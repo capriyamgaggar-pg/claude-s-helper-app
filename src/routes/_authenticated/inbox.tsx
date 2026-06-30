@@ -21,12 +21,14 @@ function Inbox() {
       const { data, error } = await supabase.from("connections").select(`
         *,
         a:profiles!connections_user_a_fkey(id, name, photo_url, city),
-        b:profiles!connections_user_b_fkey(id, name, photo_url, city)
+        b:profiles!connections_user_b_fkey(id, name, photo_url, city),
+        intent:intents!connections_intent_id_fkey(id, title, category)
       `).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const threads = useQuery({
     queryKey: ["threads", user.id],
