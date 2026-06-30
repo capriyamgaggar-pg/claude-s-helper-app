@@ -464,7 +464,14 @@ export type Database = {
     Enums: {
       app_role: "admin" | "organizer" | "user"
       connection_state: "requested" | "accepted" | "declined"
-      intent_status: "open" | "closed" | "completed" | "cancelled"
+      intent_status:
+        | "open"
+        | "closed"
+        | "completed"
+        | "cancelled"
+        | "active"
+        | "fulfilled"
+        | "expired"
       intent_visibility: "public" | "unlisted"
       participant_state: "interested" | "joining" | "confirmed" | "declined"
       thread_kind: "dm" | "intent"
@@ -597,7 +604,15 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "organizer", "user"],
       connection_state: ["requested", "accepted", "declined"],
-      intent_status: ["open", "closed", "completed", "cancelled"],
+      intent_status: [
+        "open",
+        "closed",
+        "completed",
+        "cancelled",
+        "active",
+        "fulfilled",
+        "expired",
+      ],
       intent_visibility: ["public", "unlisted"],
       participant_state: ["interested", "joining", "confirmed", "declined"],
       thread_kind: ["dm", "intent"],
