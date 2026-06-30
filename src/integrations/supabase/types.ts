@@ -610,6 +610,188 @@ export type Database = {
           },
         ]
       }
+      journey_form_answers: {
+        Row: {
+          created_at: string
+          field_id: string
+          field_key: string | null
+          file_path: string | null
+          id: string
+          submission_id: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          field_id: string
+          field_key?: string | null
+          file_path?: string | null
+          id?: string
+          submission_id: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          field_id?: string
+          field_key?: string | null
+          file_path?: string | null
+          id?: string
+          submission_id?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_form_answers_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "journey_form_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_form_answers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "journey_form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_form_fields: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          auto_fill: Json
+          created_at: string
+          created_by: string | null
+          default_value: Json | null
+          description: string | null
+          display_width: string
+          field_key: string | null
+          help_text: string | null
+          id: string
+          kind: string
+          label: string
+          organizer_only: boolean
+          placeholder: string | null
+          required: boolean
+          section_id: string | null
+          sort: number
+          step_id: string
+          updated_at: string
+          validation: Json
+          visible_if: Json | null
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          auto_fill?: Json
+          created_at?: string
+          created_by?: string | null
+          default_value?: Json | null
+          description?: string | null
+          display_width?: string
+          field_key?: string | null
+          help_text?: string | null
+          id?: string
+          kind: string
+          label: string
+          organizer_only?: boolean
+          placeholder?: string | null
+          required?: boolean
+          section_id?: string | null
+          sort?: number
+          step_id: string
+          updated_at?: string
+          validation?: Json
+          visible_if?: Json | null
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          auto_fill?: Json
+          created_at?: string
+          created_by?: string | null
+          default_value?: Json | null
+          description?: string | null
+          display_width?: string
+          field_key?: string | null
+          help_text?: string | null
+          id?: string
+          kind?: string
+          label?: string
+          organizer_only?: boolean
+          placeholder?: string | null
+          required?: boolean
+          section_id?: string | null
+          sort?: number
+          step_id?: string
+          updated_at?: string
+          validation?: Json
+          visible_if?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_form_fields_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_form_submissions: {
+        Row: {
+          created_at: string
+          form_version: number
+          id: string
+          intent_id: string
+          participant_id: string
+          status: string
+          step_id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          form_version?: number
+          id?: string
+          intent_id: string
+          participant_id: string
+          status?: string
+          step_id: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          form_version?: number
+          id?: string
+          intent_id?: string
+          participant_id?: string
+          status?: string
+          step_id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_form_submissions_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_form_submissions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journey_progress: {
         Row: {
           completed_at: string | null
@@ -1059,6 +1241,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_submission: {
+        Args: { _submission_id: string; _user_id: string }
+        Returns: boolean
+      }
       expire_intents_job: { Args: never; Returns: undefined }
       has_role: {
         Args: {
@@ -1069,6 +1255,10 @@ export type Database = {
       }
       is_intent_creator: {
         Args: { _intent_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_step_creator: {
+        Args: { _step_id: string; _user_id: string }
         Returns: boolean
       }
       is_thread_member: {
