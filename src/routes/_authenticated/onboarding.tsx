@@ -71,7 +71,13 @@ function Onboarding() {
     setBusy(true);
     const { error } = await supabase.from("profiles").update({
       name: name.trim(),
-      city: city.trim() || null,
+      locality: place?.locality ?? null,
+      city: place?.city ?? null,
+      state: place?.state ?? null,
+      country: place?.country ?? null,
+      lat: place?.lat ?? null,
+      lng: place?.lng ?? null,
+      place_id: place?.place_id ?? null,
       profession: profession.trim() || null,
       bio: bio.trim() || null,
       interests,
@@ -119,8 +125,25 @@ function Onboarding() {
               <p className="mt-2 text-sm text-muted-foreground">So we can show you intents nearby.</p>
             </header>
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="h-12 rounded-xl bg-surface" placeholder="Bangalore" />
+              <Label>Location</Label>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 text-left"
+              >
+                <MapPin className="size-4 text-muted-foreground" />
+                <span className={"flex-1 truncate text-[15px] " + (place ? "" : "text-muted-foreground")}>
+                  {place ? placeLabel(place) : "Search area or city"}
+                </span>
+                <Pencil className="size-3.5 text-muted-foreground" />
+              </button>
+              <LocationPicker
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                allowAnywhere={false}
+                title="Where are you based?"
+                onSelect={(p) => setPlace(p)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="profession">Profession (optional)</Label>
