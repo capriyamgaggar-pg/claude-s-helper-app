@@ -1,8 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { toast } from "sonner";
 import { ChevronLeft, MapPin, Pencil } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +11,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
-import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picker";
-import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
 
-export const Route = createFileRoute("/_authenticated/intents/new")({
-  head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
-  component: NewIntent,
+const searchSchema = z.object({ expires_at: z.string().optional() });
+
+export const Route = createFileRoute("/_authenticated/intents/$intentId/edit")({
+  head: () => ({ meta: [{ title: "Edit intent — Intent" }] }),
+  validateSearch: searchSchema,
+  component: EditIntent,
 });
 
 interface Category { slug: string; label: string }
 
-function NewIntent() {
+function EditIntent() {
+  const { intentId } = Route.useParams();
+  const { expires_at: pendingExpiresAt } = Route.useSearch();
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
+
   const [cats, setCats] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -33,46 +38,58 @@ function NewIntent() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [busy, setBusy] = useState(false);
-  const [visPreset, setVisPreset] = useState<VisibilityPreset["id"]>("24h");
-  const [visCustom, setVisCustom] = useState<string>(minCustomDateInputValue());
+
+  const { data: intent, isLoading } = useQuery({
+    queryKey: ["intent-edit", intentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("intents")
+        .select("*")
+        .eq("id", intentId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
       .then(({ data }) => setCats((data ?? []) as Category[]));
-    supabase.from("profiles")
-      .select("locality, city, state, country, lat, lng, place_id")
-      .eq("id", user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data?.city) {
-          setPlace({
-            locality: data.locality,
-            city: data.city,
-            state: data.state,
-            country: data.country,
-            lat: data.lat,
-            lng: data.lng,
-            place_id: data.place_id,
-            label: data.locality && data.city ? `${data.locality}, ${data.city}` : data.city,
-          });
-        }
+  }, []);
+
+  useEffect(() => {
+    if (!intent) return;
+    setTitle(intent.title);
+    setCategory(intent.category_slug);
+    setDescription(intent.description ?? "");
+    setPeopleNeeded(intent.people_needed);
+    setTags((intent.tags ?? []).join(", "));
+    setStartsAt(intent.starts_at ? toLocalInput(intent.starts_at) : "");
+    if (intent.city) {
+      setPlace({
+        locality: intent.locality,
+        city: intent.city,
+        state: intent.state,
+        country: intent.country,
+        lat: intent.lat,
+        lng: intent.lng,
+        place_id: intent.place_id,
+        label: intent.locality && intent.city ? `${intent.locality}, ${intent.city}` : intent.city,
       });
-  }, [user.id]);
+    }
+  }, [intent]);
+
+  if (intent && intent.creator_id !== user.id) {
+    return <p className="p-8 text-center text-sm text-muted-foreground">You can't edit this intent.</p>;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !category) { toast.error("Title and category are required"); return; }
     if (!place) { toast.error("Pick a location"); return; }
-    let expiresAt: string;
-    try {
-      expiresAt = pickerExpiresAt(visPreset, visCustom);
-    } catch (err) {
-      toast.error((err as Error).message);
-      return;
-    }
     setBusy(true);
     const tagArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
-    const { data, error } = await supabase.from("intents").insert({
-      creator_id: user.id,
+    const basePatch = {
       title: title.trim(),
       description: description.trim() || null,
       category_slug: category,
@@ -86,30 +103,44 @@ function NewIntent() {
       starts_at: startsAt ? new Date(startsAt).toISOString() : null,
       people_needed: peopleNeeded,
       tags: tagArr,
-      expires_at: expiresAt,
-      status: "active",
-    }).select("id").single();
+    };
+    const patch = pendingExpiresAt
+      ? { ...basePatch, expires_at: pendingExpiresAt, status: "active" as const }
+      : basePatch;
+    const { error } = await supabase.from("intents").update(patch).eq("id", intentId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Intent posted");
-    navigate({ to: "/intents/$intentId", params: { intentId: data.id } });
+    toast.success(pendingExpiresAt ? "Reactivated with edits" : "Intent updated");
+    navigate({ to: "/intents/$intentId", params: { intentId } });
   }
+
+  if (isLoading) return <p className="p-8 text-center text-sm text-muted-foreground">Loading…</p>;
 
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 px-4 pt-4">
-        <Link to="/home" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
+        <Link to="/intents/$intentId" params={{ intentId }} className="grid size-9 place-items-center rounded-full hover:bg-secondary">
           <ChevronLeft className="size-5" />
         </Link>
-        <h1 className="display text-lg">New intent</h1>
+        <h1 className="display text-lg">
+          {pendingExpiresAt ? "Edit & reactivate" : "Edit intent"}
+        </h1>
       </header>
 
-      <form onSubmit={submit} className="flex-1 space-y-5 px-5 pt-6">
+      <form onSubmit={submit} className="flex-1 space-y-5 px-5 pt-6 pb-10">
+        {pendingExpiresAt && (
+          <p className="rounded-xl border border-border bg-surface px-3 py-2 text-[12px] text-muted-foreground">
+            Reactivating with new visibility until{" "}
+            <span className="font-medium text-foreground">
+              {new Date(pendingExpiresAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+            </span>
+          </p>
+        )}
+
         <div className="space-y-2">
-          <Label htmlFor="title">What are you trying to do?</Label>
+          <Label htmlFor="title">Title</Label>
           <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)}
-            className="h-12 rounded-xl bg-surface text-base"
-            placeholder="Looking for a flatmate in Indiranagar" />
+            className="h-12 rounded-xl bg-surface text-base" />
         </div>
 
         <div className="space-y-2">
@@ -131,24 +162,16 @@ function NewIntent() {
 
         <div className="space-y-2">
           <Label>Location</Label>
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 text-left"
-          >
+          <button type="button" onClick={() => setPickerOpen(true)}
+            className="flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 text-left">
             <MapPin className="size-4 text-muted-foreground" />
             <span className={"flex-1 truncate text-[15px] " + (place ? "" : "text-muted-foreground")}>
               {place ? placeLabel(place) : "Search area or city"}
             </span>
             <Pencil className="size-3.5 text-muted-foreground" />
           </button>
-          <LocationPicker
-            open={pickerOpen}
-            onOpenChange={setPickerOpen}
-            allowAnywhere={false}
-            title="Where is this happening?"
-            onSelect={(p) => setPlace(p)}
-          />
+          <LocationPicker open={pickerOpen} onOpenChange={setPickerOpen} allowAnywhere={false}
+            title="Where is this happening?" onSelect={(p) => setPlace(p)} />
         </div>
 
         <div className="space-y-2">
@@ -167,28 +190,25 @@ function NewIntent() {
         <div className="space-y-2">
           <Label htmlFor="desc">Description</Label>
           <Textarea id="desc" rows={4} value={description} onChange={(e) => setDescription(e.target.value)}
-            className="rounded-xl bg-surface"
-            placeholder="A bit more context — budget, vibe, who you'd ideally team up with." />
+            className="rounded-xl bg-surface" />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tags">Tags (comma-separated, optional)</Label>
+          <Label htmlFor="tags">Tags (comma-separated)</Label>
           <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)}
-            className="h-11 rounded-xl bg-surface" placeholder="quiet, near metro, non-smoker" />
+            className="h-11 rounded-xl bg-surface" />
         </div>
 
-        <VisibilityPicker
-          value={visPreset}
-          customISO={visCustom}
-          onChange={(p, c) => { setVisPreset(p); setVisCustom(c); }}
-        />
-
-
-
         <Button type="submit" size="lg" className="h-12 w-full rounded-xl" disabled={busy}>
-          {busy ? "Posting…" : "Post intent"}
+          {busy ? "Saving…" : pendingExpiresAt ? "Save & reactivate" : "Save changes"}
         </Button>
       </form>
     </div>
   );
+}
+
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
