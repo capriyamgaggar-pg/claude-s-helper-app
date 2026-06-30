@@ -21,12 +21,14 @@ function Inbox() {
       const { data, error } = await supabase.from("connections").select(`
         *,
         a:profiles!connections_user_a_fkey(id, name, photo_url, city),
-        b:profiles!connections_user_b_fkey(id, name, photo_url, city)
+        b:profiles!connections_user_b_fkey(id, name, photo_url, city),
+        intent:intents!connections_intent_id_fkey(id, title, category)
       `).order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const threads = useQuery({
     queryKey: ["threads", user.id],
@@ -86,26 +88,48 @@ function Inbox() {
           {(requests.data ?? []).map((c) => {
             const cn = c as unknown as {
               id: string; user_a: string; user_b: string; requested_by: string; state: string;
+              origin_category: string | null; origin_city: string | null;
               a: { id: string; name: string | null; photo_url: string | null; city: string | null } | null;
               b: { id: string; name: string | null; photo_url: string | null; city: string | null } | null;
+              intent: { id: string; title: string | null; category: string | null } | null;
             };
             const other = cn.user_a === user.id ? cn.b : cn.a;
             if (!other) return null;
             const incoming = cn.requested_by !== user.id && cn.state === "requested";
+            const outgoing = cn.requested_by === user.id && cn.state === "requested";
+            const statusLabel = cn.state === "accepted"
+              ? "Connected"
+              : incoming ? "Wants to connect with you" : "Request sent";
+            const contextLabel = cn.intent?.title
+              ?? [cn.origin_category, cn.origin_city].filter(Boolean).join(" · ")
+              ?? null;
             return (
-              <div key={cn.id} className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3">
+              <div key={cn.id} className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-3">
                 {other.photo_url ? (
-                  <img src={other.photo_url} alt="" className="size-12 rounded-full object-cover" />
+                  <img src={other.photo_url} alt="" className="size-12 shrink-0 rounded-full object-cover" />
                 ) : (
-                  <span className="grid size-12 place-items-center rounded-full bg-muted text-sm font-semibold">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted text-sm font-semibold">
                     {(other.name?.[0] ?? "·").toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{other.name ?? "Someone"}</p>
-                  <p className="truncate text-[12px] text-muted-foreground">
-                    {cn.state === "accepted" ? "Connected" : incoming ? "Wants to connect" : "Request sent"}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-medium">{other.name ?? "Someone"}</p>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">· {statusLabel}</span>
+                  </div>
+                  {contextLabel && (
+                    cn.intent?.id ? (
+                      <Link
+                        to="/intents/$intentId"
+                        params={{ intentId: cn.intent.id }}
+                        className="mt-1 block truncate rounded-lg bg-secondary/60 px-2 py-1 text-[12px] font-medium hover:bg-secondary"
+                      >
+                        {outgoing ? "On: " : incoming ? "About: " : ""}{contextLabel}
+                      </Link>
+                    ) : (
+                      <p className="mt-1 truncate text-[12px] text-muted-foreground">{contextLabel}</p>
+                    )
+                  )}
                 </div>
                 {incoming ? (
                   <Button size="sm" className="rounded-full"
@@ -113,7 +137,7 @@ function Inbox() {
                     Accept
                   </Button>
                 ) : cn.state === "accepted" ? (
-                  <Link to="/inbox" className="text-[12px] text-muted-foreground">Open</Link>
+                  <Link to="/inbox" className="shrink-0 text-[12px] text-muted-foreground">Open</Link>
                 ) : null}
               </div>
             );
@@ -121,6 +145,7 @@ function Inbox() {
           {(requests.data?.length ?? 0) === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">No requests yet.</p>
           )}
+
         </div>
       )}
 
