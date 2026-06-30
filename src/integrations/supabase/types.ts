@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      communities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          organizer_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          organizer_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organizer_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      community_answers: {
+        Row: {
+          community_id: string
+          field_key: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          community_id: string
+          field_key: string
+          updated_at?: string
+          user_id: string
+          value: Json
+        }
+        Update: {
+          community_id?: string
+          field_key?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_answers_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_member_history: {
+        Row: {
+          community_id: string
+          completed_at: string | null
+          id: string
+          intent_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          completed_at?: string | null
+          id?: string
+          intent_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          completed_at?: string | null
+          id?: string
+          intent_id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_member_history_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_member_history_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          joined_at: string
+          last_active_at: string
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          joined_at?: string
+          last_active_at?: string
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          joined_at?: string
+          last_active_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connections: {
         Row: {
           created_at: string
@@ -82,6 +215,50 @@ export type Database = {
           },
         ]
       }
+      intent_approvals: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          intent_id: string
+          note: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          intent_id: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          intent_id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_approvals_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intent_categories: {
         Row: {
           icon: string | null
@@ -127,6 +304,38 @@ export type Database = {
             foreignKeyName: "intent_fulfillments_intent_id_fkey"
             columns: ["intent_id"]
             isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intent_journeys: {
+        Row: {
+          created_at: string
+          id: string
+          intent_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_journeys_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: true
             referencedRelation: "intents"
             referencedColumns: ["id"]
           },
@@ -186,12 +395,96 @@ export type Database = {
           },
         ]
       }
+      intent_payments: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          id: string
+          intent_id: string
+          note: string | null
+          reference: string | null
+          screenshot_path: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          id?: string
+          intent_id: string
+          note?: string | null
+          reference?: string | null
+          screenshot_path?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          id?: string
+          intent_id?: string
+          note?: string | null
+          reference?: string | null
+          screenshot_path?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_payments_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intent_views: {
+        Row: {
+          id: string
+          intent_id: string
+          viewed_at: string
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          intent_id: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          intent_id?: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_views_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intents: {
         Row: {
+          approval_required: boolean
           category_slug: string
           city: string | null
           closure_reason_code: string | null
           closure_reason_note: string | null
+          community_id: string | null
           country: string | null
           created_at: string
           creator_id: string
@@ -200,13 +493,18 @@ export type Database = {
           expires_at: string
           fulfilled_at: string | null
           fulfilled_note: string | null
+          group_discussion_enabled: boolean
           id: string
           join_mode: string
           lat: number | null
           lng: number | null
           locality: string | null
+          participation_mode: string
+          payment_instructions: string | null
+          payment_required: boolean
           people_needed: number
           place_id: string | null
+          price_inr: number | null
           radius_km: number
           starts_at: string | null
           state: string | null
@@ -217,10 +515,12 @@ export type Database = {
           visibility: Database["public"]["Enums"]["intent_visibility"]
         }
         Insert: {
+          approval_required?: boolean
           category_slug: string
           city?: string | null
           closure_reason_code?: string | null
           closure_reason_note?: string | null
+          community_id?: string | null
           country?: string | null
           created_at?: string
           creator_id: string
@@ -229,13 +529,18 @@ export type Database = {
           expires_at?: string
           fulfilled_at?: string | null
           fulfilled_note?: string | null
+          group_discussion_enabled?: boolean
           id?: string
           join_mode?: string
           lat?: number | null
           lng?: number | null
           locality?: string | null
+          participation_mode?: string
+          payment_instructions?: string | null
+          payment_required?: boolean
           people_needed?: number
           place_id?: string | null
+          price_inr?: number | null
           radius_km?: number
           starts_at?: string | null
           state?: string | null
@@ -246,10 +551,12 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["intent_visibility"]
         }
         Update: {
+          approval_required?: boolean
           category_slug?: string
           city?: string | null
           closure_reason_code?: string | null
           closure_reason_note?: string | null
+          community_id?: string | null
           country?: string | null
           created_at?: string
           creator_id?: string
@@ -258,13 +565,18 @@ export type Database = {
           expires_at?: string
           fulfilled_at?: string | null
           fulfilled_note?: string | null
+          group_discussion_enabled?: boolean
           id?: string
           join_mode?: string
           lat?: number | null
           lng?: number | null
           locality?: string | null
+          participation_mode?: string
+          payment_instructions?: string | null
+          payment_required?: boolean
           people_needed?: number
           place_id?: string | null
+          price_inr?: number | null
           radius_km?: number
           starts_at?: string | null
           state?: string | null
@@ -283,10 +595,217 @@ export type Database = {
             referencedColumns: ["slug"]
           },
           {
+            foreignKeyName: "intents_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "intents_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          data: Json
+          id: string
+          intent_id: string
+          started_at: string | null
+          status: string
+          step_id: string
+          step_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          intent_id: string
+          started_at?: string | null
+          status?: string
+          step_id: string
+          step_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          intent_id?: string
+          started_at?: string | null
+          status?: string
+          step_id?: string
+          step_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_progress_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_progress_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_step_config: {
+        Row: {
+          config: Json
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_step_config_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: true
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_steps: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          journey_id: string
+          position: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          journey_id: string
+          position: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          journey_id?: string
+          position?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_steps_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "intent_journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_template_steps: {
+        Row: {
+          config: Json
+          id: string
+          position: number
+          template_id: string
+          type: string
+        }
+        Insert: {
+          config?: Json
+          id?: string
+          position: number
+          template_id: string
+          type: string
+        }
+        Update: {
+          config?: Json
+          id?: string
+          position?: number
+          template_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_template_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "journey_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          group: string
+          id: string
+          name: string
+          owner_id: string | null
+          recommended_mode: string
+          scope: string
+          slug: string | null
+          source_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group: string
+          id?: string
+          name: string
+          owner_id?: string | null
+          recommended_mode?: string
+          scope?: string
+          slug?: string | null
+          source_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group?: string
+          id?: string
+          name?: string
+          owner_id?: string | null
+          recommended_mode?: string
+          scope?: string
+          slug?: string | null
+          source_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_templates_source_intent_id_fkey"
+            columns: ["source_intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
             referencedColumns: ["id"]
           },
         ]
@@ -367,10 +886,16 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           bio: string | null
+          blood_group: string | null
           city: string | null
           country: string | null
           created_at: string
+          dob: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           id: string
           instagram_url: string | null
           interests: string[]
@@ -381,17 +906,25 @@ export type Database = {
           locality: string | null
           name: string | null
           onboarded: boolean
+          phone: string | null
           photo_url: string | null
+          pincode: string | null
           place_id: string | null
           profession: string | null
           state: string | null
           updated_at: string
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           bio?: string | null
+          blood_group?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          dob?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           id: string
           instagram_url?: string | null
           interests?: string[]
@@ -402,17 +935,25 @@ export type Database = {
           locality?: string | null
           name?: string | null
           onboarded?: boolean
+          phone?: string | null
           photo_url?: string | null
+          pincode?: string | null
           place_id?: string | null
           profession?: string | null
           state?: string | null
           updated_at?: string
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           bio?: string | null
+          blood_group?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          dob?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           id?: string
           instagram_url?: string | null
           interests?: string[]
@@ -423,7 +964,9 @@ export type Database = {
           locality?: string | null
           name?: string | null
           onboarded?: boolean
+          phone?: string | null
           photo_url?: string | null
+          pincode?: string | null
           place_id?: string | null
           profession?: string | null
           state?: string | null
@@ -551,7 +1094,7 @@ export type Database = {
         | "confirmed"
         | "declined"
         | "left"
-      thread_kind: "dm" | "intent"
+      thread_kind: "dm" | "intent" | "intent_group"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -698,7 +1241,7 @@ export const Constants = {
         "declined",
         "left",
       ],
-      thread_kind: ["dm", "intent"],
+      thread_kind: ["dm", "intent", "intent_group"],
     },
   },
 } as const
