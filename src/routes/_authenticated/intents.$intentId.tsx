@@ -1,19 +1,36 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, MapPin, Calendar, Users, Sparkle, Clock, CheckCircle2, RotateCw } from "lucide-react";
-import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, MapPin, Calendar, Users, Clock, CheckCircle2, RotateCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FulfillDialog } from "@/components/fulfill-dialog";
 import { ReactivateDialog } from "@/components/reactivate-dialog";
 import { statusPill, type IntentStatus, CLOSURE_REASONS } from "@/lib/intent-lifecycle";
+import { ParticipationButton } from "@/components/intent/participation-button";
+import { InterestedList, type InterestedRow } from "@/components/intent/interested-list";
+import { pairKey, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
   component: IntentDetail,
 });
+
+interface ParticipantRow {
+  user_id: string;
+  state: string;
+  interest_message: string | null;
+  interest_at: string;
+  confirm_initiated_by: string | null;
+  profiles: {
+    id: string;
+    name: string | null;
+    photo_url: string | null;
+    city: string | null;
+    profession: string | null;
+  } | null;
+}
 
 function IntentDetail() {
   const { intentId } = Route.useParams();
@@ -30,41 +47,64 @@ function IntentDetail() {
         *,
         intent_categories(label),
         profiles!intents_creator_id_fkey(id, name, photo_url, city, bio),
-        intent_participants(user_id, state, profiles(name, photo_url))
+        intent_participants(user_id, state, interest_message, interest_at, confirm_initiated_by,
+          profiles(id, name, photo_url, city, profession))
       `).eq("id", intentId).single();
       if (error) throw error;
       return data;
     },
   });
 
-  const myState = data?.intent_participants?.find((p: { user_id: string }) => p.user_id === user.id)?.state as
-    | "interested" | "joining" | "confirmed" | "declined" | undefined;
-
-  const setState = useMutation({
-    mutationFn: async (state: "interested" | "joining") => {
-      const { error } = await supabase.from("intent_participants")
-        .upsert({ intent_id: intentId, user_id: user.id, state }, { onConflict: "intent_id,user_id" });
-      if (error) throw error;
+  // Fetch the user's connection with the creator (so the stage machine knows what to show)
+  const { data: connection } = useQuery({
+    enabled: !!data && data.creator_id !== user.id,
+    queryKey: ["intent-connection", intentId, user.id],
+    queryFn: async () => {
+      if (!data) return null;
+      const [a, b] = pairKey(user.id, data.creator_id);
+      const { data: row } = await supabase.from("connections")
+        .select("id, state, requested_by")
+        .eq("user_a", a).eq("user_b", b).maybeSingle();
+      return row;
     },
-    onSuccess: (_d, state) => {
-      toast.success(state === "joining" ? "You're in" : "Marked as interested");
-      qc.invalidateQueries({ queryKey: ["intent", intentId] });
-    },
-    onError: (e: Error) => toast.error(e.message),
   });
 
-  async function connectWithCreator() {
-    if (!data) return;
-    const me = user.id;
-    const them = data.creator_id;
-    if (me === them) return;
-    const [a, b] = me < them ? [me, them] : [them, me];
-    const { error } = await supabase.from("connections").upsert({
-      user_a: a, user_b: b, requested_by: me, state: "requested", intent_id: intentId,
-    }, { onConflict: "user_a,user_b" });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Connection request sent");
-  }
+  // Creator-only: existing connections with each interested user
+  const { data: creatorConnections } = useQuery({
+    enabled: !!data && data.creator_id === user.id && Array.isArray(data.intent_participants),
+    queryKey: ["intent-creator-connections", intentId, user.id],
+    queryFn: async () => {
+      const others = (data?.intent_participants ?? [])
+        .map((p: { user_id: string }) => p.user_id)
+        .filter((id: string) => id !== user.id);
+      if (others.length === 0) return {} as Record<string, { id: string; state: string; requested_by: string }>;
+      const pairs = others.map((o: string) => pairKey(user.id, o));
+      // Fetch all connections where the creator is one side
+      const { data: rows } = await supabase.from("connections")
+        .select("id, state, requested_by, user_a, user_b")
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`);
+      const map: Record<string, { id: string; state: string; requested_by: string }> = {};
+      (rows ?? []).forEach((r) => {
+        const otherId = r.user_a === user.id ? r.user_b : r.user_a;
+        if (others.includes(otherId)) {
+          map[otherId] = { id: r.id, state: r.state, requested_by: r.requested_by };
+        }
+      });
+      void pairs; // (kept for symmetry/debug)
+      return map;
+    },
+  });
+
+  // Thread tied to this intent (used for "Open Chat")
+  const { data: thread } = useQuery({
+    enabled: !!data && data.creator_id !== user.id,
+    queryKey: ["intent-thread", intentId, user.id],
+    queryFn: async () => {
+      const { data: row } = await supabase.from("threads")
+        .select("id").eq("intent_id", intentId).maybeSingle();
+      return row;
+    },
+  });
 
   if (isLoading || !data) {
     return (
@@ -83,6 +123,10 @@ function IntentDetail() {
   const isExpired = status === "expired" || (status === "active" && !isActive);
   const isTerminal = status === "fulfilled" || status === "closed";
 
+  const participants = (data.intent_participants ?? []) as ParticipantRow[];
+  const myRow = participants.find((p) => p.user_id === user.id);
+  const joinedCount = participants.filter((p) => p.state === "confirmed").length;
+
   const toneClass =
     pill.tone === "amber"
       ? "bg-amber-100 text-amber-900"
@@ -93,6 +137,7 @@ function IntentDetail() {
           : "bg-secondary text-muted-foreground";
 
   const closureLabel = CLOSURE_REASONS.find((r) => r.code === data.closure_reason_code)?.label;
+  const joinMode = (data.join_mode ?? "mutual_confirm") as JoinMode;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -110,6 +155,11 @@ function IntentDetail() {
           <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium " + toneClass}>
             <Clock className="size-3" /> {pill.text}
           </span>
+          {joinMode === "open_join" && (
+            <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-900">
+              Open join
+            </span>
+          )}
         </div>
         <h1 className="display mt-3 text-3xl leading-[1.15]">{data.title}</h1>
 
@@ -121,7 +171,7 @@ function IntentDetail() {
               {new Date(data.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
             </span>
           )}
-          <span className="flex items-center gap-1.5"><Users className="size-4" />{data.people_needed} needed</span>
+          <span className="flex items-center gap-1.5"><Users className="size-4" />{joinedCount} joined · {data.people_needed} needed</span>
         </div>
 
         {data.description && (
@@ -130,25 +180,19 @@ function IntentDetail() {
           </p>
         )}
 
-        {/* Creator-visible outcome details */}
         {isCreator && status === "fulfilled" && (
           <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-[13px]">
             <p className="font-medium text-emerald-900">Marked as fulfilled</p>
-            {data.fulfilled_note && (
-              <p className="mt-1 text-emerald-900/80">{data.fulfilled_note}</p>
-            )}
+            {data.fulfilled_note && (<p className="mt-1 text-emerald-900/80">{data.fulfilled_note}</p>)}
           </div>
         )}
         {isCreator && status === "closed" && (
           <div className="mt-5 rounded-2xl border border-border bg-muted/60 p-4 text-[13px]">
             <p className="font-medium">Closed{closureLabel ? ` — ${closureLabel}` : ""}</p>
-            {data.closure_reason_note && (
-              <p className="mt-1 text-muted-foreground">{data.closure_reason_note}</p>
-            )}
+            {data.closure_reason_note && (<p className="mt-1 text-muted-foreground">{data.closure_reason_note}</p>)}
           </div>
         )}
 
-        {/* Soft notice for visitors on an inactive intent */}
         {!isCreator && !isActive && (
           <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-4 text-center text-[13px] text-muted-foreground">
             This intent is no longer active. Existing chats remain open.
@@ -171,47 +215,56 @@ function IntentDetail() {
           </div>
         </Link>
 
-        <section className="mt-6 pb-32">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {data.intent_participants?.length ?? 0} interested
-          </h2>
-          <div className="mt-3 flex -space-x-2">
-            {(data.intent_participants ?? []).slice(0, 8).map((p: { user_id: string; profiles: { name: string | null; photo_url: string | null } | null }) =>
-              p.profiles?.photo_url ? (
-                <img key={p.user_id} src={p.profiles.photo_url} alt="" className="size-9 rounded-full border-2 border-background object-cover" />
-              ) : (
-                <span key={p.user_id} className="grid size-9 place-items-center rounded-full border-2 border-background bg-muted text-[11px] font-semibold">
-                  {(p.profiles?.name?.[0] ?? "·").toUpperCase()}
-                </span>
-              ))}
+        {/* Creator-only: Interested list with optional notes */}
+        {isCreator && (
+          <div className="pb-32">
+            <InterestedList
+              intentId={intentId}
+              creatorId={user.id}
+              categorySlug={data.category_slug}
+              city={data.city}
+              rows={participants as InterestedRow[]}
+              existingConnections={creatorConnections ?? {}}
+            />
           </div>
-        </section>
+        )}
+
+        {/* Visitor: tasteful avatars row showing who has joined */}
+        {!isCreator && joinedCount > 0 && (
+          <section className="mt-6 pb-32">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {joinedCount} joined
+            </h2>
+            <div className="mt-3 flex -space-x-2">
+              {participants.filter((p) => p.state === "confirmed").slice(0, 8).map((p) =>
+                p.profiles?.photo_url ? (
+                  <img key={p.user_id} src={p.profiles.photo_url} alt="" className="size-9 rounded-full border-2 border-background object-cover" />
+                ) : (
+                  <span key={p.user_id} className="grid size-9 place-items-center rounded-full border-2 border-background bg-muted text-[11px] font-semibold">
+                    {(p.profiles?.name?.[0] ?? "·").toUpperCase()}
+                  </span>
+                ),
+              )}
+            </div>
+          </section>
+        )}
+        {!isCreator && joinedCount === 0 && <div className="pb-32" />}
       </article>
 
-      {/* Visitor actions — only on truly active intents */}
+      {/* Visitor stage-aware CTA */}
       {!isCreator && isActive && (
         <footer className="sticky bottom-16 mx-3 mb-3 rounded-2xl border border-border bg-surface/95 p-3 shadow-lg backdrop-blur">
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant={myState === "interested" ? "default" : "outline"}
-              className="h-11 rounded-xl"
-              onClick={() => setState.mutate("interested")}
-              disabled={setState.isPending}
-            >
-              Interested
-            </Button>
-            <Button
-              className="h-11 rounded-xl"
-              variant={myState === "joining" ? "default" : "outline"}
-              onClick={() => setState.mutate("joining")}
-              disabled={setState.isPending}
-            >
-              Joining
-            </Button>
-            <Button variant="secondary" className="h-11 rounded-xl gap-1" onClick={connectWithCreator}>
-              <Sparkle className="size-4" /> Connect
-            </Button>
-          </div>
+          <ParticipationButton
+            intentId={intentId}
+            creatorId={data.creator_id}
+            meId={user.id}
+            joinMode={joinMode}
+            categorySlug={data.category_slug}
+            city={data.city}
+            myParticipation={myRow ? { state: myRow.state as ParticipationState, confirm_initiated_by: myRow.confirm_initiated_by } : null}
+            connection={connection ? { id: connection.id, state: connection.state as ConnectionState, requested_by: connection.requested_by } : null}
+            threadId={thread?.id ?? null}
+          />
         </footer>
       )}
 

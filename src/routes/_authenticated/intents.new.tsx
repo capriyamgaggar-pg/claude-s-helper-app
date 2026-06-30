@@ -12,6 +12,7 @@ import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
 import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picker";
 import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
+import type { JoinMode } from "@/lib/participation";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
@@ -35,6 +36,9 @@ function NewIntent() {
   const [busy, setBusy] = useState(false);
   const [visPreset, setVisPreset] = useState<VisibilityPreset["id"]>("24h");
   const [visCustom, setVisCustom] = useState<string>(minCustomDateInputValue());
+  const [joinMode, setJoinMode] = useState<JoinMode>("mutual_confirm");
+
+
 
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
@@ -88,6 +92,7 @@ function NewIntent() {
       tags: tagArr,
       expires_at: expiresAt,
       status: "active",
+      join_mode: joinMode,
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -182,6 +187,33 @@ function NewIntent() {
           customISO={visCustom}
           onChange={(p, c) => { setVisPreset(p); setVisCustom(c); }}
         />
+
+        <div className="space-y-2">
+          <Label>How can people join?</Label>
+          <div className="grid grid-cols-1 gap-2">
+            {([
+              { id: "mutual_confirm", title: "Mutual Confirmation", desc: "Default. After chatting, both sides must explicitly confirm before someone is marked as joined." },
+              { id: "open_join",      title: "Open Join",            desc: "Anyone you've connected with can join in one tap, without a confirmation step." },
+            ] as { id: JoinMode; title: string; desc: string }[]).map((o) => {
+              const on = joinMode === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setJoinMode(o.id)}
+                  className={"rounded-2xl border p-3 text-left transition-colors " + (on
+                    ? "border-foreground bg-foreground/5"
+                    : "border-border bg-surface hover:bg-secondary/60")}
+                >
+                  <p className="text-[14px] font-medium">{o.title}</p>
+                  <p className="mt-1 text-[12px] text-muted-foreground">{o.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+
 
 
 
