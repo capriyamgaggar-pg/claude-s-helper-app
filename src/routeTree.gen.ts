@@ -21,6 +21,9 @@ import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedIntentsNewRouteImport } from './routes/_authenticated/intents.new'
 import { Route as AuthenticatedIntentsIntentIdRouteImport } from './routes/_authenticated/intents.$intentId'
 import { Route as AuthenticatedInboxThreadIdRouteImport } from './routes/_authenticated/inbox.$threadId'
+import { Route as AuthenticatedIntentsIntentIdSubmissionsRouteImport } from './routes/_authenticated/intents.$intentId.submissions'
+import { Route as AuthenticatedIntentsIntentIdRegisterRouteImport } from './routes/_authenticated/intents.$intentId.register'
+import { Route as AuthenticatedIntentsIntentIdFormRouteImport } from './routes/_authenticated/intents.$intentId.form'
 import { Route as AuthenticatedIntentsIntentIdEditRouteImport } from './routes/_authenticated/intents.$intentId.edit'
 
 const AuthRoute = AuthRouteImport.update({
@@ -85,6 +88,24 @@ const AuthenticatedInboxThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedInboxRoute,
   } as any)
+const AuthenticatedIntentsIntentIdSubmissionsRoute =
+  AuthenticatedIntentsIntentIdSubmissionsRouteImport.update({
+    id: '/submissions',
+    path: '/submissions',
+    getParentRoute: () => AuthenticatedIntentsIntentIdRoute,
+  } as any)
+const AuthenticatedIntentsIntentIdRegisterRoute =
+  AuthenticatedIntentsIntentIdRegisterRouteImport.update({
+    id: '/register',
+    path: '/register',
+    getParentRoute: () => AuthenticatedIntentsIntentIdRoute,
+  } as any)
+const AuthenticatedIntentsIntentIdFormRoute =
+  AuthenticatedIntentsIntentIdFormRouteImport.update({
+    id: '/form',
+    path: '/form',
+    getParentRoute: () => AuthenticatedIntentsIntentIdRoute,
+  } as any)
 const AuthenticatedIntentsIntentIdEditRoute =
   AuthenticatedIntentsIntentIdEditRouteImport.update({
     id: '/edit',
@@ -105,6 +126,9 @@ export interface FileRoutesByFullPath {
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
+  '/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
+  '/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +143,9 @@ export interface FileRoutesByTo {
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
+  '/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
+  '/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +162,9 @@ export interface FileRoutesById {
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/_authenticated/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/_authenticated/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
+  '/_authenticated/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
+  '/_authenticated/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +181,9 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/profile/me'
     | '/intents/$intentId/edit'
+    | '/intents/$intentId/form'
+    | '/intents/$intentId/register'
+    | '/intents/$intentId/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,6 +198,9 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/profile/me'
     | '/intents/$intentId/edit'
+    | '/intents/$intentId/form'
+    | '/intents/$intentId/register'
+    | '/intents/$intentId/submissions'
   id:
     | '__root__'
     | '/'
@@ -180,6 +216,9 @@ export interface FileRouteTypes {
     | '/_authenticated/profile/$userId'
     | '/_authenticated/profile/me'
     | '/_authenticated/intents/$intentId/edit'
+    | '/_authenticated/intents/$intentId/form'
+    | '/_authenticated/intents/$intentId/register'
+    | '/_authenticated/intents/$intentId/submissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,6 +313,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInboxThreadIdRouteImport
       parentRoute: typeof AuthenticatedInboxRoute
     }
+    '/_authenticated/intents/$intentId/submissions': {
+      id: '/_authenticated/intents/$intentId/submissions'
+      path: '/submissions'
+      fullPath: '/intents/$intentId/submissions'
+      preLoaderRoute: typeof AuthenticatedIntentsIntentIdSubmissionsRouteImport
+      parentRoute: typeof AuthenticatedIntentsIntentIdRoute
+    }
+    '/_authenticated/intents/$intentId/register': {
+      id: '/_authenticated/intents/$intentId/register'
+      path: '/register'
+      fullPath: '/intents/$intentId/register'
+      preLoaderRoute: typeof AuthenticatedIntentsIntentIdRegisterRouteImport
+      parentRoute: typeof AuthenticatedIntentsIntentIdRoute
+    }
+    '/_authenticated/intents/$intentId/form': {
+      id: '/_authenticated/intents/$intentId/form'
+      path: '/form'
+      fullPath: '/intents/$intentId/form'
+      preLoaderRoute: typeof AuthenticatedIntentsIntentIdFormRouteImport
+      parentRoute: typeof AuthenticatedIntentsIntentIdRoute
+    }
     '/_authenticated/intents/$intentId/edit': {
       id: '/_authenticated/intents/$intentId/edit'
       path: '/edit'
@@ -297,12 +357,21 @@ const AuthenticatedInboxRouteWithChildren =
 
 interface AuthenticatedIntentsIntentIdRouteChildren {
   AuthenticatedIntentsIntentIdEditRoute: typeof AuthenticatedIntentsIntentIdEditRoute
+  AuthenticatedIntentsIntentIdFormRoute: typeof AuthenticatedIntentsIntentIdFormRoute
+  AuthenticatedIntentsIntentIdRegisterRoute: typeof AuthenticatedIntentsIntentIdRegisterRoute
+  AuthenticatedIntentsIntentIdSubmissionsRoute: typeof AuthenticatedIntentsIntentIdSubmissionsRoute
 }
 
 const AuthenticatedIntentsIntentIdRouteChildren: AuthenticatedIntentsIntentIdRouteChildren =
   {
     AuthenticatedIntentsIntentIdEditRoute:
       AuthenticatedIntentsIntentIdEditRoute,
+    AuthenticatedIntentsIntentIdFormRoute:
+      AuthenticatedIntentsIntentIdFormRoute,
+    AuthenticatedIntentsIntentIdRegisterRoute:
+      AuthenticatedIntentsIntentIdRegisterRoute,
+    AuthenticatedIntentsIntentIdSubmissionsRoute:
+      AuthenticatedIntentsIntentIdSubmissionsRoute,
   }
 
 const AuthenticatedIntentsIntentIdRouteWithChildren =
