@@ -1,80 +1,72 @@
-## Intent Lifecycle & Fulfillment System (MVP) — Final Approved
+# Mutual-Consent Participation Lifecycle (MVP)
 
-### 1. Database migration
+Three independent concepts: **Intent**, **Connection** (person-to-person, persists beyond the intent), **Participation** (per-intent progress). Nothing auto-advances; every transition needs explicit action.
 
-**`intents` — add columns:**
-- `expires_at timestamptz NOT NULL` (default `now() + 24h`)
-- `status text NOT NULL DEFAULT 'active'` — `active | fulfilled | closed | expired`
-- `fulfilled_at timestamptz NULL`
-- `fulfilled_note text NULL`
-- `closure_reason_code text NULL` — one of: `found_elsewhere | no_longer_needed | not_enough_responses | wrong_timing | other` (CHECK constraint)
-- `closure_reason_note text NULL` — optional free-text, used especially when code = `other`
-- Index `(status, expires_at)`.
-- Backfill legacy `status='open'` → `'active'`; `expires_at = created_at + 24h` for existing rows.
+**Interested is not a private bookmark.** Creator sees the full list of interested users (photo, name, profession, city), not a count. Each interested user may attach an **optional short note (≤ 250 characters)** that only the creator sees in the Interested list — enough context to decide whom to connect with, without turning Interested into a heavy commitment.
 
-**New `intent_fulfillments`:** `intent_id`, `user_id`, `created_at`; unique `(intent_id, user_id)`. RLS: creator inserts/deletes; creator + credited user can SELECT.
+## User journey
 
-**Hourly pg_cron (SQL only):**
-```sql
-UPDATE intents SET status='expired' WHERE status='active' AND expires_at < now();
--- + one-shot notification per expired intent
+```
+Discover → Interested (+ optional note) → Request to Connect → Chat → Confirm Participation → Joined
 ```
 
-### 2. Discovery filter
+| Stage | Meaning | Action | Effect |
+|---|---|---|---|
+| Interested | Public signal to creator | Tap Interested; optional ≤250-char note | Saved in user's Interested tab; creator sees user + note in Interested list; no chat; not a participant |
+| Request to Connect | Either side asks to talk | Tap Request to Connect | Other side gets Accept / Decline |
+| Chat | Conversation opens after Accept | Other taps Accept | Private chat created; both become Connections (persistent) |
+| Confirm Participation | Either side proposes inside the chat | Tap Confirm Participation | Other must Accept; skipped when intent is Open Join |
+| Joined | Confirmed by both sides | Other taps Accept | Participant count ↑, appears on intent and in Joined tab |
 
-Home / Explore / Search / Recommendations queries get `.eq('status','active').gt('expires_at', now)`. Chats / participants / connections never filtered.
+Default join mode = **Mutual Confirmation**. Creator can pick **Open Join** per intent (connected users join in one tap).
 
-### 3. Create intent
+## Profile (`/profile/me`)
 
-**Visible for** chips above submit: `24h (default) · 3d · 7d · 30d · Custom` (90-day cap). Writes `expires_at`.
+Four tabs:
+1. **My Intents** — existing dashboard (Active / Fulfilled / Closed / Expired).
+2. **Interested** — intents I bookmarked. Each card: Request to Connect, Remove Interest.
+3. **Joined** — confirmed participations, grouped Upcoming / Past.
+4. **Connections** — mutual connections. Row shows photo, name, profession, city, "Connected through: {Category} • {City}", with Open Chat / View Profile.
 
-### 4. Intent detail page
+## Intent detail
 
-**Everyone:** countdown pill (`5d left` → amber `23h left` → grey `Expired`). Non-creators see soft "no longer active" state when expired.
+Stage-aware primary CTA:
+Show Interest → Request to Connect → Connection Pending → Open Chat → Confirm Participation → Joined ✓
 
-**Creator only:**
+Tapping **Show Interest** opens a small sheet with an optional textarea (max 250 chars, counter shown).
 
-- **Mark as fulfilled** → dialog:
-  1. *Has your intent been fulfilled?* → **Yes, I found what I needed** / **No, just closing it**
-  2. **If Yes** → optional helper multi-select + optional note. Writes `status='fulfilled'`, `fulfilled_at`, `fulfilled_note`, helpers → `intent_fulfillments`.
-  3. **If No** → optional closure feedback (skippable). Preset chips map to `closure_reason_code`:
-       - Found it elsewhere → `found_elsewhere`
-       - No longer needed → `no_longer_needed`
-       - Not enough responses → `not_enough_responses`
-       - Wrong timing → `wrong_timing`
-       - Other → `other` (reveals a free-text input → `closure_reason_note`)
-     Writes `status='closed'` plus `closure_reason_code` / `closure_reason_note` when provided.
+Creator view: new **Interested** section listing each interested user with avatar, name, profession, city, the optional note (truncated, tap to expand), "Interested 2h ago", and a **Send Connect Request** button. Creator never sees the note for users who didn't write one.
 
-- **Reactivate Intent** (only when `status='expired'`) → sheet:
-  1. Pick new visibility: `24h · 3d · 7d · 30d · Custom` (90-day cap)
-  2. **Reactivate now** (sets `expires_at = now + chosen`, `status='active'`) **or** **Edit & reactivate** (prefilled form; saves edits + new `expires_at` + `status='active'` in one update).
+## Chat (intent-linked threads)
 
-`fulfilled` and `closed` are terminal.
+Sticky **Participation card** at the top:
+- Status: Not Joined / Awaiting Confirmation / Confirmation pending — your turn / Joined
+- Actions: Confirm Participation (or Join now in Open Join), Accept, Decline
+- On Accept: insert system message, participant count updates.
 
-### 5. Expiry prompt
+## Database (already applied)
 
-Cron inserts one notification per newly expired intent: *"Did '…' work out?"* → opens the same fulfillment dialog (Yes path or No path with optional closure reason). No repeat reminders.
+- `participant_state` enum gains `left`. Existing values reused: `interested`, `joining` (= confirm pending), `confirmed` (= joined), `declined`.
+- `intent_participants` adds `interest_message text` (CHECK ≤ 250 chars), `interest_at`, `confirm_initiated_by`, `confirm_initiated_at`, `joined_at`, `left_at`.
+- `intents` adds `join_mode text` default `mutual_confirm` (`mutual_confirm | open_join`).
+- `connections` adds `origin_category`, `origin_city` (existing `intent_id` reused).
+- Existing RLS already lets the intent creator SELECT the interested list and lets each user manage their own row; no policy changes needed for MVP.
 
-### 6. My Intents (inside Profile)
+## Code changes
 
-`profile.me.tsx` gets a tabbed section: **Active · Fulfilled · Closed · Expired**. Creator's own intents per status, recency-sorted. Cards always tappable.
+- `src/lib/participation.ts` — stage machine + label/CTA mapping + canonical pair key for connections.
+- `src/components/intent/participation-button.tsx` — stage-aware CTA, owns the Show Interest dialog with the 250-char note.
+- `src/components/intent/interested-list.tsx` — creator-only list with note display and Send Connect Request.
+- `src/components/chat/participation-card.tsx` — sticky chat header card; Confirm / Accept / Decline transitions.
+- `src/routes/_authenticated/intents.$intentId.tsx` — replace the three buttons with `ParticipationButton`; mount `InterestedList` for creator; include `join_mode`, `interest_message`, `interest_at`, `confirm_initiated_by` in the existing query; fetch the user's connection with the creator.
+- `src/routes/_authenticated/inbox.$threadId.tsx` — mount `ParticipationCard` when the thread has an `intent_id`.
+- `src/routes/_authenticated/intents.new.tsx` — add **Join Mode** toggle (Mutual Confirmation default / Open Join) and pass `join_mode` on insert.
+- `src/routes/_authenticated/profile.me.tsx` — restructure into four sections: My Intents (existing), Interested, Joined (grouped Upcoming/Past), Connections (with "Connected through:" subtitle from `origin_category`/`origin_city`).
 
-### 7. Card pill
+## Out of scope this round
 
-`intent-card.tsx` adds one small chip — countdown when active, status badge otherwise.
+- Public "X people interested" count for non-creator viewers (interest stays creator-visible).
+- Bulk-confirm multiple users at once.
+- Reputation / ratings based on confirm history.
 
-### 8. Profile (public)
-
-No public fulfillment stats in MVP. Closure reasons stay private to the creator; structured codes enable future category-level insights with no schema change.
-
-### Implementation order
-1. Migration (columns incl. `closure_reason_code` + `closure_reason_note` with CHECK, table, RLS, backfill, indexes)
-2. Hourly cron + expiry notification
-3. Create flow Visible-for chips
-4. Discovery query filters
-5. Card countdown pill
-6. Detail page: countdown, Mark-as-fulfilled dialog (Yes + No-with-coded-closure paths), Reactivate sheet (Reactivate now / Edit & reactivate)
-7. Profile → My Intents tabs
-8. Smoke-test full lifecycle
-
-Ready to build.
+> Database migration already approved and applied. Approving this plan moves the project into build mode so the UI changes above can be written.
