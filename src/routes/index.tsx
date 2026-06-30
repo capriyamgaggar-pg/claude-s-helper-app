@@ -16,8 +16,8 @@ function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      navigate({ to: data.user ? "/home" : "/auth", replace: true });
+      const { data } = await supabase.auth.getSession();
+      navigate({ to: data.session ? "/home" : "/auth", replace: true });
     })();
   }, [navigate]);
   return (
