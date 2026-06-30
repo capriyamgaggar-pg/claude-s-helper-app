@@ -15,10 +15,18 @@ export const Route = createFileRoute("/")({
 function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      navigate({ to: data.session ? "/home" : "/auth", replace: true });
-    })();
+    let done = false;
+    const go = (to: "/home" | "/auth") => {
+      if (done) return;
+      done = true;
+      navigate({ to, replace: true });
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      go(data.session ? "/home" : "/auth");
+    }).catch(() => go("/auth"));
+    // Safety fallback if session check stalls
+    const t = setTimeout(() => go("/auth"), 1500);
+    return () => clearTimeout(t);
   }, [navigate]);
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
