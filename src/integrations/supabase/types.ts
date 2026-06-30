@@ -19,6 +19,8 @@ export type Database = {
           created_at: string
           id: string
           intent_id: string | null
+          origin_category: string | null
+          origin_city: string | null
           requested_by: string
           state: Database["public"]["Enums"]["connection_state"]
           updated_at: string
@@ -29,6 +31,8 @@ export type Database = {
           created_at?: string
           id?: string
           intent_id?: string | null
+          origin_category?: string | null
+          origin_city?: string | null
           requested_by: string
           state?: Database["public"]["Enums"]["connection_state"]
           updated_at?: string
@@ -39,6 +43,8 @@ export type Database = {
           created_at?: string
           id?: string
           intent_id?: string | null
+          origin_category?: string | null
+          origin_city?: string | null
           requested_by?: string
           state?: Database["public"]["Enums"]["connection_state"]
           updated_at?: string
@@ -128,20 +134,38 @@ export type Database = {
       }
       intent_participants: {
         Row: {
+          confirm_initiated_at: string | null
+          confirm_initiated_by: string | null
           created_at: string
           intent_id: string
+          interest_at: string
+          interest_message: string | null
+          joined_at: string | null
+          left_at: string | null
           state: Database["public"]["Enums"]["participant_state"]
           user_id: string
         }
         Insert: {
+          confirm_initiated_at?: string | null
+          confirm_initiated_by?: string | null
           created_at?: string
           intent_id: string
+          interest_at?: string
+          interest_message?: string | null
+          joined_at?: string | null
+          left_at?: string | null
           state?: Database["public"]["Enums"]["participant_state"]
           user_id: string
         }
         Update: {
+          confirm_initiated_at?: string | null
+          confirm_initiated_by?: string | null
           created_at?: string
           intent_id?: string
+          interest_at?: string
+          interest_message?: string | null
+          joined_at?: string | null
+          left_at?: string | null
           state?: Database["public"]["Enums"]["participant_state"]
           user_id?: string
         }
@@ -177,6 +201,7 @@ export type Database = {
           fulfilled_at: string | null
           fulfilled_note: string | null
           id: string
+          join_mode: string
           lat: number | null
           lng: number | null
           locality: string | null
@@ -205,6 +230,7 @@ export type Database = {
           fulfilled_at?: string | null
           fulfilled_note?: string | null
           id?: string
+          join_mode?: string
           lat?: number | null
           lng?: number | null
           locality?: string | null
@@ -233,6 +259,7 @@ export type Database = {
           fulfilled_at?: string | null
           fulfilled_note?: string | null
           id?: string
+          join_mode?: string
           lat?: number | null
           lng?: number | null
           locality?: string | null
@@ -518,7 +545,12 @@ export type Database = {
         | "fulfilled"
         | "expired"
       intent_visibility: "public" | "unlisted"
-      participant_state: "interested" | "joining" | "confirmed" | "declined"
+      participant_state:
+        | "interested"
+        | "joining"
+        | "confirmed"
+        | "declined"
+        | "left"
       thread_kind: "dm" | "intent"
     }
     CompositeTypes: {
@@ -659,7 +691,13 @@ export const Constants = {
         "expired",
       ],
       intent_visibility: ["public", "unlisted"],
-      participant_state: ["interested", "joining", "confirmed", "declined"],
+      participant_state: [
+        "interested",
+        "joining",
+        "confirmed",
+        "declined",
+        "left",
+      ],
       thread_kind: ["dm", "intent"],
     },
   },
