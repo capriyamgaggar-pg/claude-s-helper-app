@@ -33,6 +33,8 @@ function NewIntent() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [busy, setBusy] = useState(false);
+  const [visPreset, setVisPreset] = useState<VisibilityPreset["id"]>("24h");
+  const [visCustom, setVisCustom] = useState<string>(minCustomDateInputValue());
 
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
@@ -60,6 +62,13 @@ function NewIntent() {
     e.preventDefault();
     if (!title.trim() || !category) { toast.error("Title and category are required"); return; }
     if (!place) { toast.error("Pick a location"); return; }
+    let expiresAt: string;
+    try {
+      expiresAt = pickerExpiresAt(visPreset, visCustom);
+    } catch (err) {
+      toast.error((err as Error).message);
+      return;
+    }
     setBusy(true);
     const tagArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
     const { data, error } = await supabase.from("intents").insert({
@@ -77,6 +86,8 @@ function NewIntent() {
       starts_at: startsAt ? new Date(startsAt).toISOString() : null,
       people_needed: peopleNeeded,
       tags: tagArr,
+      expires_at: expiresAt,
+      status: "active",
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
