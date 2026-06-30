@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { startersFor } from "@/lib/categories";
+import { ParticipationCard } from "@/components/chat/participation-card";
 
 export const Route = createFileRoute("/_authenticated/inbox/$threadId")({
   head: () => ({ meta: [{ title: "Chat — Intent" }] }),
@@ -26,13 +27,14 @@ function ChatThread() {
     queryKey: ["thread-ctx", threadId],
     queryFn: async () => {
       const { data: thread, error: et } = await supabase.from("threads")
-        .select(`id, kind, intent_id, intents(id, title, category_slug, intent_categories(label)),
+        .select(`id, kind, intent_id, intents(id, title, category_slug, creator_id, intent_categories(label)),
           thread_members(user_id, profiles(id, name, photo_url, interests))`)
         .eq("id", threadId).single();
       if (et) throw et;
       return thread;
     },
   });
+
 
   // initial messages
   useEffect(() => {
@@ -65,7 +67,7 @@ function ChatThread() {
 
   const ctxData = ctx.data as unknown as {
     intent_id: string | null;
-    intents: { id: string; title: string; category_slug: string; intent_categories: { label: string } | null } | null;
+    intents: { id: string; title: string; category_slug: string; creator_id: string; intent_categories: { label: string } | null } | null;
     thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null; interests: string[] } | null }>;
   } | undefined;
 
@@ -73,6 +75,7 @@ function ChatThread() {
   const me = ctxData?.thread_members.find((m) => m.user_id === user.id)?.profiles;
   const sharedInterests = (me?.interests ?? []).filter((i) => (other?.interests ?? []).includes(i));
   const starters = startersFor(ctxData?.intents?.category_slug);
+
 
   const showOpener = messages.length === 0 && !!ctxData;
 
@@ -91,6 +94,16 @@ function ChatThread() {
         )}
         <p className="truncate font-medium">{other?.name ?? "Chat"}</p>
       </header>
+
+      {ctxData?.intent_id && ctxData.intents && other && (
+        <ParticipationCard
+          intentId={ctxData.intent_id}
+          meId={user.id}
+          otherId={other.id}
+          creatorId={ctxData.intents.creator_id}
+        />
+      )}
+
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
         {showOpener && (
