@@ -20,7 +20,8 @@ interface IntentRow {
   category_slug: string; city: string | null; locality: string | null;
   lat: number | null; lng: number | null;
   starts_at: string | null; ends_at: string | null; people_needed: number;
-  visibility: string; status: string; tags: string[]; created_at: string;
+  visibility: string; status: string; expires_at: string | null;
+  tags: string[]; created_at: string;
   creator_id: string;
   intent_categories: { label: string } | null;
   profiles: { name: string | null; photo_url: string | null } | null;
@@ -39,6 +40,8 @@ function rowToCard(r: IntentRow): IntentCardData {
     creator_name: r.profiles?.name ?? null,
     creator_photo: r.profiles?.photo_url ?? null,
     created_at: r.created_at,
+    status: r.status,
+    expires_at: r.expires_at,
   };
 }
 
@@ -97,14 +100,15 @@ function HomePage() {
         .from("intents")
         .select(`
           id, title, description, category_slug, city, locality, lat, lng,
-          starts_at, ends_at, people_needed, visibility, status, tags,
+          starts_at, ends_at, people_needed, visibility, status, expires_at, tags,
           created_at, creator_id,
           intent_categories(label),
           profiles!intents_creator_id_fkey(name, photo_url),
           intent_participants(user_id, state)
         `)
         .eq("visibility", "public")
-        .eq("status", "open")
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
         .limit(60);
       query = applyLocationFilter(query, filter);

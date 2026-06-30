@@ -32,11 +32,12 @@ function Explore() {
     queryKey: ["explore", active, filter.scope, filter.city ?? "", filter.locality ?? ""],
     queryFn: async () => {
       let query = supabase.from("intents").select(`
-        id, title, category_slug, city, locality, starts_at, people_needed, created_at, creator_id,
+        id, title, category_slug, city, locality, starts_at, people_needed, status, expires_at, created_at, creator_id,
         intent_categories(label),
         profiles!intents_creator_id_fkey(name, photo_url),
         intent_participants(user_id)
-      `).eq("visibility", "public").eq("status", "open")
+      `).eq("visibility", "public").eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false }).limit(80);
       if (active) query = query.eq("category_slug", active);
       query = applyLocationFilter(query, filter);
@@ -86,7 +87,8 @@ function Explore() {
         {filtered.map((r) => {
           const intent = r as unknown as {
             id: string; title: string; category_slug: string; city: string | null; locality: string | null;
-            starts_at: string | null; people_needed: number; created_at: string; creator_id: string;
+            starts_at: string | null; people_needed: number; status: string; expires_at: string | null;
+            created_at: string; creator_id: string;
             intent_categories: { label: string } | null;
             profiles: { name: string | null; photo_url: string | null } | null;
             intent_participants: { user_id: string }[];
@@ -101,6 +103,8 @@ function Explore() {
             creator_name: intent.profiles?.name ?? null,
             creator_photo: intent.profiles?.photo_url ?? null,
             created_at: intent.created_at,
+            status: intent.status,
+            expires_at: intent.expires_at,
           };
           return <IntentCard key={card.id} intent={card} />;
         })}
