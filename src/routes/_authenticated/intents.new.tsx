@@ -177,6 +177,14 @@ function NewIntent() {
             className="h-11 rounded-xl bg-surface" placeholder="quiet, near metro, non-smoker" />
         </div>
 
+        <VisibilityPicker
+          value={visPreset}
+          customISO={visCustom}
+          onChange={(p, c) => { setVisPreset(p); setVisCustom(c); }}
+        />
+
+
+
         <Button type="submit" size="lg" className="h-12 w-full rounded-xl" disabled={busy}>
           {busy ? "Posting…" : "Post intent"}
         </Button>
