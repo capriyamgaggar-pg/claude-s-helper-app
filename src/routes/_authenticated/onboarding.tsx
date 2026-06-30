@@ -24,7 +24,8 @@ function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [city, setCity] = useState("");
+  const [place, setPlace] = useState<Place | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [profession, setProfession] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
@@ -40,7 +41,18 @@ function Onboarding() {
       if (data) {
         if (data.onboarded) { navigate({ to: "/home" }); return; }
         setName(data.name ?? "");
-        setCity(data.city ?? "");
+        if (data.city) {
+          setPlace({
+            locality: data.locality ?? null,
+            city: data.city,
+            state: data.state ?? null,
+            country: data.country ?? null,
+            lat: data.lat ?? null,
+            lng: data.lng ?? null,
+            place_id: data.place_id ?? null,
+            label: data.locality && data.city ? `${data.locality}, ${data.city}` : data.city,
+          });
+        }
         setProfession(data.profession ?? "");
         setBio(data.bio ?? "");
         setInterests(data.interests ?? []);
