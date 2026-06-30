@@ -89,7 +89,7 @@ function EditIntent() {
     if (!place) { toast.error("Pick a location"); return; }
     setBusy(true);
     const tagArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
-    const patch: Record<string, unknown> = {
+    const basePatch = {
       title: title.trim(),
       description: description.trim() || null,
       category_slug: category,
@@ -104,10 +104,9 @@ function EditIntent() {
       people_needed: peopleNeeded,
       tags: tagArr,
     };
-    if (pendingExpiresAt) {
-      patch.expires_at = pendingExpiresAt;
-      patch.status = "active";
-    }
+    const patch = pendingExpiresAt
+      ? { ...basePatch, expires_at: pendingExpiresAt, status: "active" as const }
+      : basePatch;
     const { error } = await supabase.from("intents").update(patch).eq("id", intentId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
