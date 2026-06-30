@@ -1,13 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, MapPin, Pencil } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationPicker } from "@/components/location-picker";
+import { placeLabel, type Place } from "@/lib/location";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
@@ -22,7 +24,8 @@ function NewIntent() {
   const [cats, setCats] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [city, setCity] = useState("");
+  const [place, setPlace] = useState<Place | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [startsAt, setStartsAt] = useState("");
   const [peopleNeeded, setPeopleNeeded] = useState(1);
   const [description, setDescription] = useState("");
@@ -32,13 +35,29 @@ function NewIntent() {
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
       .then(({ data }) => setCats((data ?? []) as Category[]));
-    supabase.from("profiles").select("city").eq("id", user.id).maybeSingle()
-      .then(({ data }) => { if (data?.city) setCity(data.city); });
+    supabase.from("profiles")
+      .select("locality, city, state, country, lat, lng, place_id")
+      .eq("id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.city) {
+          setPlace({
+            locality: data.locality,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            lat: data.lat,
+            lng: data.lng,
+            place_id: data.place_id,
+            label: data.locality && data.city ? `${data.locality}, ${data.city}` : data.city,
+          });
+        }
+      });
   }, [user.id]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !category) { toast.error("Title and category are required"); return; }
+    if (!place) { toast.error("Pick a location"); return; }
     setBusy(true);
     const tagArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
     const { data, error } = await supabase.from("intents").insert({
@@ -46,7 +65,13 @@ function NewIntent() {
       title: title.trim(),
       description: description.trim() || null,
       category_slug: category,
-      city: city.trim() || null,
+      locality: place.locality,
+      city: place.city,
+      state: place.state,
+      country: place.country,
+      lat: place.lat,
+      lng: place.lng,
+      place_id: place.place_id,
       starts_at: startsAt ? new Date(startsAt).toISOString() : null,
       people_needed: peopleNeeded,
       tags: tagArr,
@@ -91,17 +116,33 @@ function NewIntent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="h-11 rounded-xl bg-surface" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="people">People needed</Label>
-            <Input id="people" type="number" min={1} max={50} value={peopleNeeded}
-              onChange={(e) => setPeopleNeeded(parseInt(e.target.value) || 1)}
-              className="h-11 rounded-xl bg-surface" />
-          </div>
+        <div className="space-y-2">
+          <Label>Location</Label>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 text-left"
+          >
+            <MapPin className="size-4 text-muted-foreground" />
+            <span className={"flex-1 truncate text-[15px] " + (place ? "" : "text-muted-foreground")}>
+              {place ? placeLabel(place) : "Search area or city"}
+            </span>
+            <Pencil className="size-3.5 text-muted-foreground" />
+          </button>
+          <LocationPicker
+            open={pickerOpen}
+            onOpenChange={setPickerOpen}
+            allowAnywhere={false}
+            title="Where is this happening?"
+            onSelect={(p) => setPlace(p)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="people">People needed</Label>
+          <Input id="people" type="number" min={1} max={50} value={peopleNeeded}
+            onChange={(e) => setPeopleNeeded(parseInt(e.target.value) || 1)}
+            className="h-11 rounded-xl bg-surface" />
         </div>
 
         <div className="space-y-2">

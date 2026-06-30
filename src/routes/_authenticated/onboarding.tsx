@@ -1,11 +1,14 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { MapPin, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationPicker } from "@/components/location-picker";
+import { placeLabel, type Place } from "@/lib/location";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
