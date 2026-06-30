@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -8,11 +9,20 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "A network for shared real-world intentions, not a social feed." },
     ],
   }),
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/home" });
-    throw redirect({ to: "/auth" });
-  },
-  component: () => null,
+  component: IndexRedirect,
 });
+
+function IndexRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      navigate({ to: data.user ? "/home" : "/auth", replace: true });
+    })();
+  }, [navigate]);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <p className="text-sm opacity-60">Loading…</p>
+    </div>
+  );
+}
