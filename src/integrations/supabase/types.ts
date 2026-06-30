@@ -137,6 +137,7 @@ export type Database = {
         Row: {
           category_slug: string
           city: string | null
+          country: string | null
           created_at: string
           creator_id: string
           description: string | null
@@ -144,9 +145,12 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          locality: string | null
           people_needed: number
+          place_id: string | null
           radius_km: number
           starts_at: string | null
+          state: string | null
           status: Database["public"]["Enums"]["intent_status"]
           tags: string[]
           title: string
@@ -156,6 +160,7 @@ export type Database = {
         Insert: {
           category_slug: string
           city?: string | null
+          country?: string | null
           created_at?: string
           creator_id: string
           description?: string | null
@@ -163,9 +168,12 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          locality?: string | null
           people_needed?: number
+          place_id?: string | null
           radius_km?: number
           starts_at?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
           tags?: string[]
           title: string
@@ -175,6 +183,7 @@ export type Database = {
         Update: {
           category_slug?: string
           city?: string | null
+          country?: string | null
           created_at?: string
           creator_id?: string
           description?: string | null
@@ -182,9 +191,12 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          locality?: string | null
           people_needed?: number
+          place_id?: string | null
           radius_km?: number
           starts_at?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
           tags?: string[]
           title?: string
@@ -286,46 +298,64 @@ export type Database = {
         Row: {
           bio: string | null
           city: string | null
+          country: string | null
           created_at: string
           id: string
           instagram_url: string | null
           interests: string[]
           languages: string[]
+          lat: number | null
           linkedin_url: string | null
+          lng: number | null
+          locality: string | null
           name: string | null
           onboarded: boolean
           photo_url: string | null
+          place_id: string | null
           profession: string | null
+          state: string | null
           updated_at: string
         }
         Insert: {
           bio?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           id: string
           instagram_url?: string | null
           interests?: string[]
           languages?: string[]
+          lat?: number | null
           linkedin_url?: string | null
+          lng?: number | null
+          locality?: string | null
           name?: string | null
           onboarded?: boolean
           photo_url?: string | null
+          place_id?: string | null
           profession?: string | null
+          state?: string | null
           updated_at?: string
         }
         Update: {
           bio?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           instagram_url?: string | null
           interests?: string[]
           languages?: string[]
+          lat?: number | null
           linkedin_url?: string | null
+          lng?: number | null
+          locality?: string | null
           name?: string | null
           onboarded?: boolean
           photo_url?: string | null
+          place_id?: string | null
           profession?: string | null
+          state?: string | null
           updated_at?: string
         }
         Relationships: []

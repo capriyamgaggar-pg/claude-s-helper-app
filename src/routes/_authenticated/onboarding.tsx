@@ -1,11 +1,14 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { MapPin, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationPicker } from "@/components/location-picker";
+import { placeLabel, type Place } from "@/lib/location";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
@@ -21,7 +24,8 @@ function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [city, setCity] = useState("");
+  const [place, setPlace] = useState<Place | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [profession, setProfession] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
@@ -37,7 +41,18 @@ function Onboarding() {
       if (data) {
         if (data.onboarded) { navigate({ to: "/home" }); return; }
         setName(data.name ?? "");
-        setCity(data.city ?? "");
+        if (data.city) {
+          setPlace({
+            locality: data.locality ?? null,
+            city: data.city,
+            state: data.state ?? null,
+            country: data.country ?? null,
+            lat: data.lat ?? null,
+            lng: data.lng ?? null,
+            place_id: data.place_id ?? null,
+            label: data.locality && data.city ? `${data.locality}, ${data.city}` : data.city,
+          });
+        }
         setProfession(data.profession ?? "");
         setBio(data.bio ?? "");
         setInterests(data.interests ?? []);
@@ -56,7 +71,13 @@ function Onboarding() {
     setBusy(true);
     const { error } = await supabase.from("profiles").update({
       name: name.trim(),
-      city: city.trim() || null,
+      locality: place?.locality ?? null,
+      city: place?.city ?? null,
+      state: place?.state ?? null,
+      country: place?.country ?? null,
+      lat: place?.lat ?? null,
+      lng: place?.lng ?? null,
+      place_id: place?.place_id ?? null,
       profession: profession.trim() || null,
       bio: bio.trim() || null,
       interests,
@@ -104,8 +125,25 @@ function Onboarding() {
               <p className="mt-2 text-sm text-muted-foreground">So we can show you intents nearby.</p>
             </header>
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="h-12 rounded-xl bg-surface" placeholder="Bangalore" />
+              <Label>Location</Label>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 text-left"
+              >
+                <MapPin className="size-4 text-muted-foreground" />
+                <span className={"flex-1 truncate text-[15px] " + (place ? "" : "text-muted-foreground")}>
+                  {place ? placeLabel(place) : "Search area or city"}
+                </span>
+                <Pencil className="size-3.5 text-muted-foreground" />
+              </button>
+              <LocationPicker
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                allowAnywhere={false}
+                title="Where are you based?"
+                onSelect={(p) => setPlace(p)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="profession">Profession (optional)</Label>

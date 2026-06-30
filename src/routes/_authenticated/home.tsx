@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { scoreIntent } from "@/lib/matching";
+import { LocationPill } from "@/components/location-pill";
+import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/location";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
@@ -15,7 +17,8 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 interface IntentRow {
   id: string; title: string; description: string | null;
-  category_slug: string; city: string | null; lat: number | null; lng: number | null;
+  category_slug: string; city: string | null; locality: string | null;
+  lat: number | null; lng: number | null;
   starts_at: string | null; ends_at: string | null; people_needed: number;
   visibility: string; status: string; tags: string[]; created_at: string;
   creator_id: string;
@@ -29,7 +32,7 @@ function rowToCard(r: IntentRow): IntentCardData {
     id: r.id,
     title: r.title,
     category_label: r.intent_categories?.label ?? r.category_slug,
-    city: r.city,
+    city: r.locality && r.city ? `${r.locality}, ${r.city}` : r.city,
     starts_at: r.starts_at,
     people_needed: r.people_needed,
     interested_count: r.intent_participants.length,
@@ -43,14 +46,40 @@ function HomePage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const { place, setPlace, filter, label } = useActiveLocation();
+  const [seededFromProfile, setSeededFromProfile] = useState(false);
 
-  // Onboarding gate
+  // Onboarding gate + seed location from profile if user hasn't set one
   useEffect(() => {
-    supabase.from("profiles").select("onboarded").eq("id", user.id).maybeSingle()
+    supabase
+      .from("profiles")
+      .select("onboarded, locality, city, state, country, lat, lng, place_id")
+      .eq("id", user.id)
+      .maybeSingle()
       .then(({ data }) => {
-        if (!data || !data.onboarded) navigate({ to: "/onboarding" });
+        if (!data || !data.onboarded) {
+          navigate({ to: "/onboarding" });
+          return;
+        }
+        if (!place && !seededFromProfile && data.city) {
+          const p: Place = {
+            locality: data.locality,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            lat: data.lat,
+            lng: data.lng,
+            place_id: data.place_id,
+            label:
+              data.locality && data.city
+                ? `${data.locality}, ${data.city}`
+                : (data.city ?? "Anywhere"),
+          };
+          setPlace(p);
+        }
+        setSeededFromProfile(true);
       });
-  }, [user.id, navigate]);
+  }, [user.id, navigate, place, seededFromProfile, setPlace]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user.id],
@@ -62,12 +91,12 @@ function HomePage() {
   });
 
   const { data: intents, isLoading } = useQuery({
-    queryKey: ["intents", "feed"],
+    queryKey: ["intents", "feed", filter.scope, filter.city ?? "", filter.locality ?? ""],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("intents")
         .select(`
-          id, title, description, category_slug, city, lat, lng,
+          id, title, description, category_slug, city, locality, lat, lng,
           starts_at, ends_at, people_needed, visibility, status, tags,
           created_at, creator_id,
           intent_categories(label),
@@ -78,6 +107,8 @@ function HomePage() {
         .eq("status", "open")
         .order("created_at", { ascending: false })
         .limit(60);
+      query = applyLocationFilter(query, filter);
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as unknown as IntentRow[];
     },
@@ -91,6 +122,7 @@ function HomePage() {
       (i) => i.title.toLowerCase().includes(term)
         || i.description?.toLowerCase().includes(term)
         || i.city?.toLowerCase().includes(term)
+        || i.locality?.toLowerCase().includes(term)
         || i.category_slug.toLowerCase().includes(term),
     );
   }, [intents, q]);
@@ -133,13 +165,19 @@ function HomePage() {
     return { recommended, trending, recent };
   }, [filtered, profile, user.id]);
 
+  const everythingEmpty =
+    sections &&
+    sections.recommended.length === 0 &&
+    sections.trending.length === 0 &&
+    sections.recent.length === 0;
+
   return (
     <div className="px-5 pt-8">
       <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          {profile?.city ? `${profile.city}` : "Welcome"}
-        </p>
-        <h1 className="display mt-2 text-3xl leading-[1.1]">
+        <div className="flex items-center justify-between gap-2">
+          <LocationPill place={place} onChange={setPlace} prefix="Showing" />
+        </div>
+        <h1 className="display mt-4 text-3xl leading-[1.1]">
           What are you trying to do today?
         </h1>
       </header>
@@ -171,9 +209,7 @@ function HomePage() {
           {sections.recent.length > 0 && (
             <Section title="Just posted" Icon={Clock} items={sections.recent} />
           )}
-          {sections.recommended.length === 0 && sections.trending.length === 0 && sections.recent.length === 0 && (
-            <EmptyState />
-          )}
+          {everythingEmpty && <EmptyState label={label} onReset={() => setPlace(null)} />}
         </div>
       )}
     </div>
@@ -194,13 +230,25 @@ function Section({ title, Icon, items }: { title: string; Icon: typeof Search; i
   );
 }
 
-function EmptyState() {
+function EmptyState({ label, onReset }: { label: string; onReset: () => void }) {
+  const isAnywhere = label === "Anywhere";
   return (
     <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center">
-      <h3 className="display text-xl">No intents yet</h3>
+      <h3 className="display text-xl">Nothing here yet</h3>
       <p className="mt-2 text-sm text-muted-foreground">
-        Be the first — post what you're trying to do today.
+        {isAnywhere
+          ? "Be the first — post what you're trying to do today."
+          : `No intents in ${label} right now.`}
       </p>
+      {!isAnywhere && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-4 inline-flex items-center rounded-full border border-border bg-background px-4 py-2 text-[13px] font-medium hover:bg-secondary"
+        >
+          Show Anywhere
+        </button>
+      )}
     </div>
   );
 }

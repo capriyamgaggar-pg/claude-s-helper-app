@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
+import { LocationPill } from "@/components/location-pill";
+import { applyLocationFilter, placeToFilter, type Place } from "@/lib/location";
 
 export const Route = createFileRoute("/_authenticated/explore")({
   head: () => ({ meta: [{ title: "Explore — Intent" }] }),
@@ -17,6 +19,9 @@ function Explore() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  // Explore defaults to Anywhere, independent of Home selection.
+  const [place, setPlace] = useState<Place | null>(null);
+  const filter = placeToFilter(place);
 
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
@@ -24,26 +29,29 @@ function Explore() {
   }, []);
 
   const { data: intents } = useQuery({
-    queryKey: ["explore", active],
+    queryKey: ["explore", active, filter.scope, filter.city ?? "", filter.locality ?? ""],
     queryFn: async () => {
       let query = supabase.from("intents").select(`
-        id, title, category_slug, city, starts_at, people_needed, created_at, creator_id,
+        id, title, category_slug, city, locality, starts_at, people_needed, created_at, creator_id,
         intent_categories(label),
         profiles!intents_creator_id_fkey(name, photo_url),
         intent_participants(user_id)
       `).eq("visibility", "public").eq("status", "open")
         .order("created_at", { ascending: false }).limit(80);
       if (active) query = query.eq("category_slug", active);
+      query = applyLocationFilter(query, filter);
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const filtered = (intents ?? []).filter((i: { title: string; city: string | null }) => {
+  const filtered = (intents ?? []).filter((i: { title: string; city: string | null; locality: string | null }) => {
     const t = q.trim().toLowerCase();
     if (!t) return true;
-    return i.title.toLowerCase().includes(t) || i.city?.toLowerCase().includes(t);
+    return i.title.toLowerCase().includes(t)
+      || i.city?.toLowerCase().includes(t)
+      || i.locality?.toLowerCase().includes(t);
   });
 
   return (
@@ -52,23 +60,32 @@ function Explore() {
 
       <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3">
         <Search className="size-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title or city"
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, city or area"
           className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" />
       </div>
 
-      <div className="mt-4 -mx-5 overflow-x-auto px-5">
-        <div className="flex gap-2 pb-2">
-          <Chip on={active === null} onClick={() => setActive(null)}>All</Chip>
-          {cats.map((c) => (
-            <Chip key={c.slug} on={active === c.slug} onClick={() => setActive(c.slug)}>{c.label}</Chip>
-          ))}
+      <div className="mt-4 space-y-3">
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Location</p>
+          <LocationPill place={place} onChange={setPlace} />
+        </div>
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Category</p>
+          <div className="-mx-5 overflow-x-auto px-5">
+            <div className="flex gap-2 pb-2">
+              <Chip on={active === null} onClick={() => setActive(null)}>All</Chip>
+              {cats.map((c) => (
+                <Chip key={c.slug} on={active === c.slug} onClick={() => setActive(c.slug)}>{c.label}</Chip>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mt-2 space-y-3 pb-8">
+      <div className="mt-4 space-y-3 pb-8">
         {filtered.map((r) => {
           const intent = r as unknown as {
-            id: string; title: string; category_slug: string; city: string | null;
+            id: string; title: string; category_slug: string; city: string | null; locality: string | null;
             starts_at: string | null; people_needed: number; created_at: string; creator_id: string;
             intent_categories: { label: string } | null;
             profiles: { name: string | null; photo_url: string | null } | null;
@@ -77,7 +94,8 @@ function Explore() {
           const card: IntentCardData = {
             id: intent.id, title: intent.title,
             category_label: intent.intent_categories?.label ?? intent.category_slug,
-            city: intent.city, starts_at: intent.starts_at,
+            city: intent.locality && intent.city ? `${intent.locality}, ${intent.city}` : intent.city,
+            starts_at: intent.starts_at,
             people_needed: intent.people_needed,
             interested_count: intent.intent_participants.length,
             creator_name: intent.profiles?.name ?? null,
