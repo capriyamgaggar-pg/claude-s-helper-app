@@ -172,7 +172,7 @@ function Runner() {
       // Delete prior + insert (simplest)
       await supabase.from("journey_form_answers").delete().eq("submission_id", sub.id);
       if (answerRows.length) {
-        const { error: ansErr } = await supabase.from("journey_form_answers").insert(answerRows);
+        const { error: ansErr } = await supabase.from("journey_form_answers").insert(answerRows as never);
         if (ansErr) throw ansErr;
       }
 
