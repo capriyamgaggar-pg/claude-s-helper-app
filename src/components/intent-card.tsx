@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin, Calendar, Users } from "lucide-react";
+import { MapPin, Calendar, Users, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { statusPill, type IntentStatus } from "@/lib/intent-lifecycle";
 
 export interface IntentCardData {
   id: string;
@@ -13,9 +14,21 @@ export interface IntentCardData {
   creator_name: string | null;
   creator_photo: string | null;
   created_at: string;
+  status?: IntentStatus | string;
+  expires_at?: string | null;
 }
 
 export function IntentCard({ intent }: { intent: IntentCardData }) {
+  const pill = intent.status ? statusPill(intent.status, intent.expires_at ?? null) : null;
+  const toneClass =
+    pill?.tone === "amber"
+      ? "bg-amber-100 text-amber-900"
+      : pill?.tone === "green"
+        ? "bg-emerald-100 text-emerald-900"
+        : pill?.tone === "grey"
+          ? "bg-muted text-muted-foreground"
+          : "bg-secondary text-muted-foreground";
+
   return (
     <Link
       to="/intents/$intentId"
@@ -26,8 +39,13 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
         <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
           {intent.category_label}
         </span>
-        <span className="text-[11px] text-muted-foreground">
-          · {formatDistanceToNow(new Date(intent.created_at), { addSuffix: true })}
+        {pill && (
+          <span className={"inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium " + toneClass}>
+            <Clock className="size-3" /> {pill.text}
+          </span>
+        )}
+        <span className="ml-auto text-[11px] text-muted-foreground">
+          {formatDistanceToNow(new Date(intent.created_at), { addSuffix: true })}
         </span>
       </div>
 
