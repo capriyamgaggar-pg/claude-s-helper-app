@@ -97,6 +97,35 @@ export type Database = {
         }
         Relationships: []
       }
+      intent_fulfillments: {
+        Row: {
+          created_at: string
+          id: string
+          intent_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_fulfillments_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intent_participants: {
         Row: {
           created_at: string
@@ -137,11 +166,16 @@ export type Database = {
         Row: {
           category_slug: string
           city: string | null
+          closure_reason_code: string | null
+          closure_reason_note: string | null
           country: string | null
           created_at: string
           creator_id: string
           description: string | null
           ends_at: string | null
+          expires_at: string
+          fulfilled_at: string | null
+          fulfilled_note: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -160,11 +194,16 @@ export type Database = {
         Insert: {
           category_slug: string
           city?: string | null
+          closure_reason_code?: string | null
+          closure_reason_note?: string | null
           country?: string | null
           created_at?: string
           creator_id: string
           description?: string | null
           ends_at?: string | null
+          expires_at?: string
+          fulfilled_at?: string | null
+          fulfilled_note?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -183,11 +222,16 @@ export type Database = {
         Update: {
           category_slug?: string
           city?: string | null
+          closure_reason_code?: string | null
+          closure_reason_note?: string | null
           country?: string | null
           created_at?: string
           creator_id?: string
           description?: string | null
           ends_at?: string | null
+          expires_at?: string
+          fulfilled_at?: string | null
+          fulfilled_note?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -445,6 +489,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_intents_job: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
