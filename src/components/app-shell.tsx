@@ -3,13 +3,14 @@ import { Home, Compass, MessageCircle, User as UserIcon, Plus } from "lucide-rea
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
-const tabs = [
+type Tab = { to: string; label: string; Icon: typeof Home; primary?: boolean };
+const tabs: Tab[] = [
   { to: "/home", label: "Home", Icon: Home },
   { to: "/explore", label: "Explore", Icon: Compass },
   { to: "/intents/new", label: "Create", Icon: Plus, primary: true },
   { to: "/inbox", label: "Inbox", Icon: MessageCircle },
   { to: "/profile/me", label: "You", Icon: UserIcon },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -30,7 +31,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={to}
-                to={to}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                to={to as any}
                 className={cn(
                   "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
