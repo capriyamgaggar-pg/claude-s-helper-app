@@ -76,7 +76,7 @@ function FormBuilder() {
     [fields],
   );
 
-  async function withStatus<T>(p: Promise<T>): Promise<T | null> {
+  async function withStatus<T>(p: PromiseLike<T>): Promise<T | null> {
     setStatus("saving");
     try { const r = await p; setStatus("saved"); return r; }
     catch (e) { console.error(e); setStatus("error"); toast.error("Save failed."); return null; }
@@ -97,8 +97,8 @@ function FormBuilder() {
       sort: nextSort,
       required: false,
       display_width: "full",
-      validation: meta.defaultValidation ?? {},
-      auto_fill: { scope: null, source_key: null, editable_after_fill: true },
+      validation: (meta.defaultValidation ?? {}) as never,
+      auto_fill: { scope: null, source_key: null, editable_after_fill: true } as never,
       created_by: user.id,
     }));
     await qc.invalidateQueries({ queryKey: ["form-fields", stepId] });
@@ -106,7 +106,7 @@ function FormBuilder() {
 
   async function updateField(id: string, patch: Partial<FormField>) {
     await withStatus(
-      supabase.from("journey_form_fields").update(patch as Record<string, unknown>).eq("id", id)
+      supabase.from("journey_form_fields").update(patch as never).eq("id", id)
     );
     await qc.invalidateQueries({ queryKey: ["form-fields", stepId] });
   }
@@ -117,7 +117,7 @@ function FormBuilder() {
     // Push siblings down
     const after = fields.filter((x) => x.sort > f.sort);
     for (const s of after) {
-      await supabase.from("journey_form_fields").update({ sort: s.sort + 1 }).eq("id", s.id);
+      await supabase.from("journey_form_fields").update({ sort: s.sort + 1 } as never).eq("id", s.id);
     }
     const base = slugifyKey((f.label || "field") + " copy");
     const key = f.kind === "section" ? null : uniqueKey(base, existingKeySet);
@@ -130,11 +130,11 @@ function FormBuilder() {
       required: f.required,
       placeholder: f.placeholder,
       help_text: f.help_text,
-      default_value: f.default_value,
-      validation: f.validation,
-      auto_fill: f.auto_fill,
+      default_value: f.default_value as never,
+      validation: f.validation as never,
+      auto_fill: f.auto_fill as never,
       display_width: f.display_width,
-      visible_if: f.visible_if,
+      visible_if: f.visible_if as never,
       organizer_only: f.organizer_only,
       sort: nextSort,
       created_by: user.id,
@@ -145,7 +145,7 @@ function FormBuilder() {
   async function archiveField(id: string) {
     await withStatus(
       supabase.from("journey_form_fields")
-        .update({ archived_at: new Date().toISOString(), archived_by: user.id })
+        .update({ archived_at: new Date().toISOString(), archived_by: user.id } as never)
         .eq("id", id)
     );
     await qc.invalidateQueries({ queryKey: ["form-fields", stepId] });
@@ -154,7 +154,7 @@ function FormBuilder() {
   async function restoreField(id: string) {
     await withStatus(
       supabase.from("journey_form_fields")
-        .update({ archived_at: null, archived_by: null }).eq("id", id)
+        .update({ archived_at: null, archived_by: null } as never).eq("id", id)
     );
     await qc.invalidateQueries({ queryKey: ["form-fields", stepId] });
   }
@@ -165,8 +165,8 @@ function FormBuilder() {
     if (idx < 0 || j < 0 || j >= fields.length) return;
     const a = fields[idx], b = fields[j];
     await withStatus(Promise.all([
-      supabase.from("journey_form_fields").update({ sort: b.sort }).eq("id", a.id),
-      supabase.from("journey_form_fields").update({ sort: a.sort }).eq("id", b.id),
+      supabase.from("journey_form_fields").update({ sort: b.sort } as never).eq("id", a.id),
+      supabase.from("journey_form_fields").update({ sort: a.sort } as never).eq("id", b.id),
     ]));
     await qc.invalidateQueries({ queryKey: ["form-fields", stepId] });
   }
