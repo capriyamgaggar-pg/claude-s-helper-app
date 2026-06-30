@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
+import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picker";
+import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
