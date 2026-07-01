@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { scoreIntent } from "@/lib/matching";
 import { LocationPill } from "@/components/location-pill";
 import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/location";
+import { canSeeCreator } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
@@ -21,6 +22,7 @@ interface IntentRow {
   lat: number | null; lng: number | null;
   starts_at: string | null; ends_at: string | null; people_needed: number;
   visibility: string; status: string; expires_at: string | null;
+  creator_visibility: string | null;
   tags: string[]; created_at: string;
   creator_id: string;
   intent_categories: { label: string } | null;
@@ -28,10 +30,18 @@ interface IntentRow {
   intent_participants: { user_id: string; state: string }[];
 }
 
-function rowToCard(r: IntentRow): IntentCardData {
+function rowToCard(r: IntentRow, viewerId: string): IntentCardData {
+  const mine = r.intent_participants.find((p) => p.user_id === viewerId);
+  const visible = canSeeCreator({
+    creator_id: r.creator_id,
+    creator_visibility: r.creator_visibility,
+    viewer_id: viewerId,
+    viewer_participant_state: mine?.state ?? null,
+  });
   return {
     id: r.id,
     title: r.title,
+    category_slug: r.category_slug,
     category_label: r.intent_categories?.label ?? r.category_slug,
     city: r.locality && r.city ? `${r.locality}, ${r.city}` : r.city,
     starts_at: r.starts_at,
@@ -39,6 +49,7 @@ function rowToCard(r: IntentRow): IntentCardData {
     interested_count: r.intent_participants.length,
     creator_name: r.profiles?.name ?? null,
     creator_photo: r.profiles?.photo_url ?? null,
+    creator_visible: visible,
     created_at: r.created_at,
     status: r.status,
     expires_at: r.expires_at,
@@ -101,7 +112,7 @@ function HomePage() {
         .select(`
           id, title, description, category_slug, city, locality, lat, lng,
           starts_at, ends_at, people_needed, visibility, status, expires_at, tags,
-          created_at, creator_id,
+          created_at, creator_id, creator_visibility,
           intent_categories(label),
           profiles!intents_creator_id_fkey(name, photo_url),
           intent_participants(user_id, state)
@@ -205,13 +216,13 @@ function HomePage() {
       {sections && (
         <div className="space-y-10 pt-8">
           {sections.recommended.length > 0 && (
-            <Section title="Recommended for you" Icon={Sparkles} items={sections.recommended} />
+            <Section title="Recommended for you" Icon={Sparkles} items={sections.recommended} viewerId={user.id} />
           )}
           {sections.trending.length > 0 && (
-            <Section title="Trending" Icon={Flame} items={sections.trending} />
+            <Section title="Trending" Icon={Flame} items={sections.trending} viewerId={user.id} />
           )}
           {sections.recent.length > 0 && (
-            <Section title="Just posted" Icon={Clock} items={sections.recent} />
+            <Section title="Just posted" Icon={Clock} items={sections.recent} viewerId={user.id} />
           )}
           {everythingEmpty && <EmptyState label={label} onReset={() => setPlace(null)} />}
         </div>
@@ -220,7 +231,7 @@ function HomePage() {
   );
 }
 
-function Section({ title, Icon, items }: { title: string; Icon: typeof Search; items: IntentRow[] }) {
+function Section({ title, Icon, items, viewerId }: { title: string; Icon: typeof Search; items: IntentRow[]; viewerId: string }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
@@ -228,7 +239,7 @@ function Section({ title, Icon, items }: { title: string; Icon: typeof Search; i
         <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       </div>
       <div className="space-y-3">
-        {items.map((r) => <IntentCard key={r.id} intent={rowToCard(r)} />)}
+        {items.map((r) => <IntentCard key={r.id} intent={rowToCard(r, viewerId)} />)}
       </div>
     </section>
   );

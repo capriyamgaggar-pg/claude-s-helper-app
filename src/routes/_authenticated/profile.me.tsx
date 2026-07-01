@@ -9,6 +9,8 @@ import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { toast } from "sonner";
 import { STATUS_TAB_FILTERS, type IntentStatus } from "@/lib/intent-lifecycle";
 import { pairKey } from "@/lib/participation";
+import { canSeeCreator } from "@/lib/creator-visibility";
+import { ReputationPanel } from "@/components/reputation-panel";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
   head: () => ({ meta: [{ title: "Your profile — Intent" }] }),
@@ -26,6 +28,7 @@ interface MyIntentRow {
   city: string | null;
   locality: string | null;
   created_at: string;
+  creator_visibility: string | null;
   intent_categories: { label: string } | null;
   intent_participants: { user_id: string }[];
 }
@@ -45,6 +48,7 @@ interface ParticipationRow {
     locality: string | null;
     created_at: string;
     creator_id: string;
+    creator_visibility: string | null;
     intent_categories: { label: string } | null;
     profiles: { name: string | null; photo_url: string | null } | null;
     intent_participants: { user_id: string }[];
@@ -64,18 +68,25 @@ interface ConnectionRow {
   intent: { intent_categories: { label: string } | null } | null;
 }
 
-function rowToCard(i: MyIntentRow | ParticipationRow["intent"], creatorName?: string | null, creatorPhoto?: string | null): IntentCardData {
+function rowToCard(
+  i: MyIntentRow | ParticipationRow["intent"],
+  creatorName: string | null,
+  creatorPhoto: string | null,
+  creatorVisible: boolean,
+): IntentCardData {
   if (!i) return {} as IntentCardData;
   return {
     id: i.id,
     title: i.title,
+    category_slug: i.category_slug,
     category_label: i.intent_categories?.label ?? i.category_slug,
     city: i.locality && i.city ? `${i.locality}, ${i.city}` : i.city,
     starts_at: i.starts_at,
     people_needed: i.people_needed,
     interested_count: i.intent_participants.length,
-    creator_name: creatorName ?? null,
-    creator_photo: creatorPhoto ?? null,
+    creator_name: creatorName,
+    creator_photo: creatorPhoto,
+    creator_visible: creatorVisible,
     created_at: i.created_at,
     status: i.status,
     expires_at: i.expires_at,
@@ -102,7 +113,7 @@ function MeProfile() {
     queryKey: ["my-intents", user.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("intents")
-        .select(`id, title, category_slug, status, expires_at, starts_at, people_needed, city, locality, created_at,
+        .select(`id, title, category_slug, status, expires_at, starts_at, people_needed, city, locality, created_at, creator_visibility,
           intent_categories(label),
           intent_participants(user_id)`)
         .eq("creator_id", user.id)
@@ -119,7 +130,7 @@ function MeProfile() {
         .select(`intent_id, state,
           intent:intents!intent_participants_intent_id_fkey(
             id, title, category_slug, status, expires_at, starts_at, people_needed,
-            city, locality, created_at, creator_id,
+            city, locality, created_at, creator_id, creator_visibility,
             intent_categories(label),
             profiles!intents_creator_id_fkey(name, photo_url),
             intent_participants(user_id)
@@ -239,6 +250,10 @@ function MeProfile() {
         </section>
       )}
 
+      <ReputationPanel userId={user.id} />
+
+
+
       <Tabs value={topTab} onValueChange={(v) => setTopTab(v as typeof topTab)} className="mt-8">
         <TabsList className="grid h-9 w-full grid-cols-4">
           <TabsTrigger value="mine" className="text-[12px]">My Intents</TabsTrigger>
@@ -261,7 +276,7 @@ function MeProfile() {
                 </p>
               )}
               {mineFiltered.map((i) => (
-                <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null)} />
+                <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true)} />
               ))}
             </TabsContent>
           </Tabs>
@@ -273,18 +288,26 @@ function MeProfile() {
               You haven't shown interest in anything yet.
             </p>
           )}
-          {interestedRows.map((p) => (
-            <div key={p.intent_id} className="space-y-2">
-              <IntentCard intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
-              <button
-                type="button"
-                onClick={() => removeInterest.mutate(p.intent_id)}
-                className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-3" /> Remove interest
-              </button>
-            </div>
-          ))}
+          {interestedRows.map((p) => {
+            const visible = canSeeCreator({
+              creator_id: p.intent!.creator_id,
+              creator_visibility: p.intent!.creator_visibility,
+              viewer_id: user.id,
+              viewer_participant_state: p.state,
+            });
+            return (
+              <div key={p.intent_id} className="space-y-2">
+                <IntentCard intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, visible)} />
+                <button
+                  type="button"
+                  onClick={() => removeInterest.mutate(p.intent_id)}
+                  className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3" /> Remove interest
+                </button>
+              </div>
+            );
+          })}
         </TabsContent>
 
         <TabsContent value="joined" className="mt-4 space-y-6">
@@ -297,7 +320,7 @@ function MeProfile() {
                 </p>
               )}
               {upcoming.map((p) => (
-                <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
+                <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, true)} />
               ))}
             </div>
           </section>
@@ -306,7 +329,7 @@ function MeProfile() {
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Past</p>
               <div className="space-y-3">
                 {past.map((p) => (
-                  <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
+                  <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, true)} />
                 ))}
               </div>
             </section>

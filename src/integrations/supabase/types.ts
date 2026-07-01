@@ -488,6 +488,7 @@ export type Database = {
           country: string | null
           created_at: string
           creator_id: string
+          creator_visibility: string
           description: string | null
           ends_at: string | null
           expires_at: string
@@ -513,6 +514,7 @@ export type Database = {
           title: string
           updated_at: string
           visibility: Database["public"]["Enums"]["intent_visibility"]
+          visibility_locked_at: string | null
         }
         Insert: {
           approval_required?: boolean
@@ -524,6 +526,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           creator_id: string
+          creator_visibility?: string
           description?: string | null
           ends_at?: string | null
           expires_at?: string
@@ -549,6 +552,7 @@ export type Database = {
           title: string
           updated_at?: string
           visibility?: Database["public"]["Enums"]["intent_visibility"]
+          visibility_locked_at?: string | null
         }
         Update: {
           approval_required?: boolean
@@ -560,6 +564,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           creator_id?: string
+          creator_visibility?: string
           description?: string | null
           ends_at?: string | null
           expires_at?: string
@@ -585,6 +590,7 @@ export type Database = {
           title?: string
           updated_at?: string
           visibility?: Database["public"]["Enums"]["intent_visibility"]
+          visibility_locked_at?: string | null
         }
         Relationships: [
           {
@@ -1156,6 +1162,48 @@ export type Database = {
         }
         Relationships: []
       }
+      reputation_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          intent_id: string | null
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          intent_id?: string | null
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          intent_id?: string | null
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputation_events_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reputation_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       thread_members: {
         Row: {
           created_at: string
@@ -1218,6 +1266,74 @@ export type Database = {
           },
         ]
       }
+      user_reputation_stats: {
+        Row: {
+          fulfilled_by_category: Json
+          intents_closed: number
+          intents_created: number
+          intents_expired: number
+          intents_fulfilled: number
+          organizer_intents_completed: number
+          organizer_intents_total: number
+          repeat_connections: number
+          repeat_participants: number
+          response_count: number
+          response_total_seconds: number
+          returning_members: number
+          total_connections: number
+          total_interested_received: number
+          total_joined_participants: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          fulfilled_by_category?: Json
+          intents_closed?: number
+          intents_created?: number
+          intents_expired?: number
+          intents_fulfilled?: number
+          organizer_intents_completed?: number
+          organizer_intents_total?: number
+          repeat_connections?: number
+          repeat_participants?: number
+          response_count?: number
+          response_total_seconds?: number
+          returning_members?: number
+          total_connections?: number
+          total_interested_received?: number
+          total_joined_participants?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          fulfilled_by_category?: Json
+          intents_closed?: number
+          intents_created?: number
+          intents_expired?: number
+          intents_fulfilled?: number
+          organizer_intents_completed?: number
+          organizer_intents_total?: number
+          repeat_connections?: number
+          repeat_participants?: number
+          response_count?: number
+          response_total_seconds?: number
+          returning_members?: number
+          total_connections?: number
+          total_interested_received?: number
+          total_joined_participants?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reputation_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1245,6 +1361,10 @@ export type Database = {
         Args: { _submission_id: string; _user_id: string }
         Returns: boolean
       }
+      can_see_creator: {
+        Args: { _intent_id: string; _viewer: string }
+        Returns: boolean
+      }
       expire_intents_job: { Args: never; Returns: undefined }
       has_role: {
         Args: {
@@ -1264,6 +1384,27 @@ export type Database = {
       is_thread_member: {
         Args: { _thread_id: string; _user_id: string }
         Returns: boolean
+      }
+      lock_intent_visibility: {
+        Args: { _intent_id: string }
+        Returns: undefined
+      }
+      rep_bump: {
+        Args: { _delta?: number; _field: string; _user_id: string }
+        Returns: undefined
+      }
+      rep_bump_category: {
+        Args: { _category: string; _delta?: number; _user_id: string }
+        Returns: undefined
+      }
+      rep_log: {
+        Args: {
+          _event_type: string
+          _intent_id: string
+          _metadata?: Json
+          _user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

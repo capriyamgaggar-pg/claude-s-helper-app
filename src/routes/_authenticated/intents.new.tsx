@@ -13,6 +13,7 @@ import { placeLabel, type Place } from "@/lib/location";
 import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picker";
 import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
 import type { JoinMode } from "@/lib/participation";
+import type { CreatorVisibility } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
@@ -23,6 +24,8 @@ interface Category { slug: string; label: string }
 
 // Categories that are typically organizer-driven (one-to-many, ticketed, structured).
 const ORGANIZER_CATEGORIES = new Set(["event", "trekking"]);
+
+
 
 type ParticipationFlow = "conversation_first" | "registration_first";
 
@@ -52,6 +55,9 @@ function NewIntent() {
   const [maxParticipants, setMaxParticipants] = useState(50);
   const [priceInr, setPriceInr] = useState<string>("");
   const [flow, setFlow] = useState<ParticipationFlow>("conversation_first");
+
+  // Creator visibility (default: show identity)
+  const [creatorVisibility, setCreatorVisibility] = useState<CreatorVisibility>("public");
 
   const [busy, setBusy] = useState(false);
 
@@ -117,6 +123,7 @@ function NewIntent() {
       participation_mode: isOrganizer ? flow : undefined,
       payment_required: isOrganizer && priceNum > 0,
       price_inr: isOrganizer ? priceNum : 0,
+      creator_visibility: creatorVisibility,
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -335,6 +342,31 @@ function NewIntent() {
                     customISO={visCustom}
                     onChange={(p, c) => { setVisPreset(p); setVisCustom(c); }}
                   />
+
+                  <div className="space-y-2">
+                    <Label>Creator visibility</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {([
+                        { id: "public",    title: "Show my profile",         desc: "Your name and photo are visible on this intent." },
+                        { id: "anonymous", title: "Anonymous until connected", desc: "Your identity stays hidden until you accept a connection or someone joins." },
+                      ] as { id: CreatorVisibility; title: string; desc: string }[]).map((o) => {
+                        const on = creatorVisibility === o.id;
+                        return (
+                          <button key={o.id} type="button" onClick={() => setCreatorVisibility(o.id)}
+                            className={"rounded-2xl border p-3 text-left transition-colors " + (on
+                              ? "border-foreground bg-foreground/5"
+                              : "border-border bg-background hover:bg-secondary/60")}>
+                            <p className="text-[14px] font-medium">{o.title}</p>
+                            <p className="mt-1 text-[12px] text-muted-foreground">{o.desc}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      This locks once the first person interacts with your intent.
+                    </p>
+                  </div>
+
 
                   {isOrganizer ? (
                     <div className="space-y-2">

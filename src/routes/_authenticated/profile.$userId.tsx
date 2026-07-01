@@ -4,6 +4,7 @@ import { ChevronLeft, Sparkle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ReputationPanel } from "@/components/reputation-panel";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: ({ params }) => ({ meta: [{ title: `Profile — ${params.userId.slice(0, 6)}` }] }),
@@ -91,6 +92,9 @@ function PublicProfile() {
           <Sparkle className="size-4" /> Connect
         </Button>
       )}
+
+      <ReputationPanel userId={userId} />
+
 
       <section className="mt-8">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active intents</p>
