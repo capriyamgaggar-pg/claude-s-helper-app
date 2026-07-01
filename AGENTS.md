@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+# connection test 2026-07-01T18:44:56Z — verifying Claude push access, safe to delete this line
