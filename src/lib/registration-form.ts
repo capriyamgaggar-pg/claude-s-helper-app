@@ -196,6 +196,97 @@ export async function ensureRegistrationStep(intentId: string): Promise<string> 
 }
 
 // ---------------------------------------------------------------------------
+// Registration readiness — shared source of truth.
+// Future states (payment_required, approval_required, unpublished, archived)
+// slot in without changing the API.
+// ---------------------------------------------------------------------------
+
+export type RegistrationState = "not_ready" | "ready";
+
+export interface RegistrationStatus {
+  ready: boolean;
+  state: RegistrationState;
+  stepId: string | null;
+  activeFieldCount: number;
+}
+
+export async function getRegistrationStatus(intentId: string): Promise<RegistrationStatus> {
+  const empty: RegistrationStatus = { ready: false, state: "not_ready", stepId: null, activeFieldCount: 0 };
+
+  const { data: journey } = await supabase
+    .from("intent_journeys")
+    .select("id")
+    .eq("intent_id", intentId)
+    .maybeSingle();
+  if (!journey?.id) return empty;
+
+  const { data: step } = await supabase
+    .from("journey_steps")
+    .select("id")
+    .eq("journey_id", journey.id)
+    .eq("type", "registration_form")
+    .maybeSingle();
+  if (!step?.id) return empty;
+
+  const { count } = await supabase
+    .from("journey_form_fields")
+    .select("id", { count: "exact", head: true })
+    .eq("step_id", step.id)
+    .is("archived_at", null)
+    .neq("kind", "section");
+
+  const activeFieldCount = count ?? 0;
+  const ready = activeFieldCount > 0;
+  return {
+    ready,
+    state: ready ? "ready" : "not_ready",
+    stepId: step.id,
+    activeFieldCount,
+  };
+}
+
+export async function getSubmissionCount(stepId: string): Promise<number> {
+  const { count } = await supabase
+    .from("journey_form_submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("step_id", stepId)
+    .eq("status", "submitted");
+  return count ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Participant CTA — returns everything the button needs.
+// Future states (waitlisted, payment_pending, rejected) plug in here.
+// ---------------------------------------------------------------------------
+
+export type RegistrationCTA = {
+  label: string;
+  variant: "primary" | "success" | "muted";
+  disabled: boolean;
+  href?: string;
+};
+
+export function getRegistrationCTA(
+  status: RegistrationStatus,
+  mySubmissionStatus: "none" | "submitted",
+  myParticipationStatus: "none" | "requested" | "approved" | "rejected",
+  intentId: string,
+): RegistrationCTA {
+  const href = `/intents/${intentId}/register`;
+
+  if (myParticipationStatus === "approved") {
+    return { label: "Approved ✓", variant: "success", disabled: true };
+  }
+  if (!status.ready) {
+    return { label: "Registration will open soon.", variant: "muted", disabled: true };
+  }
+  if (mySubmissionStatus === "submitted") {
+    return { label: "Registration Submitted ✓", variant: "success", disabled: false, href };
+  }
+  return { label: "Register", variant: "primary", disabled: false, href };
+}
+
+// ---------------------------------------------------------------------------
 // Validation (participant runner)
 // ---------------------------------------------------------------------------
 

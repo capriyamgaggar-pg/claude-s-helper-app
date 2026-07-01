@@ -13,6 +13,8 @@ import { InterestedList, type InterestedRow } from "@/components/intent/interest
 import { pairKey, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
 import { canSeeCreator, isOrganizerCategory } from "@/lib/creator-visibility";
 import { FeedbackTab } from "@/components/feedback/feedback-tab";
+import { RegistrationStatusCard } from "@/components/registration/status-card";
+import { ParticipantRegistrationCTA } from "@/components/registration/participant-cta";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
@@ -212,24 +214,22 @@ function IntentDetail() {
           </div>
         )}
 
-        {/* Registration form entry points */}
-        {isCreator && (
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <Link to="/intents/$intentId/form" params={{ intentId }}
-              className="rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-              Registration form
-            </Link>
-            <Link to="/intents/$intentId/submissions" params={{ intentId }}
-              className="rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-              Responses
-            </Link>
-          </div>
-        )}
+        {/* Registration status / CTA */}
+        {isCreator && <RegistrationStatusCard intentId={intentId} />}
         {!isCreator && isActive && (
-          <Link to="/intents/$intentId/register" params={{ intentId }}
-            className="mt-5 block rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-            Open registration form
-          </Link>
+          <ParticipantRegistrationCTA
+            intentId={intentId}
+            userId={user.id}
+            myParticipationStatus={
+              myRow?.state === "confirmed"
+                ? "approved"
+                : myRow?.state === "joining" || myRow?.state === "interested"
+                  ? "requested"
+                  : myRow?.state === "declined"
+                    ? "rejected"
+                    : "none"
+            }
+          />
         )}
 
         {(() => {
