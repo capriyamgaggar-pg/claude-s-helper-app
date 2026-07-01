@@ -123,6 +123,7 @@ function NewIntent() {
       participation_mode: isOrganizer ? flow : undefined,
       payment_required: isOrganizer && priceNum > 0,
       price_inr: isOrganizer ? priceNum : 0,
+      creator_visibility: creatorVisibility,
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
