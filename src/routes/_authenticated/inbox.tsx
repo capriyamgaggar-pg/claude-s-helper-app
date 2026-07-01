@@ -91,7 +91,7 @@ function Inbox() {
               origin_category: string | null; origin_city: string | null;
               a: { id: string; name: string | null; photo_url: string | null; city: string | null } | null;
               b: { id: string; name: string | null; photo_url: string | null; city: string | null } | null;
-              intent: { id: string; title: string | null; category: string | null } | null;
+              intent: { id: string; title: string | null; category_slug: string | null } | null;
             };
             const other = cn.user_a === user.id ? cn.b : cn.a;
             if (!other) return null;
