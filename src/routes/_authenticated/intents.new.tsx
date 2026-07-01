@@ -56,6 +56,9 @@ function NewIntent() {
   const [priceInr, setPriceInr] = useState<string>("");
   const [flow, setFlow] = useState<ParticipationFlow>("conversation_first");
 
+  // Creator visibility (default: show identity)
+  const [creatorVisibility, setCreatorVisibility] = useState<CreatorVisibility>("public");
+
   const [busy, setBusy] = useState(false);
 
   const isOrganizer = useMemo(
