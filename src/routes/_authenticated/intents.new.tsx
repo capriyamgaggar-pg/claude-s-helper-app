@@ -156,6 +156,55 @@ function NewIntent() {
         </h1>
       </header>
 
+      {createdOrganizerId ? (
+        <div className="flex-1 px-5 pt-8 pb-24">
+          <div className="mx-auto max-w-md rounded-2xl border border-border bg-surface p-6">
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-full bg-emerald-100 text-emerald-900">✓</span>
+              <h2 className="display text-xl">Intent Created</h2>
+            </div>
+            <p className="mt-3 text-[14px] text-foreground">
+              Your {category === "trekking" ? "trek" : "event"} is now live.
+            </p>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Participants can already discover it.
+            </p>
+
+            <div className="mt-5 rounded-xl border border-border bg-background p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Next recommended step
+              </p>
+              <div className="mt-2 flex items-start gap-2">
+                <span className="mt-0.5 inline-block size-4 rounded border border-border" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium">Registration Form</p>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">
+                    Build your registration form so people can register.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <Link
+                to="/intents/$intentId/form"
+                params={{ intentId: createdOrganizerId }}
+                className="block rounded-xl bg-foreground px-3 py-3 text-center text-[14px] font-medium text-background hover:opacity-90"
+              >
+                Build Registration Form
+              </Link>
+              <Link
+                to="/intents/$intentId"
+                params={{ intentId: createdOrganizerId }}
+                className="block rounded-xl border border-border bg-background px-3 py-3 text-center text-[14px] font-medium hover:bg-secondary/60"
+              >
+                I'll do it later
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+
       <form onSubmit={submit} className="flex-1 space-y-5 px-5 pt-6 pb-24">
         {/* Category — first choice; everything else adapts to it */}
         <div className="space-y-2">
