@@ -40,7 +40,16 @@ export function FeedbackTab({
       {list.data && list.data.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-[13px] font-semibold">Comments</h3>
-          <FeedbackList rows={list.data} questionLabels={labels} />
+          <FeedbackList
+            rows={list.data.map((r) => ({
+              id: r.id,
+              submitted_at: r.submitted_at,
+              met_expectations: r.met_expectations,
+              would_participate_again: r.would_participate_again,
+              answers: (r.answers ?? null) as Record<string, { rating?: number; text?: string }> | null,
+            }))}
+            questionLabels={labels}
+          />
         </div>
       )}
     </div>
