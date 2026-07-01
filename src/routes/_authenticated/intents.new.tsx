@@ -476,6 +476,7 @@ function NewIntent() {
           {busy ? "Posting…" : cta}
         </Button>
       </form>
+      )}
     </div>
   );
 }
