@@ -225,7 +225,7 @@ function IntentDetail() {
             creator_id: data.creator_id,
             creator_visibility: (data as { creator_visibility?: string | null }).creator_visibility ?? "public",
             viewer_id: user.id,
-            viewer_connection_state: connection?.state ?? null,
+            viewer_connection_accepted: connection?.state === "accepted",
             viewer_participant_state: myRow?.state ?? null,
           });
           const label = isOrganizerCategory(data.category_slug) ? "Organized by" : "Created by";
