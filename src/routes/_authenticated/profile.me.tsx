@@ -316,7 +316,7 @@ function MeProfile() {
                 </p>
               )}
               {upcoming.map((p) => (
-                <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
+                <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, true)} />
               ))}
             </div>
           </section>
@@ -325,7 +325,7 @@ function MeProfile() {
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Past</p>
               <div className="space-y-3">
                 {past.map((p) => (
-                  <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
+                  <IntentCard key={p.intent_id} intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, true)} />
                 ))}
               </div>
             </section>
