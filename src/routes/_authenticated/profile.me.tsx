@@ -113,7 +113,7 @@ function MeProfile() {
     queryKey: ["my-intents", user.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("intents")
-        .select(`id, title, category_slug, status, expires_at, starts_at, people_needed, city, locality, created_at,
+        .select(`id, title, category_slug, status, expires_at, starts_at, people_needed, city, locality, created_at, creator_visibility,
           intent_categories(label),
           intent_participants(user_id)`)
         .eq("creator_id", user.id)
@@ -130,7 +130,7 @@ function MeProfile() {
         .select(`intent_id, state,
           intent:intents!intent_participants_intent_id_fkey(
             id, title, category_slug, status, expires_at, starts_at, people_needed,
-            city, locality, created_at, creator_id,
+            city, locality, created_at, creator_id, creator_visibility,
             intent_categories(label),
             profiles!intents_creator_id_fkey(name, photo_url),
             intent_participants(user_id)
