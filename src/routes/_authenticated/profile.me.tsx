@@ -284,18 +284,26 @@ function MeProfile() {
               You haven't shown interest in anything yet.
             </p>
           )}
-          {interestedRows.map((p) => (
-            <div key={p.intent_id} className="space-y-2">
-              <IntentCard intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null)} />
-              <button
-                type="button"
-                onClick={() => removeInterest.mutate(p.intent_id)}
-                className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-3" /> Remove interest
-              </button>
-            </div>
-          ))}
+          {interestedRows.map((p) => {
+            const visible = canSeeCreator({
+              creator_id: p.intent!.creator_id,
+              creator_visibility: p.intent!.creator_visibility,
+              viewer_id: user.id,
+              viewer_participant_state: p.state,
+            });
+            return (
+              <div key={p.intent_id} className="space-y-2">
+                <IntentCard intent={rowToCard(p.intent, p.intent!.profiles?.name ?? null, p.intent!.profiles?.photo_url ?? null, visible)} />
+                <button
+                  type="button"
+                  onClick={() => removeInterest.mutate(p.intent_id)}
+                  className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3" /> Remove interest
+                </button>
+              </div>
+            );
+          })}
         </TabsContent>
 
         <TabsContent value="joined" className="mt-4 space-y-6">
