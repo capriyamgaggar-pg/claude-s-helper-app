@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { LocationPill } from "@/components/location-pill";
 import { applyLocationFilter, placeToFilter, type Place } from "@/lib/location";
+import { canSeeCreator } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/explore")({
   head: () => ({ meta: [{ title: "Explore — Intent" }] }),
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/explore")({
 interface Cat { slug: string; label: string }
 
 function Explore() {
+  const { user } = Route.useRouteContext();
   const [cats, setCats] = useState<Cat[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -33,9 +35,10 @@ function Explore() {
     queryFn: async () => {
       let query = supabase.from("intents").select(`
         id, title, category_slug, city, locality, starts_at, people_needed, status, expires_at, created_at, creator_id,
+        creator_visibility,
         intent_categories(label),
         profiles!intents_creator_id_fkey(name, photo_url),
-        intent_participants(user_id)
+        intent_participants(user_id, state)
       `).eq("visibility", "public").eq("status", "active")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false }).limit(80);
@@ -88,13 +91,21 @@ function Explore() {
           const intent = r as unknown as {
             id: string; title: string; category_slug: string; city: string | null; locality: string | null;
             starts_at: string | null; people_needed: number; status: string; expires_at: string | null;
-            created_at: string; creator_id: string;
+            created_at: string; creator_id: string; creator_visibility: string | null;
             intent_categories: { label: string } | null;
             profiles: { name: string | null; photo_url: string | null } | null;
-            intent_participants: { user_id: string }[];
+            intent_participants: { user_id: string; state: string }[];
           };
+          const mine = intent.intent_participants.find((p) => p.user_id === user.id);
+          const visible = canSeeCreator({
+            creator_id: intent.creator_id,
+            creator_visibility: intent.creator_visibility,
+            viewer_id: user.id,
+            viewer_participant_state: mine?.state ?? null,
+          });
           const card: IntentCardData = {
             id: intent.id, title: intent.title,
+            category_slug: intent.category_slug,
             category_label: intent.intent_categories?.label ?? intent.category_slug,
             city: intent.locality && intent.city ? `${intent.locality}, ${intent.city}` : intent.city,
             starts_at: intent.starts_at,
@@ -102,6 +113,7 @@ function Explore() {
             interested_count: intent.intent_participants.length,
             creator_name: intent.profiles?.name ?? null,
             creator_photo: intent.profiles?.photo_url ?? null,
+            creator_visible: visible,
             created_at: intent.created_at,
             status: intent.status,
             expires_at: intent.expires_at,

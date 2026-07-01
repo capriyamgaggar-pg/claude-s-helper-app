@@ -9,6 +9,8 @@ import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { toast } from "sonner";
 import { STATUS_TAB_FILTERS, type IntentStatus } from "@/lib/intent-lifecycle";
 import { pairKey } from "@/lib/participation";
+import { canSeeCreator } from "@/lib/creator-visibility";
+import { ReputationPanel } from "@/components/reputation-panel";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
   head: () => ({ meta: [{ title: "Your profile — Intent" }] }),
@@ -26,6 +28,7 @@ interface MyIntentRow {
   city: string | null;
   locality: string | null;
   created_at: string;
+  creator_visibility: string | null;
   intent_categories: { label: string } | null;
   intent_participants: { user_id: string }[];
 }
@@ -45,6 +48,7 @@ interface ParticipationRow {
     locality: string | null;
     created_at: string;
     creator_id: string;
+    creator_visibility: string | null;
     intent_categories: { label: string } | null;
     profiles: { name: string | null; photo_url: string | null } | null;
     intent_participants: { user_id: string }[];
@@ -64,18 +68,25 @@ interface ConnectionRow {
   intent: { intent_categories: { label: string } | null } | null;
 }
 
-function rowToCard(i: MyIntentRow | ParticipationRow["intent"], creatorName?: string | null, creatorPhoto?: string | null): IntentCardData {
+function rowToCard(
+  i: MyIntentRow | ParticipationRow["intent"],
+  creatorName: string | null,
+  creatorPhoto: string | null,
+  creatorVisible: boolean,
+): IntentCardData {
   if (!i) return {} as IntentCardData;
   return {
     id: i.id,
     title: i.title,
+    category_slug: i.category_slug,
     category_label: i.intent_categories?.label ?? i.category_slug,
     city: i.locality && i.city ? `${i.locality}, ${i.city}` : i.city,
     starts_at: i.starts_at,
     people_needed: i.people_needed,
     interested_count: i.intent_participants.length,
-    creator_name: creatorName ?? null,
-    creator_photo: creatorPhoto ?? null,
+    creator_name: creatorName,
+    creator_photo: creatorPhoto,
+    creator_visible: creatorVisible,
     created_at: i.created_at,
     status: i.status,
     expires_at: i.expires_at,

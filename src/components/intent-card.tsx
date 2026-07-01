@@ -2,10 +2,12 @@ import { Link } from "@tanstack/react-router";
 import { MapPin, Calendar, Users, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { statusPill, type IntentStatus } from "@/lib/intent-lifecycle";
+import { creatorByline, isOrganizerCategory } from "@/lib/creator-visibility";
 
 export interface IntentCardData {
   id: string;
   title: string;
+  category_slug: string;
   category_label: string;
   city: string | null;
   starts_at: string | null;
@@ -13,6 +15,7 @@ export interface IntentCardData {
   interested_count: number;
   creator_name: string | null;
   creator_photo: string | null;
+  creator_visible: boolean;
   created_at: string;
   status?: IntentStatus | string;
   expires_at?: string | null;
@@ -28,6 +31,12 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
         : pill?.tone === "grey"
           ? "bg-muted text-muted-foreground"
           : "bg-secondary text-muted-foreground";
+
+  const byline = creatorByline(intent.category_slug, intent.creator_visible);
+  const showName = intent.creator_visible;
+  const initial = showName
+    ? (intent.creator_name?.[0] ?? "·").toUpperCase()
+    : "?";
 
   return (
     <Link
@@ -68,12 +77,15 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
         )}
         <span className="flex items-center gap-1">
           <Users className="size-3.5" />
-          {intent.interested_count} interested · {intent.people_needed} needed
+          {intent.interested_count} interested
+          {isOrganizerCategory(intent.category_slug)
+            ? ` · ${intent.people_needed} max`
+            : ` · ${intent.people_needed} needed`}
         </span>
       </div>
 
       <div className="mt-3 flex items-center gap-2 pt-1">
-        {intent.creator_photo ? (
+        {showName && intent.creator_photo ? (
           <img
             src={intent.creator_photo}
             alt=""
@@ -81,11 +93,13 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
           />
         ) : (
           <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
-            {(intent.creator_name?.[0] ?? "·").toUpperCase()}
+            {initial}
           </span>
         )}
         <span className="text-[12px] text-muted-foreground">
-          by {intent.creator_name ?? "Someone"}
+          {showName
+            ? `${byline} ${intent.creator_name ?? "Someone"}`
+            : "Anonymous Creator"}
         </span>
       </div>
     </Link>
