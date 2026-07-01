@@ -130,12 +130,17 @@ function NewIntent() {
     if (error) { toast.error(error.message); return; }
     toast.success(isOrganizer ? "Event created" : "Intent posted");
 
-    // Organizer with registration_first → jump to the Journey/Form builder next.
+    // Organizer with registration_first → jump straight to Journey/Form builder.
     if (isOrganizer && flow === "registration_first") {
       navigate({ to: "/intents/$intentId/form", params: { intentId: data.id } });
-    } else {
-      navigate({ to: "/intents/$intentId", params: { intentId: data.id } });
+      return;
     }
+    // Organizer → in-place success screen so they can build the form next.
+    if (isOrganizer) {
+      setCreatedOrganizerId(data.id);
+      return;
+    }
+    navigate({ to: "/intents/$intentId", params: { intentId: data.id } });
   }
 
   const cta = !category ? "Continue" : isOrganizer ? "Create event" : "Create intent";
