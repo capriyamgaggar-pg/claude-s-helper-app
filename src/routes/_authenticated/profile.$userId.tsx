@@ -93,6 +93,9 @@ function PublicProfile() {
         </Button>
       )}
 
+      <ReputationPanel userId={userId} />
+
+
       <section className="mt-8">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active intents</p>
         <div className="mt-3 space-y-2">
