@@ -279,6 +279,9 @@ function IntentDetail() {
               rows={participants as InterestedRow[]}
               existingConnections={creatorConnections ?? {}}
             />
+            {(status === "fulfilled" || status === "closed" || status === "expired") && (
+              <FeedbackTab intentId={intentId} categorySlug={data.category_slug} />
+            )}
           </div>
         )}
 
