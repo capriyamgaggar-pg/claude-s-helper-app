@@ -219,21 +219,41 @@ function IntentDetail() {
           </Link>
         )}
 
-        <Link to="/profile/$userId" params={{ userId: data.profiles!.id }}
-          className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:bg-secondary/60">
-          {data.profiles?.photo_url ? (
-            <img src={data.profiles.photo_url} alt="" className="size-12 rounded-full object-cover" />
-          ) : (
-            <span className="grid size-12 place-items-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-              {(data.profiles?.name?.[0] ?? "·").toUpperCase()}
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Posted by</p>
-            <p className="truncate font-medium">{data.profiles?.name ?? "Someone"}</p>
-            {data.profiles?.city && <p className="truncate text-[12px] text-muted-foreground">{data.profiles.city}</p>}
-          </div>
-        </Link>
+        {(() => {
+          const visible = canSeeCreator({
+            creator_id: data.creator_id,
+            creator_visibility: (data as { creator_visibility?: string | null }).creator_visibility ?? "public",
+            viewer_id: user.id,
+            viewer_connection_state: connection?.state ?? null,
+            viewer_participant_state: myRow?.state ?? null,
+          });
+          const label = isOrganizerCategory(data.category_slug) ? "Organized by" : "Created by";
+          const name = visible ? (data.profiles?.name ?? "Someone") : "Anonymous Creator";
+          const photo = visible ? data.profiles?.photo_url : null;
+          const city = visible ? data.profiles?.city : null;
+          const card = (
+            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
+              {photo ? (
+                <img src={photo} alt="" className="size-12 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-12 place-items-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                  {(name?.[0] ?? "·").toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
+                <p className="truncate font-medium">{name}</p>
+                {city && <p className="truncate text-[12px] text-muted-foreground">{city}</p>}
+              </div>
+            </div>
+          );
+          return visible ? (
+            <Link to="/profile/$userId" params={{ userId: data.profiles!.id }} className="block hover:opacity-90">
+              {card}
+            </Link>
+          ) : card;
+        })()}
+
 
         {/* Creator-only: Interested list with optional notes */}
         {isCreator && (
