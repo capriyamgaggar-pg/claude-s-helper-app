@@ -13,6 +13,8 @@ import { InterestedList, type InterestedRow } from "@/components/intent/interest
 import { pairKey, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
 import { canSeeCreator, isOrganizerCategory } from "@/lib/creator-visibility";
 import { FeedbackTab } from "@/components/feedback/feedback-tab";
+import { RegistrationStatusCard } from "@/components/registration/status-card";
+import { ParticipantRegistrationCTA } from "@/components/registration/participant-cta";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
