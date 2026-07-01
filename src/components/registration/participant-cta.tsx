@@ -23,7 +23,7 @@ export function ParticipantRegistrationCTA({ intentId, userId, myParticipationSt
         .from("journey_form_submissions")
         .select("status")
         .eq("step_id", status.data!.stepId!)
-        .eq("user_id", userId)
+        .eq("participant_id", userId)
         .maybeSingle();
       return data;
     },
