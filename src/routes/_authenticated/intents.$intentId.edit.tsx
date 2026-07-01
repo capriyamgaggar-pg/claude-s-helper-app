@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
+import type { CreatorVisibility } from "@/lib/creator-visibility";
 
 const searchSchema = z.object({ expires_at: z.string().optional() });
 
