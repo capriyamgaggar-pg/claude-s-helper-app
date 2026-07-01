@@ -25,6 +25,8 @@ interface Category { slug: string; label: string }
 // Categories that are typically organizer-driven (one-to-many, ticketed, structured).
 const ORGANIZER_CATEGORIES = new Set(["event", "trekking"]);
 
+
+
 type ParticipationFlow = "conversation_first" | "registration_first";
 
 function NewIntent() {
