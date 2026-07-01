@@ -24,6 +24,7 @@ import { Route as AuthenticatedInboxThreadIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedIntentsIntentIdSubmissionsRouteImport } from './routes/_authenticated/intents.$intentId.submissions'
 import { Route as AuthenticatedIntentsIntentIdRegisterRouteImport } from './routes/_authenticated/intents.$intentId.register'
 import { Route as AuthenticatedIntentsIntentIdFormRouteImport } from './routes/_authenticated/intents.$intentId.form'
+import { Route as AuthenticatedIntentsIntentIdFeedbackRouteImport } from './routes/_authenticated/intents.$intentId.feedback'
 import { Route as AuthenticatedIntentsIntentIdEditRouteImport } from './routes/_authenticated/intents.$intentId.edit'
 
 const AuthRoute = AuthRouteImport.update({
@@ -106,6 +107,12 @@ const AuthenticatedIntentsIntentIdFormRoute =
     path: '/form',
     getParentRoute: () => AuthenticatedIntentsIntentIdRoute,
   } as any)
+const AuthenticatedIntentsIntentIdFeedbackRoute =
+  AuthenticatedIntentsIntentIdFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedIntentsIntentIdRoute,
+  } as any)
 const AuthenticatedIntentsIntentIdEditRoute =
   AuthenticatedIntentsIntentIdEditRouteImport.update({
     id: '/edit',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
   '/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
   '/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
   '/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
   '/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
   '/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
   '/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/_authenticated/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
+  '/_authenticated/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
   '/_authenticated/intents/$intentId/form': typeof AuthenticatedIntentsIntentIdFormRoute
   '/_authenticated/intents/$intentId/register': typeof AuthenticatedIntentsIntentIdRegisterRoute
   '/_authenticated/intents/$intentId/submissions': typeof AuthenticatedIntentsIntentIdSubmissionsRoute
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/profile/me'
     | '/intents/$intentId/edit'
+    | '/intents/$intentId/feedback'
     | '/intents/$intentId/form'
     | '/intents/$intentId/register'
     | '/intents/$intentId/submissions'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/profile/me'
     | '/intents/$intentId/edit'
+    | '/intents/$intentId/feedback'
     | '/intents/$intentId/form'
     | '/intents/$intentId/register'
     | '/intents/$intentId/submissions'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile/$userId'
     | '/_authenticated/profile/me'
     | '/_authenticated/intents/$intentId/edit'
+    | '/_authenticated/intents/$intentId/feedback'
     | '/_authenticated/intents/$intentId/form'
     | '/_authenticated/intents/$intentId/register'
     | '/_authenticated/intents/$intentId/submissions'
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIntentsIntentIdFormRouteImport
       parentRoute: typeof AuthenticatedIntentsIntentIdRoute
     }
+    '/_authenticated/intents/$intentId/feedback': {
+      id: '/_authenticated/intents/$intentId/feedback'
+      path: '/feedback'
+      fullPath: '/intents/$intentId/feedback'
+      preLoaderRoute: typeof AuthenticatedIntentsIntentIdFeedbackRouteImport
+      parentRoute: typeof AuthenticatedIntentsIntentIdRoute
+    }
     '/_authenticated/intents/$intentId/edit': {
       id: '/_authenticated/intents/$intentId/edit'
       path: '/edit'
@@ -357,6 +377,7 @@ const AuthenticatedInboxRouteWithChildren =
 
 interface AuthenticatedIntentsIntentIdRouteChildren {
   AuthenticatedIntentsIntentIdEditRoute: typeof AuthenticatedIntentsIntentIdEditRoute
+  AuthenticatedIntentsIntentIdFeedbackRoute: typeof AuthenticatedIntentsIntentIdFeedbackRoute
   AuthenticatedIntentsIntentIdFormRoute: typeof AuthenticatedIntentsIntentIdFormRoute
   AuthenticatedIntentsIntentIdRegisterRoute: typeof AuthenticatedIntentsIntentIdRegisterRoute
   AuthenticatedIntentsIntentIdSubmissionsRoute: typeof AuthenticatedIntentsIntentIdSubmissionsRoute
@@ -366,6 +387,8 @@ const AuthenticatedIntentsIntentIdRouteChildren: AuthenticatedIntentsIntentIdRou
   {
     AuthenticatedIntentsIntentIdEditRoute:
       AuthenticatedIntentsIntentIdEditRoute,
+    AuthenticatedIntentsIntentIdFeedbackRoute:
+      AuthenticatedIntentsIntentIdFeedbackRoute,
     AuthenticatedIntentsIntentIdFormRoute:
       AuthenticatedIntentsIntentIdFormRoute,
     AuthenticatedIntentsIntentIdRegisterRoute:

@@ -280,6 +280,119 @@ export type Database = {
         }
         Relationships: []
       }
+      intent_feedback: {
+        Row: {
+          answers: Json
+          creator_id: string
+          id: string
+          intent_id: string
+          met_expectations: number
+          participant_id: string
+          submitted_at: string
+          would_participate_again: Database["public"]["Enums"]["feedback_participate_again"]
+          would_recommend:
+            | Database["public"]["Enums"]["feedback_recommend"]
+            | null
+        }
+        Insert: {
+          answers?: Json
+          creator_id: string
+          id?: string
+          intent_id: string
+          met_expectations: number
+          participant_id: string
+          submitted_at?: string
+          would_participate_again: Database["public"]["Enums"]["feedback_participate_again"]
+          would_recommend?:
+            | Database["public"]["Enums"]["feedback_recommend"]
+            | null
+        }
+        Update: {
+          answers?: Json
+          creator_id?: string
+          id?: string
+          intent_id?: string
+          met_expectations?: number
+          participant_id?: string
+          submitted_at?: string
+          would_participate_again?: Database["public"]["Enums"]["feedback_participate_again"]
+          would_recommend?:
+            | Database["public"]["Enums"]["feedback_recommend"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_feedback_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_feedback_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_feedback_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intent_feedback_requests: {
+        Row: {
+          creator_id: string
+          feedback_requested_at: string
+          feedback_submitted_at: string | null
+          id: string
+          intent_id: string
+          participant_id: string
+        }
+        Insert: {
+          creator_id: string
+          feedback_requested_at?: string
+          feedback_submitted_at?: string | null
+          id?: string
+          intent_id: string
+          participant_id: string
+        }
+        Update: {
+          creator_id?: string
+          feedback_requested_at?: string
+          feedback_submitted_at?: string | null
+          id?: string
+          intent_id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_feedback_requests_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_feedback_requests_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_feedback_requests_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intent_fulfillments: {
         Row: {
           created_at: string
@@ -1268,11 +1381,14 @@ export type Database = {
       }
       user_reputation_stats: {
         Row: {
+          feedback_received: number
           fulfilled_by_category: Json
           intents_closed: number
           intents_created: number
           intents_expired: number
           intents_fulfilled: number
+          met_expectations_count: number
+          met_expectations_sum: number
           organizer_intents_completed: number
           organizer_intents_total: number
           repeat_connections: number
@@ -1285,13 +1401,26 @@ export type Database = {
           total_joined_participants: number
           updated_at: string
           user_id: string
+          would_participate_again_definitely: number
+          would_participate_again_maybe: number
+          would_participate_again_never: number
+          would_participate_again_probably: number
+          would_participate_again_probably_not: number
+          would_recommend_definitely: number
+          would_recommend_maybe: number
+          would_recommend_never: number
+          would_recommend_probably: number
+          would_recommend_probably_not: number
         }
         Insert: {
+          feedback_received?: number
           fulfilled_by_category?: Json
           intents_closed?: number
           intents_created?: number
           intents_expired?: number
           intents_fulfilled?: number
+          met_expectations_count?: number
+          met_expectations_sum?: number
           organizer_intents_completed?: number
           organizer_intents_total?: number
           repeat_connections?: number
@@ -1304,13 +1433,26 @@ export type Database = {
           total_joined_participants?: number
           updated_at?: string
           user_id: string
+          would_participate_again_definitely?: number
+          would_participate_again_maybe?: number
+          would_participate_again_never?: number
+          would_participate_again_probably?: number
+          would_participate_again_probably_not?: number
+          would_recommend_definitely?: number
+          would_recommend_maybe?: number
+          would_recommend_never?: number
+          would_recommend_probably?: number
+          would_recommend_probably_not?: number
         }
         Update: {
+          feedback_received?: number
           fulfilled_by_category?: Json
           intents_closed?: number
           intents_created?: number
           intents_expired?: number
           intents_fulfilled?: number
+          met_expectations_count?: number
+          met_expectations_sum?: number
           organizer_intents_completed?: number
           organizer_intents_total?: number
           repeat_connections?: number
@@ -1323,6 +1465,16 @@ export type Database = {
           total_joined_participants?: number
           updated_at?: string
           user_id?: string
+          would_participate_again_definitely?: number
+          would_participate_again_maybe?: number
+          would_participate_again_never?: number
+          would_participate_again_probably?: number
+          would_participate_again_probably_not?: number
+          would_recommend_definitely?: number
+          would_recommend_maybe?: number
+          would_recommend_never?: number
+          would_recommend_probably?: number
+          would_recommend_probably_not?: number
         }
         Relationships: [
           {
@@ -1410,6 +1562,18 @@ export type Database = {
     Enums: {
       app_role: "admin" | "organizer" | "user"
       connection_state: "requested" | "accepted" | "declined"
+      feedback_participate_again:
+        | "definitely"
+        | "probably"
+        | "maybe"
+        | "probably_not"
+        | "never"
+      feedback_recommend:
+        | "definitely"
+        | "probably"
+        | "maybe"
+        | "probably_not"
+        | "never"
       intent_status:
         | "open"
         | "closed"
@@ -1555,6 +1719,20 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "organizer", "user"],
       connection_state: ["requested", "accepted", "declined"],
+      feedback_participate_again: [
+        "definitely",
+        "probably",
+        "maybe",
+        "probably_not",
+        "never",
+      ],
+      feedback_recommend: [
+        "definitely",
+        "probably",
+        "maybe",
+        "probably_not",
+        "never",
+      ],
       intent_status: [
         "open",
         "closed",
