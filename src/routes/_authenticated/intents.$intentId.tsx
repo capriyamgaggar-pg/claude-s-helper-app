@@ -212,24 +212,22 @@ function IntentDetail() {
           </div>
         )}
 
-        {/* Registration form entry points */}
-        {isCreator && (
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <Link to="/intents/$intentId/form" params={{ intentId }}
-              className="rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-              Registration form
-            </Link>
-            <Link to="/intents/$intentId/submissions" params={{ intentId }}
-              className="rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-              Responses
-            </Link>
-          </div>
-        )}
+        {/* Registration status / CTA */}
+        {isCreator && <RegistrationStatusCard intentId={intentId} />}
         {!isCreator && isActive && (
-          <Link to="/intents/$intentId/register" params={{ intentId }}
-            className="mt-5 block rounded-xl border border-border bg-surface px-3 py-2.5 text-center text-[13px] font-medium hover:bg-secondary/60">
-            Open registration form
-          </Link>
+          <ParticipantRegistrationCTA
+            intentId={intentId}
+            userId={user.id}
+            myParticipationStatus={
+              myRow?.state === "confirmed"
+                ? "approved"
+                : myRow?.state === "joining" || myRow?.state === "interested"
+                  ? "requested"
+                  : myRow?.state === "declined"
+                    ? "rejected"
+                    : "none"
+            }
+          />
         )}
 
         {(() => {
