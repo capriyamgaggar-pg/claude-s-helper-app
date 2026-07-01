@@ -272,7 +272,7 @@ function MeProfile() {
                 </p>
               )}
               {mineFiltered.map((i) => (
-                <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null)} />
+                <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true)} />
               ))}
             </TabsContent>
           </Tabs>
