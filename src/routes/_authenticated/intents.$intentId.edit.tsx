@@ -38,6 +38,8 @@ function EditIntent() {
   const [peopleNeeded, setPeopleNeeded] = useState(1);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
+  const [creatorVisibility, setCreatorVisibility] = useState<CreatorVisibility>("public");
+  const [visibilityLocked, setVisibilityLocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const { data: intent, isLoading } = useQuery({
