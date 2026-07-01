@@ -37,9 +37,17 @@ function FeedbackPage() {
     queryFn: () => eligibility({ data: { intentId } }),
   });
 
+  type SubmitPayload = {
+    intentId: string;
+    metExpectations: number;
+    overall: number;
+    wouldParticipateAgain: "definitely" | "probably" | "maybe" | "probably_not" | "never";
+    wouldRecommend: "definitely" | "probably" | "maybe" | "probably_not" | "never" | null;
+    answers: Record<string, { rating?: number; text?: string }>;
+  };
   const mutation = useMutation({
-    mutationFn: (payload: Parameters<typeof submit>[0] extends { data: infer T } ? T : never) =>
-      submit({ data: payload }),
+    mutationFn: (payload: SubmitPayload) =>
+      submit({ data: { ...payload, wouldRecommend: payload.wouldRecommend ?? undefined } }),
     onSuccess: () => {
       toast.success("Thanks for sharing your feedback.");
       qc.invalidateQueries({ queryKey: ["feedback-eligibility", intentId] });
