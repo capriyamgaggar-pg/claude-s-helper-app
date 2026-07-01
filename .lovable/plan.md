@@ -1,110 +1,191 @@
-# Creator Visibility & Reputation Infrastructure (MVP) — v5 (approved)
+# Feedback & Trust System (MVP) — v3 (frozen)
 
-Two coordinated features: per-intent **Creator Visibility** (show / anonymous) and **Reputation infrastructure** — raw stats + event log. Badge/level rules are intentionally deferred until real usage data exists.
+Post-intent feedback as a reusable **journey step**, serving two purposes: private **intent creator** improvement feedback and long-term **community trust** data. Anonymous to creators, identifiable internally for integrity.
 
----
-
-## 1. Creator Visibility
-
-### Data
-Add to `intents`:
-- `creator_visibility` text — `'public'` (default) | `'anonymous'`
-- `visibility_locked_at` timestamptz — stamped on the **first participant interaction of any kind**.
-
-### Lock trigger (any interaction)
-Set `visibility_locked_at = now()` on the parent intent (if null) from triggers on:
-- `intent_participants` insert (any state, including `interested`)
-- `journey_form_submissions` insert (registration started)
-- `connections` insert referencing this intent
-
-Server fn updating visibility rejects when `visibility_locked_at IS NOT NULL`; UI disables the radio with a helper line.
-
-### Redaction helper
-`public.can_see_creator(_intent_id uuid, _viewer uuid) returns boolean` — true when the intent is `public`, viewer is the creator, viewer has `connected`/`confirmed` participation on this intent, or viewer + creator have an accepted connection.
-
-App read layer maps the creator to a redacted DTO when false:
-`{ display_name: 'Anonymous Creator', photo_url: null, profession: null }`.
-
-Used in intent detail, cards, submissions list, chat headers, and SSR `head()` og:tags/preview.
-
-### UI
-- `intents.new.tsx` and `intents.$intentId.edit.tsx` (Advanced): **Creator Visibility** radio — *Show my profile* / *Anonymous*.
-- `intent-card.tsx`: `Created by {name}` / `Organized by {name}`. Redacted → `Anonymous Creator`, neutral avatar.
-- Auto-reveal on connection accept — helper flips true, identity appears for that participant.
+Architecture uses **"intent creator"** as the generic term; UI may render "Organizer" for event-style categories.
 
 ---
 
-## 2. Reputation Infrastructure (data only, no derivation yet)
+## 1. Data model
 
-### 2a. `user_reputation_stats` (one row per user, trigger-maintained)
+### New table `intent_feedback`
+- `id` uuid pk
+- `intent_id` uuid → `intents.id` (cascade)
+- `creator_id` uuid — denormalized intent creator (was "organizer_id")
+- `participant_id` uuid — stored, never surfaced to creator
+- `met_expectations` int 1–5 — **the universal signal** (required)
+- `would_participate_again` enum `feedback_participate_again`: `definitely | probably | maybe | probably_not | never`
+- `would_recommend` enum `feedback_recommend` (same 5 values) — collected, never displayed in MVP
+- `answers` jsonb — dynamic per-question responses keyed by `question_key`, values `{ rating?: 1..5, text?: string }`
+- `submitted_at` timestamptz default now()
+- **Unique** `(intent_id, participant_id)`
 
-Counters:
-- `intents_created`, `intents_fulfilled`, `intents_closed`, `intents_expired`
-- `total_interested_received`, `total_connections`, `total_joined_participants`
-- `repeat_participants`, `repeat_connections`, `returning_members`
-- `response_count`, `response_total_seconds`
-- `organizer_intents_total`, `organizer_intents_completed`
-- `fulfilled_by_category` (jsonb)
-- `updated_at`
+### New table `intent_feedback_requests` (analytics + "still available" state)
+- `id` uuid pk
+- `intent_id` uuid
+- `participant_id` uuid
+- `feedback_requested_at` timestamptz default now() — when the prompt/notification fired
+- `feedback_submitted_at` timestamptz nullable — set when the matching `intent_feedback` row lands
+- **Unique** `(intent_id, participant_id)`
 
-Grants: `SELECT` to `authenticated` and `anon`; writes `service_role` only. RLS on, public read policy. Triggers idempotent, state-transition guarded.
+Rationale: keeping request/submit timestamps in a sibling table (instead of on `intent_feedback`) means the row exists even before submission — enabling "avg time to submit", completion rate, and reminder effectiveness without touching the feedback row itself.
 
-### 2b. `reputation_events` (append-only log)
-- `id`, `user_id`, `event_type`, `intent_id` (nullable), `metadata` jsonb, `created_at`
-- `event_type` values: `intent_created`, `intent_fulfilled`, `intent_closed`, `intent_expired`, `participant_joined`, `repeat_participant`, `connection_created`, `community_member_returned`, `response_sent`
+### RLS
+- `intent_feedback` INSERT: `auth.uid() = participant_id` AND participant `confirmed` in `intent_participants` AND intent `status IN ('fulfilled','closed','expired')`.
+- `intent_feedback` SELECT own: `auth.uid() = participant_id`.
+- `intent_feedback` SELECT creator: `auth.uid() = creator_id` — but the app never reads raw rows client-side; goes through anonymized server fns.
+- `intent_feedback_requests` SELECT: own row (`auth.uid() = participant_id`) or creator (`auth.uid() = creator_id`, aggregated only via server fn).
+- No public SELECT. No UPDATE / DELETE (immutable in MVP).
 
-Written by the same triggers that update `user_reputation_stats`. Grants: `SELECT` to `authenticated` for own rows; writes `service_role` only. No UI in MVP.
-
-### 2c. Derivation — intentionally deferred
-
-> Reputation derivation is intentionally deferred. This milestone captures all raw metrics (`user_reputation_stats`) and event history (`reputation_events`) required to build a robust reputation system later. Badge rules, levels, and profile achievements will be designed after sufficient production usage data has been collected, ensuring the reputation system rewards real user behaviour rather than assumptions.
-
-`src/lib/reputation.ts` ships as scaffolding only:
-```ts
-export type Badge = { slug: string; label: string; icon: string };
-export function computeBadges(stats: UserReputationStats): Badge[] { return []; }
-export function computeLevel(stats: UserReputationStats): number | null { return null; }
+### Grants
+```
+GRANT SELECT, INSERT ON public.intent_feedback TO authenticated;
+GRANT ALL ON public.intent_feedback TO service_role;
+GRANT SELECT, INSERT, UPDATE ON public.intent_feedback_requests TO authenticated;
+GRANT ALL ON public.intent_feedback_requests TO service_role;
 ```
 
-No badge rules. No scoring weights. No `Level N` in the UI.
+### `user_reputation_stats` extension (raw counters only)
+- `feedback_received`
+- `met_expectations_sum`, `met_expectations_count` (for future avg)
+- `would_participate_again_definitely / probably / maybe / probably_not / never`
+- `would_recommend_definitely / probably / maybe / probably_not / never`
 
-### 2d. Profile Reputation section (what ships today)
-
-```
-Reputation
-  Intents Created          42
-  Successful Intents       31
-  People Interested       612
-  People Connected        284
-  Returning Participants  127
-  Avg. Response Time       2h
-```
-
-- Renamed *Successfully Fulfilled* → **Successful Intents** (clearer, shorter).
-- Added **People Interested** (exposes existing `total_interested_received`) — gives organizers immediate feedback on whether their titles/descriptions attract attention, even before badges exist.
-- **No Fulfillment %** — the definition of "fulfilled" varies too much across categories to be meaningful at this stage.
-- Empty state: "Reputation builds as you create and fulfill intents."
-
-Intent cards and creator cards show **no badge/level chip** in this milestone. When rules land later, `computeBadges`/`computeLevel` return real values and the same components light up — no schema change.
+### Triggers
+- `on_feedback_insert`: bump counters on creator's stats row, add to `met_expectations_sum/count`, stamp `intent_feedback_requests.feedback_submitted_at = now()` (or insert the row if missing), append `reputation_events` (`feedback_received`, metadata excludes `participant_id`).
+- `on_intent_completed`: when `intents.status` transitions to `fulfilled` / `closed` / `expired`, insert one `intent_feedback_requests` row per confirmed participant (idempotent, ON CONFLICT DO NOTHING), and enqueue a `notifications` row `feedback_requested` per participant.
 
 ---
 
-## Technical details
+## 2. Eligibility & lifecycle
 
-- **New files**: `src/lib/reputation.ts` (stub types + no-op functions), `src/components/reputation-panel.tsx`, `src/lib/creator-visibility.ts`.
-- **Migrations**:
-  1. Alter `intents` — add `creator_visibility`, `visibility_locked_at`; lock triggers across `intent_participants` / `journey_form_submissions` / `connections`.
-  2. Create `user_reputation_stats`, `reputation_events`, `can_see_creator`, and counter/event triggers on `intents`, `intent_participants`, `connections`, `messages`, `community_member_history`.
-- **Server fns** (`src/lib/reputation.functions.ts`): `getUserStats(userId)` → raw stats row.
-- **RLS**: creator columns stay on `intents`; redaction handled at read layer via `can_see_creator`. Visibility updates go through a server fn that enforces the lock.
-- **No `pg_cron`** — trigger-maintained.
+**Feedback is permanently available** on completed intents — no time window. The initial notification is a prompt, not a gate.
+
+Submittable when:
+- Viewer's `intent_participants.state = 'confirmed'`.
+- Intent `status IN ('fulfilled','closed','expired')`.
+- No existing `intent_feedback` row for `(intent_id, viewer)`.
+
+Enforced in DB (RLS + unique) and mirrored in `submitFeedback`.
 
 ---
 
-## Out of scope (MVP)
-- No badge rules, no level scoring, no chips on cards.
-- No Fulfillment % on the profile.
-- No "Verified" label, no manual verification, no admin overrides.
-- No mid-journey manual reveal (auto-reveal on connection accept only).
-- No timeline UI — `reputation_events` captured, not displayed.
-- Nothing derived is ever persisted.
+## 3. Journey step: `feedback` (config-driven questions)
+
+New reusable step type `feedback`. Default position: last step.
+
+### Step config (`journey_step_config.config`)
+```jsonc
+{
+  "questions": [
+    { "key": "communication", "label": "Communication",  "type": "rating", "required": true },
+    { "key": "accuracy",      "label": "Description Accuracy", "type": "rating" },
+    { "key": "liked_most",    "label": "What did you like most?", "type": "text" },
+    { "key": "improvements",  "label": "What could be improved?", "type": "text" },
+    { "key": "comments",      "label": "Additional comments", "type": "text" }
+  ]
+}
+```
+
+**Platform-fixed questions** (not in `questions`, always shown, always stored):
+1. **Did this intent meet your expectations?** → `met_expectations` (1–5) — **rendered first**.
+2. **Overall experience** → stored in `answers.overall.rating` seeded into every preset.
+3. **Would you participate in another intent by this creator?** → `would_participate_again`.
+4. **Would you recommend this creator to a friend?** → `would_recommend` (stored only).
+
+### Category presets (`src/lib/journey/steps/feedback-presets.ts`)
+Maps `category_slug` → default `questions`. Every preset gets `overall` seeded automatically.
+
+- **Trek**: safety, communication, organization, value, liked_most, improvements
+- **Workshop**: content, venue, speaker, value, liked_most, improvements
+- **Event (default)**: communication, organization, value, liked_most, improvements, comments
+- **Flatmate**: communication, compatibility, accuracy, comments
+- **Co-founder / Mentor / Investor**: communication, responsiveness, accuracy, comments
+- **Fallback**: communication, accuracy, comments
+
+Organizers can't edit questions in MVP UI, but schema supports it later.
+
+---
+
+## 4. Server functions (`src/lib/feedback.functions.ts`)
+
+All `.middleware([requireSupabaseAuth])`. All creator-facing fns verify `auth.uid() = intents.creator_id`.
+
+- `submitFeedback({ intentId, metExpectations, overall, wouldParticipateAgain, wouldRecommend, answers })` — validates eligibility + question keys against step config, inserts row.
+- `getMyFeedback({ intentId })` — viewer's own submission or null (drives "already submitted" state).
+- `getMyFeedbackEligibility({ intentId })` — returns `{ eligible, alreadySubmitted, requestedAt }` for CTA logic.
+- `getFeedbackSummary({ intentId })` — creator-only. Returns: response count, request count (for completion rate), avg `met_expectations`, per-question averages + 1–5 distribution, `would_participate_again` distribution. **`would_recommend` intentionally excluded.**
+- `getCreatorFeedback({ intentId, cursor })` — creator-only, paginated **anonymized** rows: `submitted_at`, `met_expectations`, per-question rating/text values, `would_participate_again`. No `participant_id`, name, avatar, or `would_recommend`.
+
+---
+
+## 5. UI
+
+### Participant
+- `src/components/feedback/feedback-form.tsx` — order:
+  1. **Did this intent meet your expectations?** ★★★★★ (required)
+  2. **Overall experience** ★★★★★
+  3. Preset rating questions (from step config)
+  4. Preset text questions
+  5. **Would you participate in another intent by this creator?** (5-radio)
+  6. **Would you recommend this creator to a friend?** (5-radio, stored only)
+- Copy: "Your response is anonymous to the intent creator."
+- Route: `src/routes/_authenticated/intents.$intentId.feedback.tsx`.
+- Entry points:
+  - **Notification** on intent completion → deep link into the form.
+  - **Intent detail (completed)**: replace the terminal "Completed / Fulfilled" pill CTA with **"Share Feedback"** for eligible non-submitters; permanent, no expiry.
+  - Profile → completed intents list: "Share feedback" affordance per eligible intent.
+  - Journey progress: `feedback` step becomes actionable.
+
+### Intent Creator
+- Intent detail: new **Feedback** tab, visible when intent is `fulfilled` / `closed` / `expired`.
+- `src/components/feedback/feedback-summary.tsx`:
+  - Responses received / requests sent (completion rate)
+  - Avg **Met Expectations** (headline metric)
+  - Per-question average + 1–5 distribution
+  - `would_participate_again` distribution
+- `src/components/feedback/feedback-list.tsx`:
+  - Header: **"Anonymous Participant · Joined"** · ★★★★☆ · relative time
+  - Renders each non-empty text answer with its question label.
+  - No avatar, no link, no name. No `would_recommend`.
+- Terminology: internal architecture / server fns / DB columns use **"creator"**; UI labels may render "Organizer" for organizer-mode categories (Event, Trek, Workshop) and "Creator" elsewhere via a small `roleLabel(category)` helper.
+
+---
+
+## 6. Out of scope (explicit)
+- No trust %, badges, levels, scores, AI summaries.
+- No public reviews / ratings / participant identities.
+- No creator-editable question UI (schema-ready).
+- No creator replies. No editing / deleting feedback.
+- `would_recommend` never displayed anywhere in MVP.
+- No time-limited feedback window; no automated reminder cadence (single notification on completion; permanent CTA thereafter).
+
+---
+
+## Product principles
+
+- **Operational data is identifiable. Feedback data is anonymous to creators.**
+- **Feedback serves two purposes**: helping intent creators improve, and helping the platform learn what creates successful communities. Later milestones can derive badges, recommendations, search ranking, creator insights, spam detection, and trust metrics from these raw signals — without a schema change.
+- Public trust metrics (future) only surface after a minimum response threshold (~20+).
+
+---
+
+## Technical summary
+
+- **Migration**:
+  1. Enums `feedback_participate_again`, `feedback_recommend`.
+  2. Create `intent_feedback` (+ grants, RLS, unique).
+  3. Create `intent_feedback_requests` (+ grants, RLS, unique).
+  4. Add counter columns to `user_reputation_stats`.
+  5. Triggers: `on_feedback_insert` (counters + stamp submitted_at + rep_events), `on_intent_completed` (fan out request rows + notifications).
+- **New files**:
+  - `src/lib/feedback.functions.ts`
+  - `src/lib/journey/steps/feedback.tsx`
+  - `src/lib/journey/steps/feedback-presets.ts`
+  - `src/components/feedback/{feedback-form,feedback-summary,feedback-list}.tsx`
+  - `src/routes/_authenticated/intents.$intentId.feedback.tsx`
+- **Edits**:
+  - `src/routes/_authenticated/intents.$intentId.tsx` — swap terminal CTA for "Share Feedback" (participant) + add creator Feedback tab.
+  - Journey step registry — register `feedback`.
+  - Notification renderer — handle `feedback_requested` kind.
+- **RLS discipline**: creator clients never read raw rows; server fns project anonymized DTOs, always stripping `participant_id` and `would_recommend`.
