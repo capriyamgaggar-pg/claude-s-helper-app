@@ -13,6 +13,7 @@ import { placeLabel, type Place } from "@/lib/location";
 import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picker";
 import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
 import type { JoinMode } from "@/lib/participation";
+import type { CreatorVisibility } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
