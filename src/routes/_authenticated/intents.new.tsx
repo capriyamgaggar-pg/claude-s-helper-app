@@ -60,6 +60,7 @@ function NewIntent() {
   const [creatorVisibility, setCreatorVisibility] = useState<CreatorVisibility>("public");
 
   const [busy, setBusy] = useState(false);
+  const [createdOrganizerId, setCreatedOrganizerId] = useState<string | null>(null);
 
   const isOrganizer = useMemo(
     () => (category ? ORGANIZER_CATEGORIES.has(category) : false),
