@@ -108,6 +108,7 @@ function EditIntent() {
       starts_at: startsAt ? new Date(startsAt).toISOString() : null,
       people_needed: peopleNeeded,
       tags: tagArr,
+      ...(visibilityLocked ? {} : { creator_visibility: creatorVisibility }),
     };
     const patch = pendingExpiresAt
       ? { ...basePatch, expires_at: pendingExpiresAt, status: "active" as const }
