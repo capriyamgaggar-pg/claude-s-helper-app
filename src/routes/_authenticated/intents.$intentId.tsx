@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, MapPin, Calendar, Users, Clock, CheckCircle2, RotateCw } from "lucide-react";
@@ -39,6 +39,9 @@ interface ParticipantRow {
 function IntentDetail() {
   const { intentId } = Route.useParams();
   const { user } = Route.useRouteContext();
+  const hasChildRoute = useRouterState({
+    select: (state) => state.matches.some((match) => match.routeId !== Route.id && match.pathname.startsWith(`/intents/${intentId}/`)),
+  });
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [fulfillOpen, setFulfillOpen] = useState(false);
@@ -109,6 +112,10 @@ function IntentDetail() {
       return row;
     },
   });
+
+  if (hasChildRoute) {
+    return <Outlet />;
+  }
 
   if (isLoading || !data) {
     return (
