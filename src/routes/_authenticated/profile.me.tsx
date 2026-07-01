@@ -250,6 +250,10 @@ function MeProfile() {
         </section>
       )}
 
+      <ReputationPanel userId={user.id} />
+
+
+
       <Tabs value={topTab} onValueChange={(v) => setTopTab(v as typeof topTab)} className="mt-8">
         <TabsList className="grid h-9 w-full grid-cols-4">
           <TabsTrigger value="mine" className="text-[12px]">My Intents</TabsTrigger>
