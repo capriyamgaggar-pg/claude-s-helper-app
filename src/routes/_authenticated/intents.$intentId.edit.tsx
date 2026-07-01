@@ -68,6 +68,8 @@ function EditIntent() {
     setPeopleNeeded(intent.people_needed);
     setTags((intent.tags ?? []).join(", "));
     setStartsAt(intent.starts_at ? toLocalInput(intent.starts_at) : "");
+    setCreatorVisibility((intent.creator_visibility as CreatorVisibility) ?? "public");
+    setVisibilityLocked(!!intent.visibility_locked_at);
     if (intent.city) {
       setPlace({
         locality: intent.locality,
