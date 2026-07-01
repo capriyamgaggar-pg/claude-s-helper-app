@@ -114,7 +114,7 @@ function NewIntent() {
       expires_at: expiresAt,
       status: "active",
       join_mode: isOrganizer ? "mutual_confirm" : joinMode,
-      participation_mode: isOrganizer ? flow : null,
+      participation_mode: isOrganizer ? flow : undefined,
       payment_required: isOrganizer && priceNum > 0,
       price_inr: isOrganizer ? priceNum : 0,
     }).select("id").single();
