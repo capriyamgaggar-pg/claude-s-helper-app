@@ -11,6 +11,7 @@ import { statusPill, type IntentStatus, CLOSURE_REASONS } from "@/lib/intent-lif
 import { ParticipationButton } from "@/components/intent/participation-button";
 import { InterestedList, type InterestedRow } from "@/components/intent/interested-list";
 import { pairKey, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
+import { canSeeCreator, isOrganizerCategory } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
