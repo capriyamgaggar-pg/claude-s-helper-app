@@ -196,8 +196,19 @@ function IntentDetail() {
         )}
 
         {!isCreator && !isActive && (
-          <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-4 text-center text-[13px] text-muted-foreground">
-            This intent is no longer active. Existing chats remain open.
+          <div className="mt-5 space-y-3">
+            <div className="rounded-2xl border border-dashed border-border bg-surface p-4 text-center text-[13px] text-muted-foreground">
+              This intent is no longer active. Existing chats remain open.
+            </div>
+            {myRow?.state === "confirmed" && (status === "fulfilled" || status === "closed" || status === "expired") && (
+              <Link
+                to="/intents/$intentId/feedback"
+                params={{ intentId }}
+                className="flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-[14px] font-medium text-primary-foreground hover:opacity-90"
+              >
+                Share feedback
+              </Link>
+            )}
           </div>
         )}
 
