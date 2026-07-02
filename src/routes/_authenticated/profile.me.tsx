@@ -103,7 +103,7 @@ function MeProfile() {
   const { data: profile } = useQuery({
     queryKey: ["profile", user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_my_profile").single();
+      const { data, error } = await supabase.rpc("get_my_profile");
       if (error) throw error;
       return data;
     },

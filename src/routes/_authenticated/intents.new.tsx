@@ -70,7 +70,7 @@ function NewIntent() {
   useEffect(() => {
     supabase.from("intent_categories").select("slug,label").order("sort")
       .then(({ data }) => setCats((data ?? []) as Category[]));
-    supabase.rpc("get_my_profile").maybeSingle()
+    supabase.rpc("get_my_profile")
       .then(({ data }) => {
         if (data?.city) {
           setPlace({
