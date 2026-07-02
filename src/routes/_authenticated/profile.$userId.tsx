@@ -19,7 +19,9 @@ function PublicProfile() {
   const { data: profile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+      const { data, error } = await supabase.from("profiles")
+        .select("id, name, photo_url, city, profession, bio, languages, interests, linkedin_url, instagram_url, locality, state, country, onboarded, created_at, updated_at")
+        .eq("id", userId).maybeSingle();
       if (error) throw error;
       return data;
     },

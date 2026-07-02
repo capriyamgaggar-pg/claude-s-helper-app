@@ -65,11 +65,7 @@ function HomePage() {
 
   // Onboarding gate + seed location from profile if user hasn't set one
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("onboarded, locality, city, state, country, lat, lng, place_id")
-      .eq("id", user.id)
-      .maybeSingle()
+    supabase.rpc("get_my_profile").maybeSingle()
       .then(({ data }) => {
         if (!data || !data.onboarded) {
           navigate({ to: "/onboarding" });
