@@ -1520,38 +1520,10 @@ export type Database = {
       expire_intents_job: { Args: never; Returns: undefined }
       get_my_profile: {
         Args: never
-        Returns: {
-          address_line1: string | null
-          address_line2: string | null
-          bio: string | null
-          blood_group: string | null
-          city: string | null
-          country: string | null
-          created_at: string
-          dob: string | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
-          id: string
-          instagram_url: string | null
-          interests: string[]
-          languages: string[]
-          lat: number | null
-          linkedin_url: string | null
-          lng: number | null
-          locality: string | null
-          name: string | null
-          onboarded: boolean
-          phone: string | null
-          photo_url: string | null
-          pincode: string | null
-          place_id: string | null
-          profession: string | null
-          state: string | null
-          updated_at: string
-        }
+        Returns: Database["public"]["CompositeTypes"]["my_profile"]
         SetofOptions: {
           from: "*"
-          to: "profiles"
+          to: "my_profile"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1630,7 +1602,35 @@ export type Database = {
       thread_kind: "dm" | "intent" | "intent_group"
     }
     CompositeTypes: {
-      [_ in never]: never
+      my_profile: {
+        id: string | null
+        name: string | null
+        photo_url: string | null
+        city: string | null
+        profession: string | null
+        bio: string | null
+        languages: string[] | null
+        interests: string[] | null
+        linkedin_url: string | null
+        instagram_url: string | null
+        onboarded: boolean | null
+        created_at: string | null
+        updated_at: string | null
+        locality: string | null
+        state: string | null
+        country: string | null
+        lat: number | null
+        lng: number | null
+        place_id: string | null
+        phone: string | null
+        dob: string | null
+        blood_group: string | null
+        emergency_contact_name: string | null
+        emergency_contact_phone: string | null
+        address_line1: string | null
+        address_line2: string | null
+        pincode: string | null
+      }
     }
   }
 }
