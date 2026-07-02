@@ -16,6 +16,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedExploreRouteImport } from './routes/_authenticated/explore'
+import { Route as AuthenticatedEmptyPreviewRouteImport } from './routes/_authenticated/empty-preview'
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedIntentsNewRouteImport } from './routes/_authenticated/intents.new'
@@ -61,6 +62,12 @@ const AuthenticatedExploreRoute = AuthenticatedExploreRouteImport.update({
   path: '/explore',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmptyPreviewRoute =
+  AuthenticatedEmptyPreviewRouteImport.update({
+    id: '/empty-preview',
+    path: '/empty-preview',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
   id: '/profile/me',
   path: '/profile/me',
@@ -123,6 +130,7 @@ const AuthenticatedIntentsIntentIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inbox': typeof AuthenticatedInboxRouteWithChildren
@@ -141,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inbox': typeof AuthenticatedInboxRouteWithChildren
@@ -161,6 +170,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/_authenticated/explore': typeof AuthenticatedExploreRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRouteWithChildren
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/empty-preview'
     | '/explore'
     | '/home'
     | '/inbox'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/empty-preview'
     | '/explore'
     | '/home'
     | '/inbox'
@@ -218,6 +230,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/empty-preview'
     | '/_authenticated/explore'
     | '/_authenticated/home'
     | '/_authenticated/inbox'
@@ -289,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof AuthenticatedExploreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/empty-preview': {
+      id: '/_authenticated/empty-preview'
+      path: '/empty-preview'
+      fullPath: '/empty-preview'
+      preLoaderRoute: typeof AuthenticatedEmptyPreviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile/me': {
@@ -403,6 +423,7 @@ const AuthenticatedIntentsIntentIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedEmptyPreviewRoute: typeof AuthenticatedEmptyPreviewRoute
   AuthenticatedExploreRoute: typeof AuthenticatedExploreRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRouteWithChildren
@@ -414,6 +435,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedEmptyPreviewRoute: AuthenticatedEmptyPreviewRoute,
   AuthenticatedExploreRoute: AuthenticatedExploreRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRouteWithChildren,
