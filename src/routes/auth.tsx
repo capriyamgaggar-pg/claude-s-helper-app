@@ -201,6 +201,13 @@ function AuthPage() {
 function sanitizeRedirect(value: string | undefined) {
   if (!value) return "/home";
   if (value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/auth")) return value;
+  try {
+    const url = new URL(value);
+    const localPath = `${url.pathname}${url.search}${url.hash}`;
+    if (localPath.startsWith("/") && !localPath.startsWith("//") && !localPath.startsWith("/auth")) return localPath;
+  } catch {
+    // Ignore malformed redirect values.
+  }
   return "/home";
 }
 
