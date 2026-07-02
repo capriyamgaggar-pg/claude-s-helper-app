@@ -1,11 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { defaultIntentExamples, type IntentExample } from "@/components/brand/examples";
+import {
+  defaultIntentExamples,
+  PREVIEW_STAGES,
+  type IntentExample,
+  type PreviewStage,
+} from "@/components/brand/examples";
+
+export type EmptyFeedPreview = {
+  /** Pin to a specific example by slug (defaults to auto-rotating). */
+  exampleKey?: string;
+  /** Force reduced-motion composed state. */
+  reducedMotion?: boolean;
+  /** When false, freeze on the fully composed state instead of rotating. */
+  previewAutoRotate?: boolean;
+  /** Pin to a specific animation stage (highest precedence). */
+  previewStage?: PreviewStage;
+  /** Bumping this key restarts the animation timeline. */
+  replayKey?: number;
+};
 
 type Props = {
   label: string;
   interests?: string[] | null;
   onReset: () => void;
+  preview?: EmptyFeedPreview;
 };
 
 // ─────────────────────────── Suggestions ────────────────────────────
