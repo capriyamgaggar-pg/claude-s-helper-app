@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,17 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const safeRedirect = sanitizeRedirect(redirect);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!alive || !data.user) return;
+      navigate({ to: safeRedirect as never, replace: true });
+    });
+    return () => { alive = false; };
+  }, [navigate, safeRedirect]);
+
   async function onGoogle() {
     setBusy(true);
     try {
@@ -48,7 +59,7 @@ function AuthPage() {
         return;
       }
       if (res.redirected) return;
-      navigate({ to: redirect ?? "/home" });
+      navigate({ to: safeRedirect as never, replace: true });
     } catch {
       toast.error("Couldn't sign in with Google.");
       setBusy(false);
@@ -78,7 +89,7 @@ function AuthPage() {
           setBusy(false);
           return;
         }
-        navigate({ to: redirect ?? "/home" });
+        navigate({ to: safeRedirect as never, replace: true });
       }
     } finally {
       setBusy(false);
@@ -185,6 +196,18 @@ function AuthPage() {
       </div>
     </div>
   );
+}
+
+function sanitizeRedirect(value: string | undefined) {
+  if (!value) return "/home";
+  try {
+    if (value.startsWith("/")) return value.startsWith("//") ? "/home" : value;
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return "/home";
+    return `${url.pathname}${url.search}${url.hash}` || "/home";
+  } catch {
+    return "/home";
+  }
 }
 
 function GoogleMark() {

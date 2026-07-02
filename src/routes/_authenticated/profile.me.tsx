@@ -11,6 +11,7 @@ import { STATUS_TAB_FILTERS, type IntentStatus } from "@/lib/intent-lifecycle";
 import { pairKey } from "@/lib/participation";
 import { canSeeCreator } from "@/lib/creator-visibility";
 import { ReputationPanel } from "@/components/reputation-panel";
+import type { UserReputationStats } from "@/lib/reputation";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
   head: () => ({ meta: [{ title: "Your profile — Intent" }] }),
@@ -120,6 +121,19 @@ function MeProfile() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as MyIntentRow[];
+    },
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["user-reputation-stats", user.id, "created-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_reputation_stats")
+        .select("user_id, intents_created")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Pick<UserReputationStats, "user_id" | "intents_created"> | null;
     },
   });
 
@@ -257,6 +271,24 @@ function MeProfile() {
         </div>
       </header>
 
+      <section className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Preview tools</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Link
+            to="/empty-preview"
+            className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
+          >
+            Empty feed preview
+          </Link>
+          <Link
+            to="/demo-preview"
+            className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
+          >
+            Demo personas
+          </Link>
+        </div>
+      </section>
+
       {profile?.bio && <p className="mt-5 text-[14px] leading-relaxed">{profile.bio}</p>}
 
       {profile?.interests && profile.interests.length > 0 && (
@@ -292,7 +324,8 @@ function MeProfile() {
             <TabsContent value={mineSub} className="mt-4 space-y-3">
               {/* Prefer the lifetime `stats.intentsCreated` when it exists; fallback to the loaded list. */}
               {(() => {
-                const hasEverCreatedIntent = (mine?.length ?? 0) > 0;
+                if (!mine || statsLoading) return null;
+                const hasEverCreatedIntent = ((stats?.intents_created ?? 0) > 0) || mine.length > 0;
                 if (!hasEverCreatedIntent) {
                   return (
                     <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
