@@ -54,7 +54,7 @@ function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (res.error) {
-        toast.error("Couldn't sign in with Google. Please try again.");
+        toast.error(res.error.message || "Couldn't sign in with Google. Please try again.");
         setBusy(false);
         return;
       }
@@ -200,7 +200,7 @@ function AuthPage() {
 
 function sanitizeRedirect(value: string | undefined) {
   if (!value) return "/home";
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  if (value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/auth")) return value;
   return "/home";
 }
 

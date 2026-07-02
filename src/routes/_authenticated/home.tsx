@@ -214,12 +214,20 @@ function HomePage() {
       <header>
         <div className="flex items-center justify-between gap-2">
           <LocationPill place={place} onChange={setPlace} prefix="Showing" />
-          <Link
-            to="/empty-preview"
-            className="shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
-          >
-            Preview
-          </Link>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              to="/empty-preview"
+              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Empty preview
+            </Link>
+            <Link
+              to="/demo-preview"
+              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Demo
+            </Link>
+          </div>
         </div>
         <h1 className="display mt-4 text-3xl leading-[1.1]">
           What are you trying to do today?
