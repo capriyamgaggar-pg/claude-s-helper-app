@@ -74,7 +74,7 @@ function ChatThread() {
   const other = ctxData?.thread_members.find((m) => m.user_id !== user.id)?.profiles;
   const me = ctxData?.thread_members.find((m) => m.user_id === user.id)?.profiles;
   const sharedInterests = (me?.interests ?? []).filter((i) => (other?.interests ?? []).includes(i));
-  const starters = startersFor(ctxData?.intents?.category_slug);
+  const starters = startersFor(ctxData?.intents?.category_slug, ctxData?.intents?.creator_id === user.id);
 
 
   const showOpener = messages.length === 0 && !!ctxData;
