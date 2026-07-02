@@ -1,51 +1,134 @@
 ## Scope
 
-Home's animated EmptyFeed is complete and remains unchanged. This update ships the final two empty-state copy revisions.
+Only `src/routes/_authenticated/profile.me.tsx` needs changes.
+
+The Explore empty state is already finalized.
+
+The Home EmptyFeed is finalized and must not be touched.
 
 ---
 
-## 1. Profile → My Intents
+## Change: Profile → My Intents empty state
 
-**File:** `src/routes/_authenticated/profile.me.tsx`
+Replace the current empty-state block with logic based on whether the user has ever created an intent, not just whether the current filter is empty.
 
-Replace the current empty state with:
+## Logic
 
-- Headline: **You haven't posted your first intent yet.**
-- Body: *Every connection starts with one intent. Create yours and let the right people find you.*
-- CTA: **Create your first Intent** → `/intents/new`
+```ts
+const hasEverCreatedIntent =
+  (stats?.intentsCreated ?? (mine?.length ?? 0)) > 0;
 
-Only show this when the selected **My Intents** tab (Active / Expired / Closed / Fulfilled) has no items. No animation.
+if (!hasEverCreatedIntent) {
+  // Variant A
+} else if (mineFiltered.length === 0) {
+  // Variant B
+} else {
+  // Render intent cards
+}
+```
+
+This uses the lifetime count when available, falls back to the loaded list if stats isn't loaded, and avoids future bugs if the stats query changes.
 
 ---
 
-## 2. Explore
+## Variant A — First-time user
 
-**File:** `src/routes/_authenticated/explore.tsx`
+Only render when the user has never created an intent.
 
-Replace the current empty state with:
+### Headline
 
-- Headline: **Nothing matched your search.**
-- Body: *Try another location or category. Or be the first to post here.*
-- CTA: **Post an Intent** → `/intents/new`
+Your first intent starts here.
 
-No animation.
+### Body
+
+Every connection starts with one intent.
+
+Create yours and let the right people find you.
+
+### CTA
+
+Create your first intent
+
+Links to:
+
+```
+/intents/new
+```
+
+---
+
+## Variant B — Empty filter
+
+Render when the user has created intents, but the current sub-tab is empty.
+
+Use a lookup object:
+
+```ts
+const EMPTY_COPY = {
+  active: {
+    title: "No active intents.",
+    body: "Your active intents will appear here.",
+  },
+  fulfilled: {
+    title: "No fulfilled intents yet.",
+    body: "Completed intents will appear here.",
+  },
+  closed: {
+    title: "No closed intents yet.",
+    body: "Closed intents will appear here.",
+  },
+  expired: {
+    title: "No expired intents.",
+    body: "Expired intents will appear here.",
+  },
+} as const;
+
+const copy = EMPTY_COPY[mineSub];
+```
+
+Display:
+
+- Headline → `copy.title`
+- Body → `copy.body`
+
+No CTA.
+
+---
+
+## Styling
+
+Reuse the existing:
+
+- dashed border
+- surface background
+- spacing
+- typography
+- Button component
+
+No new components.
+
+No design-token changes.
 
 ---
 
 ## Out of scope
 
-- Home EmptyFeed (already finalized)
-- Interested / Joined / Connections empty states
-- Routing, backend, business logic, or data changes
+- Home EmptyFeed
+- Explore
+- Interested tab
+- Joined tab
+- Connections tab
+- Backend
+- Routing
+- Database
+- Business logic beyond this empty-state condition
 
-## Technical
-
-- Inline implementations in existing files (no new components).
-- Use existing `Button` + TanStack Router `Link` to `/intents/new`.
-- Reuse existing surface, dashed border, spacing, and typography tokens.
+---
 
 ## Success criteria
 
-- Home → Inspire the user (animated brand moment)
-- My Intents → Encourage the first post
-- Explore → Help the user recover from an empty search
+- Users who have never created an intent see an encouraging first-time experience with a CTA.
+- Users who already have intents never see "Create your first intent."
+- Empty filters display contextual messages.
+- Existing users are never told they've never posted.
+- Visual styling remains consistent with the rest of Intent.

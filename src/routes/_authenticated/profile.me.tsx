@@ -215,6 +215,26 @@ function MeProfile() {
     return i.status === mineSub;
   });
 
+  const EMPTY_COPY = {
+    active: {
+      title: "No active intents.",
+      body: "Your active intents will appear here.",
+    },
+    fulfilled: {
+      title: "No fulfilled intents yet.",
+      body: "Completed intents will appear here.",
+    },
+    closed: {
+      title: "No closed intents yet.",
+      body: "Closed intents will appear here.",
+    },
+    expired: {
+      title: "No expired intents.",
+      body: "Expired intents will appear here.",
+    },
+  } as const;
+
+
   const interestedRows = (participations ?? []).filter((p) => p.state === "interested" && p.intent);
   const joinedRows = (participations ?? []).filter((p) => p.state === "confirmed" && p.intent);
   const upcoming = joinedRows.filter((p) => p.intent!.starts_at && new Date(p.intent!.starts_at).getTime() >= now);
@@ -270,17 +290,33 @@ function MeProfile() {
               ))}
             </TabsList>
             <TabsContent value={mineSub} className="mt-4 space-y-3">
-              {mineFiltered.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
-                  <p className="font-semibold text-foreground">You haven't posted your first intent yet.</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Every connection starts with one intent. Create yours and let the right people find you.
-                  </p>
-                  <Link to="/intents/new">
-                    <Button className="mt-4" size="sm">Create your first Intent</Button>
-                  </Link>
-                </div>
-              )}
+              {/* Prefer the lifetime `stats.intentsCreated` when it exists; fallback to the loaded list. */}
+              {(() => {
+                const hasEverCreatedIntent = (mine?.length ?? 0) > 0;
+                if (!hasEverCreatedIntent) {
+                  return (
+                    <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+                      <p className="font-semibold text-foreground">Your first intent starts here.</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Every connection starts with one intent. Create yours and let the right people find you.
+                      </p>
+                      <Link to="/intents/new">
+                        <Button className="mt-4" size="sm">Create your first intent</Button>
+                      </Link>
+                    </div>
+                  );
+                }
+                if (mineFiltered.length === 0) {
+                  const copy = EMPTY_COPY[mineSub];
+                  return (
+                    <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+                      <p className="font-semibold text-foreground">{copy.title}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{copy.body}</p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {mineFiltered.map((i) => (
                 <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true)} />
               ))}
