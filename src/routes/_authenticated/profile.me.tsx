@@ -271,9 +271,15 @@ function MeProfile() {
             </TabsList>
             <TabsContent value={mineSub} className="mt-4 space-y-3">
               {mineFiltered.length === 0 && (
-                <p className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center text-sm text-muted-foreground">
-                  Nothing here yet.
-                </p>
+                <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+                  <p className="font-semibold text-foreground">You haven't posted your first intent yet.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Every connection starts with one intent. Create yours and let the right people find you.
+                  </p>
+                  <Link to="/intents/new">
+                    <Button className="mt-4" size="sm">Create your first Intent</Button>
+                  </Link>
+                </div>
               )}
               {mineFiltered.map((i) => (
                 <IntentCard key={i.id} intent={rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true)} />
