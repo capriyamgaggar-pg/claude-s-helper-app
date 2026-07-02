@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ function Inbox() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabId>("chats");
+  const location = useLocation();
+  const isThreadOpen = location.pathname !== "/inbox" && location.pathname.startsWith("/inbox/");
 
   const connections = useQuery({
     queryKey: ["connections", user.id],
@@ -80,6 +82,10 @@ function Inbox() {
     { id: "received", label: "Received", badge: received.length > 0 ? received.length : null },
     { id: "sent", label: "Sent", badge: null },
   ];
+
+  if (isThreadOpen) {
+    return <Outlet />;
+  }
 
   return (
     <div className="px-5 pt-8">
