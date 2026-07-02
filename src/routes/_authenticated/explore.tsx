@@ -122,7 +122,15 @@ function Explore() {
           return <IntentCard key={card.id} intent={card} />;
         })}
         {filtered.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
+          <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+            <p className="font-semibold text-foreground">Nothing matched your search.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try another location or category. Or be the first to post here.
+            </p>
+            <Link to="/intents/new">
+              <Button className="mt-4" size="sm">Post an Intent</Button>
+            </Link>
+          </div>
         )}
       </div>
       <Link to="/intents/new" className="hidden">+</Link>
