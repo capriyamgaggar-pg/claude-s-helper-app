@@ -73,8 +73,9 @@ function AuthPage() {
         <h1 className="display mt-3 text-4xl leading-[1.05] text-foreground">
           Find people who share your goal.
         </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          Not a feed. Just real-world intentions — a flatmate, a co-founder, someone to trek with.
+        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground whitespace-pre-line">
+          Not a feed. Just real-world intentions.{"\u00a0"}{"\n"}
+          A network that gets you out there
         </p>
       </div>
 
