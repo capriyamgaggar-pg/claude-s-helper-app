@@ -12,6 +12,7 @@ import { LocationPill } from "@/components/location-pill";
 import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/location";
 import { canSeeCreator } from "@/lib/creator-visibility";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
+import { isDemoHostBrowser } from "@/lib/demo-client";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
@@ -215,18 +216,22 @@ function HomePage() {
         <div className="flex items-center justify-between gap-2">
           <LocationPill place={place} onChange={setPlace} prefix="Showing" />
           <div className="flex shrink-0 gap-2">
-            <Link
-              to="/empty-preview"
-              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
-            >
-              Empty preview
-            </Link>
-            <Link
-              to="/demo-preview"
-              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
-            >
-              Demo
-            </Link>
+            {isDemoHostBrowser() && (
+              <>
+                <Link
+                  to="/empty-preview"
+                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Empty preview
+                </Link>
+                <Link
+                  to="/demo-preview"
+                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Demo
+                </Link>
+              </>
+            )}
           </div>
         </div>
         <h1 className="display mt-4 text-3xl leading-[1.1]">
