@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { demoSignIn, type DemoPersona, DEMO_PERSONAS } from "@/lib/demo.functions";
+import { demoSignIn } from "@/lib/demo.functions";
 
-export { DEMO_PERSONAS };
-export type { DemoPersona };
+export const DEMO_PERSONAS = ["discoverer", "creator", "organizer", "community"] as const;
+export type DemoPersona = (typeof DEMO_PERSONAS)[number];
 
 export const DEMO_PERSONA_LABELS: Record<DemoPersona, { label: string; blurb: string }> = {
   discoverer: {
