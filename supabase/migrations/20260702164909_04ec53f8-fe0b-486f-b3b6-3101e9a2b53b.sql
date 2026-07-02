@@ -1,0 +1,27 @@
+
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.touch_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.handle_intent_closed() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.handle_participant_confirmed() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_connection_lock_visibility() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_intent_participant_lock_visibility() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_form_submission_lock_visibility() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_connection_reputation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_community_history_reputation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_message_reputation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_participant_reputation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_intent_completed_feedback() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_intent_reputation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.on_feedback_insert() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.bump_form_version() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.rep_bump(uuid, text, integer) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.rep_bump_category(uuid, text, integer) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.rep_log(uuid, text, uuid, jsonb) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.lock_intent_visibility(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.expire_intents_job() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, app_role) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_intent_creator(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_thread_member(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.can_access_submission(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_step_creator(uuid, uuid) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.can_see_creator(uuid, uuid) FROM PUBLIC, anon, authenticated;
