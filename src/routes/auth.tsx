@@ -200,14 +200,8 @@ function AuthPage() {
 
 function sanitizeRedirect(value: string | undefined) {
   if (!value) return "/home";
-  try {
-    if (value.startsWith("/")) return value.startsWith("//") ? "/home" : value;
-    const url = new URL(value, window.location.origin);
-    if (url.origin !== window.location.origin) return "/home";
-    return `${url.pathname}${url.search}${url.hash}` || "/home";
-  } catch {
-    return "/home";
-  }
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  return "/home";
 }
 
 function GoogleMark() {
