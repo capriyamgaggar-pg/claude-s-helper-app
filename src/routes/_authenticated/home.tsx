@@ -130,22 +130,6 @@ function HomePage() {
     },
   });
 
-  const { data: hasAnyNetworkIntent } = useQuery({
-    queryKey: ["intents", "feed-any-network", user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("intents")
-        .select("id")
-        .eq("visibility", "public")
-        .eq("status", "active")
-        .gt("expires_at", new Date().toISOString())
-        .neq("creator_id", user.id)
-        .limit(1);
-      if (error) throw error;
-      return (data ?? []).length > 0;
-    },
-  });
-
   const filtered = useMemo(() => {
     if (!intents) return null;
     const term = q.trim().toLowerCase();
@@ -266,14 +250,23 @@ function HomePage() {
           {sections.recent.length > 0 && (
             <Section title="Just posted" Icon={Clock} items={sections.recent} viewerId={user.id} />
           )}
-          {everythingEmpty && hasAnyNetworkIntent === false && (
+          {everythingEmpty && emptyReason !== "search" && (
             <EmptyFeed
               label={label}
               interests={profile?.interests ?? null}
               onReset={() => setPlace(null)}
+              headline={
+                emptyReason === "location" ? `Nothing visible in ${label} yet.` : undefined
+              }
+              bodyText={
+                emptyReason === "location"
+                  ? "The wider network has activity. Explore anywhere, or be the first to post here."
+                  : undefined
+              }
+              resetLabel={emptyReason === "location" ? "Show anywhere" : undefined}
             />
           )}
-          {everythingEmpty && hasAnyNetworkIntent !== false && (
+          {everythingEmpty && emptyReason === "search" && (
             <FeedRecoveryState
               reason={emptyReason}
               label={label}

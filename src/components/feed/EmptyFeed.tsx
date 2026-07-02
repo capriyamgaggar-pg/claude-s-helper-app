@@ -25,6 +25,12 @@ type Props = {
   interests?: string[] | null;
   onReset: () => void;
   preview?: EmptyFeedPreview;
+  /** Override the default "Start something." headline (e.g. for location-empty state). */
+  headline?: string;
+  /** Override the default body copy under the headline. */
+  bodyText?: string;
+  /** Label for the reset action button (defaults to "Explore Anywhere"). */
+  resetLabel?: string;
 };
 
 // ─────────────────────────── Suggestions ────────────────────────────
@@ -121,7 +127,7 @@ const SEGMENTS: [number, number][] = [
   [0, 1], [1, 2], [3, 5], [5, 4], [0, 6], [2, 7], [6, 3], [7, 4],
 ];
 
-export function EmptyFeed({ label, interests, onReset, preview }: Props) {
+export function EmptyFeed({ label, interests, onReset, preview, headline, bodyText, resetLabel }: Props) {
   const chips = useMemo(() => getSuggestionsForInterests(interests), [interests]);
 
   const pinnedIndex = useMemo(() => {
@@ -391,15 +397,21 @@ export function EmptyFeed({ label, interests, onReset, preview }: Props) {
 
       {/* headline + body */}
       <div className="relative mt-8 text-center">
-        <h3 className="display text-2xl leading-tight sm:text-3xl">Start something.</h3>
+        <h3 className="display text-2xl leading-tight sm:text-3xl">{headline ?? "Start something."}</h3>
         <div className="mt-4 text-[14px] leading-relaxed text-muted-foreground">
-          <p>One intent can lead to</p>
-          <ul className="mt-1 space-y-0.5">
-            <li>your next flatmate.</li>
-            <li>your next co-founder.</li>
-            <li>your next mentor.</li>
-            <li>your next community.</li>
-          </ul>
+          {bodyText ? (
+            <p>{bodyText}</p>
+          ) : (
+            <>
+              <p>One intent can lead to</p>
+              <ul className="mt-1 space-y-0.5">
+                <li>your next flatmate.</li>
+                <li>your next co-founder.</li>
+                <li>your next mentor.</li>
+                <li>your next community.</li>
+              </ul>
+            </>
+          )}
         </div>
 
         <div className="mt-7 flex flex-col items-center gap-3">
@@ -415,7 +427,7 @@ export function EmptyFeed({ label, interests, onReset, preview }: Props) {
               onClick={onReset}
               className="text-[13px] text-muted-foreground underline-offset-4 hover:underline"
             >
-              Explore Anywhere
+              {resetLabel ?? "Explore Anywhere"}
             </button>
           )}
         </div>
