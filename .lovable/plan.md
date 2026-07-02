@@ -1,134 +1,67 @@
-## Scope
+## What I found
 
-Only `src/routes/_authenticated/profile.me.tsx` needs changes.
+1. **Google authorization is partly working, but the return flow is weak**
+   - The app uses the Lovable Cloud Google helper correctly in `src/routes/auth.tsx`.
+   - Backend auth logs show Google login/token events succeeding.
+   - The likely break is after Google returns: `/` always redirects to `/auth`, and `/auth` does not detect an existing signed-in session and send the user to `/home`.
 
-The Explore empty state is already finalized.
+2. **Profile empty-state logic is not what we agreed**
+   - The code comment says it should prefer lifetime stats, but the actual code only checks `mine?.length`.
+   - If the current intent query returns empty for any reason, it wrongly shows: “Your first intent starts here.”
+   - This explains why you still see first-time copy even after posting 1 intent.
 
-The Home EmptyFeed is finalized and must not be touched.
+3. **Home empty/feed experience is too hidden**
+   - The animated `EmptyFeed` only appears when all three Home sections are empty after filters.
+   - If your account/location/query state does not match that exact condition, you will not see the new experience.
+   - `/empty-preview` exists, but it is behind the authenticated app and not surfaced anywhere in the UI.
 
----
+4. **Demo data exists, but demo login accounts do not**
+   - There are seeded demo users and demo intents already in the database.
+   - Those demo users were created without passwords, so they populate the network but cannot be used as accounts to log in.
 
-## Change: Profile → My Intents empty state
+## Plan
 
-Replace the current empty-state block with logic based on whether the user has ever created an intent, not just whether the current filter is empty.
+### 1. Fix Google sign-in return behavior
+- Add signed-in session detection on `/auth`.
+- If a user is already signed in, automatically route them to the intended redirect or `/home`.
+- Keep Google using the Lovable Cloud OAuth helper.
+- Preserve safe redirect behavior so Google returns to a public same-origin URL, then the app routes internally after the session is available.
+- If provider configuration is still failing after code fix, use the built-in social auth configuration tool rather than hand-writing OAuth code.
 
-## Logic
+### 2. Fix Profile “first intent” logic properly
+- Add a `user_reputation_stats` query in `profile.me.tsx` for the signed-in user.
+- Use the agreed resilient check:
+  - `stats.intents_created > 0` when stats are available.
+  - Fallback to `mine.length > 0`.
+- Only show “Your first intent starts here” when both signals confirm zero lifetime intents.
+- Keep tab-specific empty messages for Active/Fulfilled/Closed/Expired when the user has created intents but the current tab is empty.
 
-```ts
-const hasEverCreatedIntent =
-  (stats?.intentsCreated ?? (mine?.length ?? 0)) > 0;
+### 3. Make Home and preview understandable
+- Add a lightweight entry point to `/empty-preview` in the app UI for development/preview use, clearly marked as preview/dev.
+- On Home, add a better visible state when there are no visible cards due to filters/location:
+  - Keep the animated `EmptyFeed` for true empty/cold-start.
+  - Add clear recovery copy when filters/location hide results.
+  - Give users actions like “Clear location” and “Explore anywhere” so Home does not look blank.
 
-if (!hasEverCreatedIntent) {
-  // Variant A
-} else if (mineFiltered.length === 0) {
-  // Variant B
-} else {
-  // Render intent cards
-}
-```
+### 4. Create safe demo experiences
+- Do **not** expose public demo passwords or weaken auth.
+- Add a controlled “Demo mode / Persona preview” route or panel that lets us view the app as seeded personas without creating insecure public credentials.
+- Use existing seeded personas and add enough representative demo data to show:
+  - normal user discovering intents,
+  - creator with active/expired/fulfilled intents,
+  - organizer intent with registration form and pipeline,
+  - inbox received/sent/chat states,
+  - connection lifecycle states.
+- Keep it clearly marked as demo/preview so it does not confuse real users.
 
-This uses the lifetime count when available, falls back to the loaded list if stats isn't loaded, and avoids future bugs if the stats query changes.
+### 5. Verify after implementation
+- Test Google return behavior in preview as far as the environment allows.
+- Check `/home`, `/profile/me`, `/explore`, `/empty-preview` visually.
+- Confirm Profile no longer shows first-time copy for a user with created intents.
+- Confirm build/typecheck passes.
 
----
-
-## Variant A — First-time user
-
-Only render when the user has never created an intent.
-
-### Headline
-
-Your first intent starts here.
-
-### Body
-
-Every connection starts with one intent.
-
-Create yours and let the right people find you.
-
-### CTA
-
-Create your first intent
-
-Links to:
-
-```
-/intents/new
-```
-
----
-
-## Variant B — Empty filter
-
-Render when the user has created intents, but the current sub-tab is empty.
-
-Use a lookup object:
-
-```ts
-const EMPTY_COPY = {
-  active: {
-    title: "No active intents.",
-    body: "Your active intents will appear here.",
-  },
-  fulfilled: {
-    title: "No fulfilled intents yet.",
-    body: "Completed intents will appear here.",
-  },
-  closed: {
-    title: "No closed intents yet.",
-    body: "Closed intents will appear here.",
-  },
-  expired: {
-    title: "No expired intents.",
-    body: "Expired intents will appear here.",
-  },
-} as const;
-
-const copy = EMPTY_COPY[mineSub];
-```
-
-Display:
-
-- Headline → `copy.title`
-- Body → `copy.body`
-
-No CTA.
-
----
-
-## Styling
-
-Reuse the existing:
-
-- dashed border
-- surface background
-- spacing
-- typography
-- Button component
-
-No new components.
-
-No design-token changes.
-
----
-
-## Out of scope
-
-- Home EmptyFeed
-- Explore
-- Interested tab
-- Joined tab
-- Connections tab
-- Backend
-- Routing
-- Database
-- Business logic beyond this empty-state condition
-
----
-
-## Success criteria
-
-- Users who have never created an intent see an encouraging first-time experience with a CTA.
-- Users who already have intents never see "Create your first intent."
-- Empty filters display contextual messages.
-- Existing users are never told they've never posted.
-- Visual styling remains consistent with the rest of Intent.
+## What will not be changed
+- No unrelated security policy changes.
+- No public anonymous access to private user data.
+- No direct editing of generated auth/backend integration files.
+- No fake “demo passwords” placed in the codebase.
