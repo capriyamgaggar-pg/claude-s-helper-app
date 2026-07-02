@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { MessageCircle, PanelsTopLeft, UserRoundCheck } from "lucide-react";
+import { Calendar, Clock, MapPin, MessageCircle, PanelsTopLeft, UserRoundCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { IntentCard, type IntentCardData } from "@/components/intent-card";
+import type { IntentCardData } from "@/components/intent-card";
+import { statusPill } from "@/lib/intent-lifecycle";
 
 export const Route = createFileRoute("/_authenticated/demo-preview")({
   head: () => ({ meta: [{ title: "Demo preview — Intent" }] }),
@@ -112,7 +113,7 @@ function DemoPreview() {
           <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Home / profile cards</h2>
         </div>
         <div className="space-y-3">
-          {cards[personaKey].map((card) => <IntentCard key={card.id} intent={card} />)}
+          {cards[personaKey].map((card) => <DemoIntentCard key={card.id} intent={card} />)}
         </div>
       </section>
 
@@ -202,5 +203,48 @@ function InboxRow({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
     </div>
+  );
+}
+
+function DemoIntentCard({ intent }: { intent: IntentCardData }) {
+  const pill = intent.status ? statusPill(intent.status, intent.expires_at ?? null) : null;
+  const toneClass =
+    pill?.tone === "amber"
+      ? "bg-amber-100 text-amber-900"
+      : pill?.tone === "green"
+        ? "bg-emerald-100 text-emerald-900"
+        : pill?.tone === "grey"
+          ? "bg-muted text-muted-foreground"
+          : "bg-secondary text-muted-foreground";
+
+  return (
+    <article className="rounded-2xl border border-border bg-surface p-4">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+          {intent.category_label}
+        </span>
+        {pill && (
+          <span className={"inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium " + toneClass}>
+            <Clock className="size-3" /> {pill.text}
+          </span>
+        )}
+        <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">Demo</span>
+      </div>
+      <h3 className="display mt-2 text-lg leading-snug text-foreground">{intent.title}</h3>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+        {intent.city && <span className="flex items-center gap-1"><MapPin className="size-3.5" /> {intent.city}</span>}
+        {intent.starts_at && (
+          <span className="flex items-center gap-1">
+            <Calendar className="size-3.5" />
+            {new Date(intent.starts_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </span>
+        )}
+        <span className="flex items-center gap-1"><Users className="size-3.5" />{intent.interested_count} interested · {intent.people_needed} needed</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2 pt-1">
+        <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">D</span>
+        <span className="text-[12px] text-muted-foreground">By Demo creator</span>
+      </div>
+    </article>
   );
 }
