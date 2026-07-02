@@ -49,14 +49,18 @@ const PERSONAS: Record<DemoPersona, PersonaSpec> = {
   },
 };
 
+// IMPORTANT: Lovable's published (public, live) apps also live on *.lovable.app —
+// the same domain family as ephemeral preview links. This function grants
+// admin-privileged demo account creation and passwordless sign-in, so matching
+// on domain suffix alone would let ANY visitor to the real production site
+// self-provision and log in as a demo user. Ephemeral preview links use a
+// distinct "id-preview--" hostname prefix, so we match on that instead.
 function isDemoHost(host: string | null): boolean {
   if (!host) return false;
   return (
     host.startsWith("localhost") ||
     host.startsWith("127.0.0.1") ||
-    host.endsWith(".lovable.app") ||
-    host.endsWith(".lovable.dev") ||
-    host.endsWith(".lovableproject.com")
+    host.startsWith("id-preview--")
   );
 }
 

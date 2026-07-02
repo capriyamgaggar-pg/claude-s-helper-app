@@ -23,13 +23,18 @@ export const DEMO_PERSONA_LABELS: Record<DemoPersona, { label: string; blurb: st
   },
 };
 
-const DEMO_HOST_HINTS = [".lovable.app", ".lovable.dev", ".lovableproject.com"];
+// IMPORTANT: Lovable's published (public, live) apps also live on *.lovable.app —
+// the same domain family as ephemeral preview links. Matching on domain suffix
+// alone would expose demo/one-tap-login on the real production site. Ephemeral
+// preview links use a distinct "id-preview--" hostname prefix, so we match on
+// that instead of the domain suffix.
+const DEMO_PREVIEW_PREFIX = "id-preview--";
 
 export function isDemoHostBrowser(): boolean {
   if (typeof window === "undefined") return false;
   const h = window.location.hostname;
   if (h === "localhost" || h.startsWith("127.")) return true;
-  return DEMO_HOST_HINTS.some((s) => h.endsWith(s));
+  return h.startsWith(DEMO_PREVIEW_PREFIX);
 }
 
 export async function signInAsDemoPersona(persona: DemoPersona): Promise<void> {
