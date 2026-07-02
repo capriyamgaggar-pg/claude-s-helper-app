@@ -156,6 +156,7 @@ export type Database = {
           origin_city: string | null
           requested_by: string
           state: Database["public"]["Enums"]["connection_state"]
+          thread_id: string | null
           updated_at: string
           user_a: string
           user_b: string
@@ -168,6 +169,7 @@ export type Database = {
           origin_city?: string | null
           requested_by: string
           state?: Database["public"]["Enums"]["connection_state"]
+          thread_id?: string | null
           updated_at?: string
           user_a: string
           user_b: string
@@ -180,6 +182,7 @@ export type Database = {
           origin_city?: string | null
           requested_by?: string
           state?: Database["public"]["Enums"]["connection_state"]
+          thread_id?: string | null
           updated_at?: string
           user_a?: string
           user_b?: string
@@ -197,6 +200,13 @@ export type Database = {
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connections_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
             referencedColumns: ["id"]
           },
           {
@@ -1509,6 +1519,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_connection: { Args: { _connection_id: string }; Returns: string }
       can_access_submission: {
         Args: { _submission_id: string; _user_id: string }
         Returns: boolean
