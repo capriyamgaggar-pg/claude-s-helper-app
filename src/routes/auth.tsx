@@ -75,7 +75,7 @@ function AuthPage() {
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground whitespace-pre-line">
           Not a feed. Just real-world intentions.{"\u00a0"}{"\n"}
-          A network that gets you out there
+          A network that gets you out there.
         </p>
       </div>
 
