@@ -1546,6 +1546,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_community_member: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_community_organizer: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_intent_creator: {
         Args: { _intent_id: string; _user_id: string }
         Returns: boolean
