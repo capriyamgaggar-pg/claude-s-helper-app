@@ -102,10 +102,10 @@ function AuthPage() {
             className="text-[44px] leading-[1.02] tracking-[-0.02em] text-foreground"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Find your people
+            Where plans find People
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
-            FOR UPCOMING PLAN
+            {"\n"}
           </p>
         </div>
 
