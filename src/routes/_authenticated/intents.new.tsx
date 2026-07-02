@@ -17,6 +17,9 @@ import type { CreatorVisibility } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    title: typeof search.title === "string" ? search.title : undefined,
+  }),
   component: NewIntent,
 });
 
@@ -32,12 +35,13 @@ type ParticipationFlow = "conversation_first" | "registration_first";
 function NewIntent() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
+  const { title: prefillTitle } = Route.useSearch();
 
   const [cats, setCats] = useState<Category[]>([]);
   const [category, setCategory] = useState("");
 
   // Shared
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(prefillTitle ?? "");
   const [place, setPlace] = useState<Place | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [startsAt, setStartsAt] = useState("");
