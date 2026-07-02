@@ -1521,40 +1521,34 @@ export type Database = {
       get_my_profile: {
         Args: never
         Returns: {
-          address_line1: string | null
-          address_line2: string | null
-          bio: string | null
-          blood_group: string | null
-          city: string | null
-          country: string | null
+          address_line1: string
+          address_line2: string
+          bio: string
+          blood_group: string
+          city: string
+          country: string
           created_at: string
-          dob: string | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
+          dob: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
           id: string
-          instagram_url: string | null
+          instagram_url: string
           interests: string[]
           languages: string[]
-          lat: number | null
-          linkedin_url: string | null
-          lng: number | null
-          locality: string | null
-          name: string | null
+          lat: number
+          linkedin_url: string
+          lng: number
+          locality: string
+          name: string
           onboarded: boolean
-          phone: string | null
-          photo_url: string | null
-          pincode: string | null
-          place_id: string | null
-          profession: string | null
-          state: string | null
+          phone: string
+          photo_url: string
+          pincode: string
+          place_id: string
+          profession: string
+          state: string
           updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "profiles"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        }[]
       }
       has_role: {
         Args: {
