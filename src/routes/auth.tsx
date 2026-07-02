@@ -94,7 +94,7 @@ function AuthPage() {
 
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-6 pb-10 pt-14">
         <div className={isMobile ? "mt-20" : "mt-10"}>
-          <Wordmark size="lg" tagline="A network for shared real-world goals" />
+          <Wordmark size="lg" tagline="A NETWORK FOR REAL WORLD CONNECTION" />
         </div>
 
         <div className="mt-6">
@@ -102,10 +102,10 @@ function AuthPage() {
             className="text-[44px] leading-[1.02] tracking-[-0.02em] text-foreground"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Find your people.
+            Find your people
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
-            Anyone. Any goal. Anywhere.
+            FOR UPCOMING PLAN
           </p>
         </div>
 
