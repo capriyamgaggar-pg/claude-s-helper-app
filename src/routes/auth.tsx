@@ -11,6 +11,7 @@ import { AmbientNetwork } from "@/components/brand/AmbientNetwork";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { defaultIntentExamples } from "@/components/brand/examples";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DemoAuthPanel } from "@/components/demo/DemoAuthPanel";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -184,6 +185,8 @@ function AuthPage() {
               : "Already have an account? Sign in"}
           </button>
         </div>
+
+        <DemoAuthPanel />
 
         <div className="mt-6 text-center">
           <p className="text-[12px] text-foreground/50">

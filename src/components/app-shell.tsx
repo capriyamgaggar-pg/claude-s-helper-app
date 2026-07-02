@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Compass, MessageCircle, User as UserIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { DemoBanner } from "@/components/demo/DemoBanner";
 
 type Tab = { to: string; label: string; Icon: typeof Home; primary?: boolean };
 const tabs: Tab[] = [
@@ -17,6 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-background pb-[calc(64px+env(safe-area-inset-bottom))] sm:max-w-[640px]">
+      <DemoBanner />
       <main className="flex-1">{children}</main>
 
       <nav
