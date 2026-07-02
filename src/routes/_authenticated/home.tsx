@@ -10,6 +10,7 @@ import { scoreIntent } from "@/lib/matching";
 import { LocationPill } from "@/components/location-pill";
 import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/location";
 import { canSeeCreator } from "@/lib/creator-visibility";
+import { EmptyFeed } from "@/components/feed/EmptyFeed";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
@@ -222,7 +223,13 @@ function HomePage() {
           {sections.recent.length > 0 && (
             <Section title="Just posted" Icon={Clock} items={sections.recent} viewerId={user.id} />
           )}
-          {everythingEmpty && <EmptyState label={label} onReset={() => setPlace(null)} />}
+          {everythingEmpty && (
+            <EmptyFeed
+              label={label}
+              interests={profile?.interests ?? null}
+              onReset={() => setPlace(null)}
+            />
+          )}
         </div>
       )}
     </div>
@@ -243,25 +250,3 @@ function Section({ title, Icon, items, viewerId }: { title: string; Icon: typeof
   );
 }
 
-function EmptyState({ label, onReset }: { label: string; onReset: () => void }) {
-  const isAnywhere = label === "Anywhere";
-  return (
-    <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center">
-      <h3 className="display text-xl">Nothing here yet</h3>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {isAnywhere
-          ? "Be the first — post what you're trying to do today."
-          : `No intents in ${label} right now.`}
-      </p>
-      {!isAnywhere && (
-        <button
-          type="button"
-          onClick={onReset}
-          className="mt-4 inline-flex items-center rounded-full border border-border bg-background px-4 py-2 text-[13px] font-medium hover:bg-secondary"
-        >
-          Show Anywhere
-        </button>
-      )}
-    </div>
-  );
-}
