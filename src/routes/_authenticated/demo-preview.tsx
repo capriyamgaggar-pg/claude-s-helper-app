@@ -43,16 +43,16 @@ const personas: Record<PersonaKey, {
 
 const cards: Record<PersonaKey, IntentCardData[]> = {
   discoverer: [
-    demoCard("trek-1", "Kudremukh trek — 2 days", "trekking", "Trekking", "Bengaluru", 2, 4),
-    demoCard("photo-1", "Film photography walk", "hobby", "Hobby", "Cubbon Park, Bengaluru", 5, 7),
+    demoCard("11111111-1111-4111-8111-111111111111", "Kudremukh trek — 2 days", "trekking", "Trekking", "Bengaluru", 2, 4),
+    demoCard("22222222-2222-4222-8222-222222222222", "Film photography walk", "hobby", "Hobby", "Cubbon Park, Bengaluru", 5, 7),
   ],
   creator: [
-    demoCard("cofounder-1", "Technical co-founder — fintech for MSMEs", "cofounder", "Co-founder", "Mumbai", 1, 5),
-    { ...demoCard("coffee-1", "Founders coffee — Bandra", "networking", "Networking", "Mumbai", 6, 9), status: "expired", expires_at: new Date(Date.now() - 86_400_000).toISOString() },
+    demoCard("33333333-3333-4333-8333-333333333333", "Technical co-founder — fintech for MSMEs", "cofounder", "Co-founder", "Mumbai", 1, 5),
+    { ...demoCard("44444444-4444-4444-8444-444444444444", "Founders coffee — Bandra", "networking", "Networking", "Mumbai", 6, 9), status: "expired", expires_at: new Date(Date.now() - 86_400_000).toISOString() },
   ],
   organizer: [
-    demoCard("expo-1", "Booth partner — Yarn Expo Mumbai", "event", "Event / Expo", "Mumbai", 50, 18),
-    demoCard("run-1", "Sunday long run — 18km", "sports", "Sports", "Pune", 30, 12),
+    demoCard("55555555-5555-4555-8555-555555555555", "Booth partner — Yarn Expo Mumbai", "event", "Event / Expo", "Mumbai", 50, 18),
+    demoCard("66666666-6666-4666-8666-666666666666", "Sunday long run — 18km", "sports", "Sports", "Pune", 30, 12),
   ],
 };
 
