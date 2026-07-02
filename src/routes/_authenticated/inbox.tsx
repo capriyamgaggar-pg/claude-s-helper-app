@@ -56,19 +56,12 @@ function Inbox() {
   });
 
   const accept = useMutation({
-    mutationFn: async (c: { id: string; user_a: string; user_b: string }) => {
-      const { error } = await supabase.from("connections")
-        .update({ state: "accepted" }).eq("id", c.id);
+    mutationFn: async (c: { id: string }) => {
+      const { data: threadId, error } = await supabase.rpc("accept_connection", {
+        _connection_id: c.id,
+      });
       if (error) throw error;
-      const { data: t, error: et } = await supabase.from("threads")
-        .insert({ kind: "dm" }).select("id").single();
-      if (et) throw et;
-      const { error: em } = await supabase.from("thread_members").insert([
-        { thread_id: t.id, user_id: c.user_a },
-        { thread_id: t.id, user_id: c.user_b },
-      ]);
-      if (em) throw em;
-      return t.id as string;
+      return threadId as string;
     },
     onSuccess: () => {
       toast.success("Connected — chat is open");
@@ -115,7 +108,7 @@ function Inbox() {
           rows={received}
           userId={user.id}
           emptyText="No pending requests."
-          onAccept={(c) => accept.mutate({ id: c.id, user_a: c.user_a, user_b: c.user_b })}
+          onAccept={(c) => accept.mutate({ id: c.id })}
         />
       )}
 
