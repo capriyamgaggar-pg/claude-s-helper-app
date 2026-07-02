@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { defaultIntentExamples, PREVIEW_STAGES, type PreviewStage } from "@/components/brand/examples";
+import { isDemoHostBrowser } from "@/lib/demo-client";
 
 export const Route = createFileRoute("/_authenticated/empty-preview")({
   component: EmptyPreviewPage,
@@ -22,6 +23,10 @@ function EmptyPreviewPage() {
   const [previewAutoRotate, setPreviewAutoRotate] = useState(true);
   const [previewStage, setPreviewStage] = useState<PreviewStage | "auto">("auto");
   const [replayKey, setReplayKey] = useState(0);
+
+  if (!isDemoHostBrowser()) {
+    return <Navigate to="/home" replace />;
+  }
 
   const toggleInterest = (i: string) =>
     setInterests((prev) =>

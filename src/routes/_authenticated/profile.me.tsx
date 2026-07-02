@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isDemoHostBrowser } from "@/lib/demo-client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
@@ -271,23 +272,25 @@ function MeProfile() {
         </div>
       </header>
 
-      <section className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Preview tools</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Link
-            to="/empty-preview"
-            className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
-          >
-            Empty feed preview
-          </Link>
-          <Link
-            to="/demo-preview"
-            className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
-          >
-            Demo personas
-          </Link>
-        </div>
-      </section>
+      {isDemoHostBrowser() && (
+        <section className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Preview tools</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link
+              to="/empty-preview"
+              className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
+            >
+              Empty feed preview
+            </Link>
+            <Link
+              to="/demo-preview"
+              className="rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-secondary"
+            >
+              Demo personas
+            </Link>
+          </div>
+        </section>
+      )}
 
       {profile?.bio && <p className="mt-5 text-[14px] leading-relaxed">{profile.bio}</p>}
 

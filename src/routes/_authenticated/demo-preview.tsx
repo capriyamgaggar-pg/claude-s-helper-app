@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, MessageCircle, PanelsTopLeft, UserRoundCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { IntentCardData } from "@/components/intent-card";
 import { statusPill } from "@/lib/intent-lifecycle";
+import { isDemoHostBrowser } from "@/lib/demo-client";
 
 export const Route = createFileRoute("/_authenticated/demo-preview")({
   head: () => ({ meta: [{ title: "Demo preview — Intent" }] }),
@@ -61,6 +62,10 @@ function DemoPreview() {
   const [personaKey, setPersonaKey] = useState<PersonaKey>("discoverer");
   const persona = personas[personaKey];
   const pipeline = useMemo(() => pipelineFor(personaKey), [personaKey]);
+
+  if (!isDemoHostBrowser()) {
+    return <Navigate to="/home" replace />;
+  }
 
   return (
     <div className="px-5 pt-8 pb-10">
