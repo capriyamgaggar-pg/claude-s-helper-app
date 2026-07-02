@@ -8,6 +8,6 @@ export const Route = createFileRoute("/")({
     ],
   }),
   beforeLoad: () => {
-    throw redirect({ to: "/auth" });
+    throw redirect({ to: "/home" });
   },
 });

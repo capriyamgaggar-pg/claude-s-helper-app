@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,17 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const safeRedirect = sanitizeRedirect(redirect);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!alive || !data.user) return;
+      navigate({ to: safeRedirect as never, replace: true });
+    });
+    return () => { alive = false; };
+  }, [navigate, safeRedirect]);
+
   async function onGoogle() {
     setBusy(true);
     try {
@@ -43,12 +54,12 @@ function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (res.error) {
-        toast.error("Couldn't sign in with Google. Please try again.");
+        toast.error(res.error.message || "Couldn't sign in with Google. Please try again.");
         setBusy(false);
         return;
       }
       if (res.redirected) return;
-      navigate({ to: redirect ?? "/home" });
+      navigate({ to: safeRedirect as never, replace: true });
     } catch {
       toast.error("Couldn't sign in with Google.");
       setBusy(false);
@@ -78,7 +89,7 @@ function AuthPage() {
           setBusy(false);
           return;
         }
-        navigate({ to: redirect ?? "/home" });
+        navigate({ to: safeRedirect as never, replace: true });
       }
     } finally {
       setBusy(false);
@@ -185,6 +196,19 @@ function AuthPage() {
       </div>
     </div>
   );
+}
+
+function sanitizeRedirect(value: string | undefined) {
+  if (!value) return "/home";
+  if (value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/auth")) return value;
+  try {
+    const url = new URL(value);
+    const localPath = `${url.pathname}${url.search}${url.hash}`;
+    if (localPath.startsWith("/") && !localPath.startsWith("//") && !localPath.startsWith("/auth")) return localPath;
+  } catch {
+    // Ignore malformed redirect values.
+  }
+  return "/home";
 }
 
 function GoogleMark() {

@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Sparkles, Flame, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { scoreIntent } from "@/lib/matching";
@@ -128,6 +129,22 @@ function HomePage() {
     },
   });
 
+  const { data: hasAnyNetworkIntent } = useQuery({
+    queryKey: ["intents", "feed-any-network", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("intents")
+        .select("id")
+        .eq("visibility", "public")
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .neq("creator_id", user.id)
+        .limit(1);
+      if (error) throw error;
+      return (data ?? []).length > 0;
+    },
+  });
+
   const filtered = useMemo(() => {
     if (!intents) return null;
     const term = q.trim().toLowerCase();
@@ -185,11 +202,32 @@ function HomePage() {
     sections.trending.length === 0 &&
     sections.recent.length === 0;
 
+  const currentLocationHasOthers = (intents ?? []).some((i) => i.creator_id !== user.id);
+  const emptyReason = q.trim()
+    ? "search"
+    : filter.scope !== "anywhere" && !currentLocationHasOthers
+      ? "location"
+      : "network";
+
   return (
     <div className="px-5 pt-8">
       <header>
         <div className="flex items-center justify-between gap-2">
           <LocationPill place={place} onChange={setPlace} prefix="Showing" />
+          <div className="flex shrink-0 gap-2">
+            <Link
+              to="/empty-preview"
+              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Empty preview
+            </Link>
+            <Link
+              to="/demo-preview"
+              className="rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Demo
+            </Link>
+          </div>
         </div>
         <h1 className="display mt-4 text-3xl leading-[1.1]">
           What are you trying to do today?
@@ -223,15 +261,71 @@ function HomePage() {
           {sections.recent.length > 0 && (
             <Section title="Just posted" Icon={Clock} items={sections.recent} viewerId={user.id} />
           )}
-          {everythingEmpty && (
+          {everythingEmpty && hasAnyNetworkIntent === false && (
             <EmptyFeed
               label={label}
               interests={profile?.interests ?? null}
               onReset={() => setPlace(null)}
             />
           )}
+          {everythingEmpty && hasAnyNetworkIntent !== false && (
+            <FeedRecoveryState
+              reason={emptyReason}
+              label={label}
+              onClearSearch={() => setQ("")}
+              onClearLocation={() => setPlace(null)}
+            />
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function FeedRecoveryState({
+  reason,
+  label,
+  onClearSearch,
+  onClearLocation,
+}: {
+  reason: "search" | "location" | "network";
+  label: string;
+  onClearSearch: () => void;
+  onClearLocation: () => void;
+}) {
+  const copy = reason === "search"
+    ? {
+        title: "No intent matched that search.",
+        body: "Try a simpler word, clear the search, or explore everything nearby.",
+      }
+    : reason === "location"
+      ? {
+          title: `Nothing visible in ${label} yet.`,
+          body: "The wider network has activity. Open your location filter to see more intents.",
+        }
+      : {
+          title: "No visible intents from others yet.",
+          body: "Your own intents stay in Profile. Home fills with people around you as the network grows.",
+        };
+
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+      <p className="font-semibold text-foreground">{copy.title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{copy.body}</p>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        {reason === "search" && (
+          <Button size="sm" variant="outline" onClick={onClearSearch}>Clear search</Button>
+        )}
+        {reason === "location" && (
+          <Button size="sm" variant="outline" onClick={onClearLocation}>Show anywhere</Button>
+        )}
+        <Link to="/explore">
+          <Button size="sm">Explore intents</Button>
+        </Link>
+        <Link to="/intents/new">
+          <Button size="sm" variant="outline">Post an Intent</Button>
+        </Link>
+      </div>
     </div>
   );
 }
