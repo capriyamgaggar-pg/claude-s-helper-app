@@ -1520,35 +1520,13 @@ export type Database = {
       expire_intents_job: { Args: never; Returns: undefined }
       get_my_profile: {
         Args: never
-        Returns: {
-          address_line1: string
-          address_line2: string
-          bio: string
-          blood_group: string
-          city: string
-          country: string
-          created_at: string
-          dob: string
-          emergency_contact_name: string
-          emergency_contact_phone: string
-          id: string
-          instagram_url: string
-          interests: string[]
-          languages: string[]
-          lat: number
-          linkedin_url: string
-          lng: number
-          locality: string
-          name: string
-          onboarded: boolean
-          phone: string
-          photo_url: string
-          pincode: string
-          place_id: string
-          profession: string
-          state: string
-          updated_at: string
-        }[]
+        Returns: Database["public"]["CompositeTypes"]["my_profile"]
+        SetofOptions: {
+          from: "*"
+          to: "my_profile"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       has_role: {
         Args: {
@@ -1624,7 +1602,35 @@ export type Database = {
       thread_kind: "dm" | "intent" | "intent_group"
     }
     CompositeTypes: {
-      [_ in never]: never
+      my_profile: {
+        id: string | null
+        name: string | null
+        photo_url: string | null
+        city: string | null
+        profession: string | null
+        bio: string | null
+        languages: string[] | null
+        interests: string[] | null
+        linkedin_url: string | null
+        instagram_url: string | null
+        onboarded: boolean | null
+        created_at: string | null
+        updated_at: string | null
+        locality: string | null
+        state: string | null
+        country: string | null
+        lat: number | null
+        lng: number | null
+        place_id: string | null
+        phone: string | null
+        dob: string | null
+        blood_group: string | null
+        emergency_contact_name: string | null
+        emergency_contact_phone: string | null
+        address_line1: string | null
+        address_line2: string | null
+        pincode: string | null
+      }
     }
   }
 }
