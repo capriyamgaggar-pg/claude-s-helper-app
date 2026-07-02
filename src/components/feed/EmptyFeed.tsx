@@ -121,22 +121,48 @@ const SEGMENTS: [number, number][] = [
   [0, 1], [1, 2], [3, 5], [5, 4], [0, 6], [2, 7], [6, 3], [7, 4],
 ];
 
-export function EmptyFeed({ label, interests, onReset }: Props) {
+export function EmptyFeed({ label, interests, onReset, preview }: Props) {
   const chips = useMemo(() => getSuggestionsForInterests(interests), [interests]);
-  const [exampleIndex, setExampleIndex] = useState(0);
-  const [stage, setStage] = useState(0);
+
+  const pinnedIndex = useMemo(() => {
+    if (!preview?.exampleKey) return null;
+    const i = defaultIntentExamples.findIndex((e) => e.slug === preview.exampleKey);
+    return i >= 0 ? i : null;
+  }, [preview?.exampleKey]);
+
+  const pinnedStage = useMemo(() => {
+    if (!preview?.previewStage) return null;
+    const i = PREVIEW_STAGES.indexOf(preview.previewStage);
+    return i >= 0 ? i : null;
+  }, [preview?.previewStage]);
+
+  const autoRotate = preview?.previewAutoRotate ?? true;
+
+  const [exampleIndex, setExampleIndex] = useState(pinnedIndex ?? 0);
+  const [stage, setStage] = useState(pinnedStage ?? 0);
   const [rippleOffset, setRippleOffset] = useState({ x: 0, y: 0 });
   const timerRef = useRef<number | null>(null);
 
-  const prefersReduced = useMemo(
+  const systemReduced = useMemo(
     () =>
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     [],
   );
+  const prefersReduced = preview?.reducedMotion ?? systemReduced;
+
+  // Sync when pinned values change
+  useEffect(() => {
+    if (pinnedIndex !== null) setExampleIndex(pinnedIndex);
+  }, [pinnedIndex]);
+  useEffect(() => {
+    if (pinnedStage !== null) setStage(pinnedStage);
+  }, [pinnedStage]);
 
   useEffect(() => {
     if (prefersReduced) return;
+    if (pinnedStage !== null) return; // don't animate when stage is pinned
+
     let cancelled = false;
 
     const tick = (s: number) => {
@@ -145,12 +171,13 @@ export function EmptyFeed({ label, interests, onReset }: Props) {
       const dur = STAGE_DUR[s];
       timerRef.current = window.setTimeout(() => {
         if (s + 1 >= STAGE_DUR.length) {
-          setExampleIndex((i) => (i + 1) % defaultIntentExamples.length);
+          if (autoRotate && pinnedIndex === null) {
+            setExampleIndex((i) => (i + 1) % defaultIntentExamples.length);
+          }
           setRippleOffset({
             x: (Math.random() - 0.5) * 12,
             y: (Math.random() - 0.5) * 12,
           });
-          // Skip stage 0 on subsequent loops — the card stays visible.
           tick(1);
         } else {
           tick(s + 1);
@@ -162,7 +189,7 @@ export function EmptyFeed({ label, interests, onReset }: Props) {
       cancelled = true;
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [prefersReduced]);
+  }, [prefersReduced, pinnedStage, autoRotate, pinnedIndex, preview?.replayKey]);
 
   const example = defaultIntentExamples[exampleIndex];
   const nextExample =
@@ -177,7 +204,6 @@ export function EmptyFeed({ label, interests, onReset }: Props) {
   const cardVisible = forceComposed || stage >= 1;
   const rippleActive = !forceComposed && stage === 2;
   const nodesAwake = forceComposed || (stage >= 2 && stage <= 8);
-  // 0 = asleep dot, 1 = larger dot, 2 = outline, 3 = silhouette filled
   const avatarStep = forceComposed
     ? 3
     : stage <= 2
@@ -188,7 +214,7 @@ export function EmptyFeed({ label, interests, onReset }: Props) {
     ? 2
     : stage >= 5 && stage <= 8
     ? 3
-    : 0; // stage 9 — fading back to sleep
+    : 0;
   const linesVisible = forceComposed || (stage >= 6 && stage <= 8);
   const connectedVisible = forceComposed || (stage >= 7 && stage <= 8);
   const morphing = !forceComposed && stage === 9;
