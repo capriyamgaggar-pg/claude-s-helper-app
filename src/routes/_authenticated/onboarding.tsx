@@ -37,7 +37,7 @@ function Onboarding() {
   // Prefill from existing profile (in case of re-entry)
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.rpc("get_my_profile");
       if (data) {
         if (data.onboarded) { navigate({ to: "/home" }); return; }
         setName(data.name ?? "");

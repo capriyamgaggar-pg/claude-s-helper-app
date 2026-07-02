@@ -42,7 +42,7 @@ function Runner() {
   const profileQ = useQuery({
     queryKey: ["my-profile", user.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      const { data } = await supabase.rpc("get_my_profile");
       return data as Record<string, unknown> | null;
     },
   });

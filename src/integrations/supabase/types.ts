@@ -1518,6 +1518,44 @@ export type Database = {
         Returns: boolean
       }
       expire_intents_job: { Args: never; Returns: undefined }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          address_line1: string | null
+          address_line2: string | null
+          bio: string | null
+          blood_group: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          dob: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          id: string
+          instagram_url: string | null
+          interests: string[]
+          languages: string[]
+          lat: number | null
+          linkedin_url: string | null
+          lng: number | null
+          locality: string | null
+          name: string | null
+          onboarded: boolean
+          phone: string | null
+          photo_url: string | null
+          pincode: string | null
+          place_id: string | null
+          profession: string | null
+          state: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
