@@ -7,13 +7,21 @@ import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AmbientNetwork } from "@/components/brand/AmbientNetwork";
+import { Wordmark } from "@/components/brand/Wordmark";
+import { defaultIntentExamples } from "@/components/brand/examples";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Sign in — Intent" },
-      { name: "description", content: "Sign in to Intent to discover people who share your real-world goals." },
+      { title: "Intent — find your people" },
+      {
+        name: "description",
+        content:
+          "A network for shared real-world goals. Flatmates, co-founders, travel buddies, treks, communities.",
+      },
     ],
   }),
   component: AuthPage,
@@ -22,6 +30,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = useSearch({ from: "/auth" });
+  const isMobile = useIsMobile();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +48,6 @@ function AuthPage() {
         return;
       }
       if (res.redirected) return;
-      // session set — go to redirect or home
       navigate({ to: redirect ?? "/home" });
     } catch {
       toast.error("Couldn't sign in with Google.");
@@ -53,76 +61,134 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email, password,
+          email,
+          password,
           options: { emailRedirectTo: window.location.origin },
         });
-        if (error) { toast.error(error.message); setBusy(false); return; }
+        if (error) {
+          toast.error(error.message);
+          setBusy(false);
+          return;
+        }
         toast.success("Check your email to confirm your account.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) { toast.error(error.message); setBusy(false); return; }
+        if (error) {
+          toast.error(error.message);
+          setBusy(false);
+          return;
+        }
         navigate({ to: redirect ?? "/home" });
       }
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col justify-center px-6 py-10">
-      <div>
-        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Intent</span>
-        <h1 className="display mt-3 text-4xl leading-[1.05] text-foreground">
-          Find people who share your goal.
-        </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground whitespace-pre-line">
-          Not a feed. Just real-world intentions.{"\u00a0"}{"\n"}
-          A network that gets you out there.
-        </p>
-      </div>
+    <div className="relative min-h-dvh w-full overflow-hidden bg-background">
+      <AmbientNetwork
+        examples={defaultIntentExamples}
+        variant={isMobile ? "compact" : "full"}
+      />
 
-      <div className="mt-10 space-y-3">
-        <Button
-          variant="outline"
-          size="lg"
-          className="h-12 w-full justify-center gap-3 rounded-xl border-input bg-surface text-[15px] font-medium"
-          onClick={onGoogle}
-          disabled={busy}
-        >
-          <GoogleMark />
-          Continue with Google
-        </Button>
-
-        <div className="flex items-center gap-3 py-2 text-[11px] uppercase tracking-widest text-muted-foreground">
-          <div className="h-px flex-1 bg-border" />
-          or with email
-          <div className="h-px flex-1 bg-border" />
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-6 pb-10 pt-14">
+        <div className={isMobile ? "mt-24" : ""}>
+          <Wordmark size="lg" tagline="A network for shared real-world goals" />
         </div>
 
-        <form onSubmit={onEmail} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" required
-              className="h-11 rounded-xl bg-surface"
-              value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" minLength={6} required
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              className="h-11 rounded-xl bg-surface"
-              value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          <Button type="submit" size="lg" className="h-12 w-full rounded-xl text-[15px]" disabled={busy}>
-            {mode === "signup" ? "Create account" : "Sign in"}
-          </Button>
-        </form>
+        <div className="mt-10">
+          <h1
+            className="text-[44px] leading-[1.02] tracking-[-0.02em] text-foreground"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Find your people.
+          </h1>
+          <p className="mt-5 text-[15px] leading-[1.85] text-muted-foreground">
+            Flatmates.<br />
+            Co-founders.<br />
+            Travel buddies.<br />
+            Treks.<br />
+            Communities.
+          </p>
+          <p className="mt-5 text-[15px] leading-relaxed text-foreground/70">
+            Real people. Shared goals.
+          </p>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="block w-full pt-2 text-center text-[13px] text-muted-foreground hover:text-foreground"
-        >
-          {mode === "signin" ? "New here? Create an account" : "Have an account? Sign in"}
-        </button>
+        <div className="mt-8 rounded-2xl border border-foreground/8 bg-surface p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.02),0_20px_60px_-30px_rgba(20,20,40,0.10)]">
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-11 w-full justify-center gap-3 rounded-xl border-input bg-surface text-[15px] font-medium"
+            onClick={onGoogle}
+            disabled={busy}
+          >
+            <GoogleMark />
+            Continue with Google
+          </Button>
+
+          <div className="my-4 flex items-center gap-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+            <div className="h-px flex-1 bg-border" />
+            or use email
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={onEmail} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="h-11 rounded-xl bg-surface"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                minLength={6}
+                required
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                className="h-11 rounded-xl bg-surface"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="h-11 w-full rounded-xl text-[15px]"
+              disabled={busy}
+            >
+              {mode === "signup" ? "Create account" : "Sign in"}
+            </Button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            className="mt-3 block w-full text-center text-[13px] text-muted-foreground hover:text-foreground"
+          >
+            {mode === "signin"
+              ? "First time? Create your account"
+              : "Already have an account? Sign in"}
+          </button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-[12px] text-foreground/50">
+            Your next connection could change everything.
+          </p>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            By continuing you agree to our Terms and Privacy.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -131,7 +197,10 @@ function AuthPage() {
 function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
-      <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.5-1.7 4.4-5.5 4.4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.6 14.7 2.7 12 2.7 6.9 2.7 2.8 6.8 2.8 12s4.1 9.3 9.2 9.3c5.3 0 8.8-3.7 8.8-9 0-.6-.1-1.1-.2-1.6H12z"/>
+      <path
+        fill="#EA4335"
+        d="M12 10.2v3.9h5.5c-.24 1.5-1.7 4.4-5.5 4.4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.6 14.7 2.7 12 2.7 6.9 2.7 2.8 6.8 2.8 12s4.1 9.3 9.2 9.3c5.3 0 8.8-3.7 8.8-9 0-.6-.1-1.1-.2-1.6H12z"
+      />
     </svg>
   );
 }

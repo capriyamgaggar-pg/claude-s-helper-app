@@ -1,131 +1,142 @@
+## Goal
 
-## Scope
+Ship v1 of Intent's visual identity on `/auth`. Timeless over trendy. Restrained over decorative. Every element earns its place by reinforcing one idea: **people with shared goals finding one another in the real world.** If motion doesn't tell that story, it doesn't ship.
 
-Frontend/UX only. No schema changes. Reuses `journey_form_fields`, `connections`, `threads`.
+## Design principles (locked)
 
-## 1. Shared readiness helper (`src/lib/registration-form.ts`)
+1. **One story, one moment.** At any instant, at most one connection is forming. No parallel loops, no ambient sparkle competing for attention.
+2. **Motion serves meaning.** The only choreographed motion on the page is: card → line → person. That is the product, drawn.
+3. **Everything else is still.** Ambient nodes: static. Background: static warm wash, no drift. Wordmark dot: single slow pulse only.
+4. **Editorial, not app-y.** Serif display, generous whitespace, hairline rules, muted palette. No gradients-of-the-year, no glassmorphism theatrics.
+5. **Reusable primitives.** Everything built here is a component so onboarding, landing, splash, empty states, and marketing inherit the same language.
 
-Future-proofed shape so new states slot in without touching callers:
+## Reusable brand primitives — `src/components/brand/`
 
-```ts
-export type RegistrationState = "not_ready" | "ready";
-// Later: "payment_required" | "approval_required" | "unpublished" | "archived"
-
-export interface RegistrationStatus {
-  ready: boolean;
-  state: RegistrationState;
-  stepId: string | null;
-  activeFieldCount: number;
-}
-
-export async function getRegistrationStatus(intentId: string): Promise<RegistrationStatus>;
-// Does NOT create the step — participants must not trigger creation.
-// ready === true iff stepId exists AND activeFieldCount > 0.
-```
-
-Rich CTA helper (returns everything the button needs):
+- `examples.ts` — data source (single source of truth for example intents).
+- `IntentExampleCard.tsx` — the example card. Presentational, one `IntentExample` in.
+- `ConnectionLine.tsx` — the SVG stroke-dash connector. Standalone.
+- `PersonAvatar.tsx` — circular initial on a tinted surface.
+- `AmbientNetwork.tsx` — orchestrates the sequenced pairings. Props: `examples`, `variant: "full" | "compact"`.
+- `Wordmark.tsx` — "Intent" + dot. Props: `size`, `tagline`.
 
 ```ts
-export type RegistrationCTA = {
-  label: string;                             // "Register", "Registration Submitted ✓", "Approved ✓"
-  variant: "primary" | "success" | "muted";
-  disabled: boolean;
-  href?: string;
+// examples.ts
+export type IntentExample = {
+  emoji: string;
+  title: string;      // location-neutral
+  interested: number; // illustrative, rendered as secondary caption
+  avatar: string;     // single initial
 };
 
-export function getRegistrationCTA(
-  status: RegistrationStatus,
-  mySubmissionStatus: "none" | "submitted",
-  myParticipationStatus: "none" | "requested" | "approved" | "rejected",
-  intentId: string,
-): RegistrationCTA;
+export const defaultIntentExamples: IntentExample[] = [
+  { emoji: "🏔", title: "Weekend Trek",           interested: 23, avatar: "K" },
+  { emoji: "🚀", title: "Looking for Co-founder", interested: 8,  avatar: "P" },
+  { emoji: "🏠", title: "Looking for Flatmate",   interested: 12, avatar: "A" },
+];
 ```
 
-React Query hook `useRegistrationStatus(intentId)` wraps the fetch.
+The animation engine iterates the array — no hardcoded titles, emojis, or counts. Swapping in Photography Walk / Chess Partner / Startup Meetup / Volunteer Drive later is a one-file edit.
 
-## 2. Post-create success screen (`intents.new.tsx`)
+## Ambient background — restrained
 
-Events / Trekking branch — after successful insert, swap the form for an in-place success card (no navigation):
+- **Warm wash:** two soft radial gradients baked into a static layer. No drift, no breathing, no parallax.
+- **Ambient nodes:** ~8 small dots + 4 hairline connectors at opacity ~0.10. **Static.** They're the quiet suggestion of a network; they don't animate.
+- **Staged pairings:** the only motion in the background. Positioned around the form on desktop, centered above the wordmark on mobile.
 
-```
-✓ Intent Created
-Your trek is now live.
-Participants can already discover it.
+## The one meaningful animation — connection choreography
 
-Next recommended step
-☐ Registration Form
-Build your registration form so people can register.
+Single shared timeline, `examples.length × 8s` (default 24s). Per pairing:
 
-[ Build Registration Form ]  → /intents/$intentId/form
-[ I'll do it later ]         → /intents/$intentId
-```
+| ms | event |
+| --- | --- |
+| 0 → 500 | Card fades in (opacity 0 → 1, no translate). |
+| 500 → 1400 | Line draws (stroke-dashoffset 120 → 0). |
+| 1400 → 1800 | Avatar appears (opacity 0 → 1, scale 0.96 → 1). |
+| 1800 → 7000 | Hold. |
+| 7000 → 8000 | Whole pairing fades to 0. Next begins. |
 
-Personal-category intents keep today's straight-to-detail behavior.
+Ease: `cubic-bezier(0.22, 0.61, 0.36, 1)` throughout — calm, not springy. No bounces, no overshoots, no shimmer, no glow trails, no particles.
 
-## 3. Registration Status card for creators
+`prefers-reduced-motion`: no keyframes. Render the first pairing in its final connected state; leave others hidden. The story still reads.
 
-New `src/components/registration/status-card.tsx` shown on `intents.$intentId.tsx` when viewer is the creator, driven by `useRegistrationStatus`.
+## Responsive — pairings on every device
 
-Not ready:
-```
-Registration Setup
-🟡 Registration not ready
-Participants can discover your intent,
-but they can't register yet.
+- **≥640px (`full`):** three pairings anchored top-left, mid-right, bottom-left of the viewport around the form.
+- **<640px (`compact`):** one pairing at a time in a dedicated `h-24` slot centered above the wordmark. Slightly smaller card (12.5px title, 9.5px caption), 56px line. Same choreography cycles through the same array — mobile users see all three pairings across the loop.
 
-0 Questions
+Route reads `useIsMobile` and passes `variant`.
 
-[ Build Registration Form ]
-```
+## Wordmark
 
-Ready (registration count from `journey_form_submissions` where `status = 'submitted'`):
-```
-Registration Setup
-🟢 Registration Ready
+`<Wordmark size="lg" tagline="A network for shared real-world goals" />`
 
-{N} Questions
-{M} Registrations
+- "Intent" — Fraunces 500, 44px, tracking `-0.02em`.
+- Filled 8px dot after the "t".
+- **Single slow pulse** every 6s: opacity `0.7 → 1 → 0.7`, no scale. Reduced-motion disables.
+- Below: `h-px w-8 bg-foreground/20` rule + 10px uppercase tracked tagline.
 
-[ Edit Form ]   [ View Responses ]
-```
+## Copy (final)
 
-Replaces the current form/responses button row for the creator.
+| Slot | Copy |
+| --- | --- |
+| Wordmark tagline | `A network for shared real-world goals` |
+| Headline (Fraunces, 44px) | `Find your people.` |
+| Sub-list (Inter, 15px, muted, one per line) | `Flatmates.` / `Co-founders.` / `Travel buddies.` / `Treks.` / `Communities.` |
+| Supporting line | `Real people. Shared goals.` |
+| Google button | `Continue with Google` |
+| Divider | `or use email` |
+| Submit — signin | `Sign in` |
+| Submit — signup | `Create account` |
+| Toggle — signin view | `First time? Create your account` |
+| Toggle — signup view | `Already have an account? Sign in` |
+| Whisper | `Your next connection could change everything.` |
+| Legal | `By continuing you agree to our Terms and Privacy.` |
 
-## 4. Participant CTA on intent detail
+## Form card — quiet, not glassy
 
-Non-creator branch on `intents.$intentId.tsx` consumes `getRegistrationCTA(...)`:
+- `bg-surface border border-foreground/8 rounded-2xl p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.02),0_20px_60px_-30px_rgba(20,20,40,0.10)]`.
+- **No backdrop-blur.** Solid surface reads more premium and remains legible over any background.
+- Google button `h-11` outline. No hover-lift — hover state is a subtle background shift only.
+- Inputs: `focus-visible:ring-1 focus-visible:ring-ring`. No animated glow.
+- Container `max-w-[440px]`, `pt-14`.
 
-- `!ready` → muted line *"Registration will open soon."*, no button.
-- `ready`, no submission → primary **`Register`** → `/intents/$intentId/register`.
-- Submitted → **`Registration Submitted ✓`** (success variant, still opens read-only runner).
-- Approved participant → **`Approved ✓`** (success, disabled).
+## Meta
 
-All label/variant/disabled/href logic lives in the helper so the page stays thin and future states (Waitlisted, Payment Pending, Rejected) plug in without JSX changes.
+- title: `Intent — find your people`
+- description: `A network for shared real-world goals. Flatmates, co-founders, travel buddies, treks, communities.`
 
-## 5. Inbox reorder + badges (`inbox.tsx`)
+## Files
 
-- Tab order: **Chats · Received · Sent** (Chats default).
-- Partition the existing `connections` query by `requested_by`:
-  - Received = incoming pending (Accept button, existing behavior).
-  - Sent = outgoing pending (muted "Waiting for reply" chip, no action).
-- Badges (hidden when count is 0):
-  - **Chats**: unread thread count if derivable from existing schema; otherwise omit this pass.
-  - **Received**: pending incoming count, e.g. `Received (3)`.
-  - **Sent**: none.
-- Intent-context chip on each row stays as-is.
+- **New** `src/components/brand/examples.ts`
+- **New** `src/components/brand/IntentExampleCard.tsx`
+- **New** `src/components/brand/ConnectionLine.tsx`
+- **New** `src/components/brand/PersonAvatar.tsx`
+- **New** `src/components/brand/AmbientNetwork.tsx`
+- **New** `src/components/brand/Wordmark.tsx`
+- **Edit** `src/routes/auth.tsx` — restructure JSX, mount brand primitives, update head, new copy.
 
-## 6. Verification
+No new dependencies, no token changes, no backend, no other routes touched.
 
-- Create Event intent → in-place success card with checklist row and both CTAs routing correctly.
-- Creator with 0 fields: yellow "Not ready" card, "0 Questions"; add one field → flips to green with question and registration counts.
-- Second user on same intent:
-  - Before fields: muted "Registration will open soon."
-  - After fields: `Register` button → submit → `Registration Submitted ✓` → creator approves → `Approved ✓`.
-- Inbox: Chats first and default; Received shows `(N)` only when N > 0; Sent shows waiting chip, no badge.
-- `tsgo`.
+## Explicitly cut (in service of restraint)
 
-## Not in scope
+- Background drift / parallax on the node field.
+- "Breathing" opacity on the ambient connectors.
+- Card hover-lifts, ring glows, gradient shimmers.
+- `backdrop-blur` on the form card.
+- Double-beat heartbeat on the dot (replaced with a single slow pulse).
+- Any live-stats implication on the "N interested" caption — it stays 10px, uppercase-tracked, `foreground/40`, unmistakably illustrative.
 
-- Chats unread badge if it requires new schema.
-- Additional readiness states (payment, approval, unpublished) — API is designed for them but rules aren't built yet.
-- Drag-and-drop reorder, template picker, publish toggle.
+## Out of scope
+
+- Applying primitives to onboarding / landing / empty states — deferred; primitives are ready when we get there.
+- Auth logic, OAuth, sessions.
+- New fonts or color tokens.
+
+## Verification
+
+- `/auth` at 320 / 375 / 636 / 1280 — layout holds, one pairing at a time, all three cycle on every device.
+- Flatmate card reads `Looking for Flatmate` (no city). "N interested" is visually secondary.
+- Supporting line is `Real people. Shared goals.`
+- `prefers-reduced-motion` freezes into the first pairing's connected state.
+- Editing `defaultIntentExamples` requires no changes to `AmbientNetwork.tsx`.
+- Build passes.
