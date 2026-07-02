@@ -17,6 +17,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedExploreRouteImport } from './routes/_authenticated/explore'
 import { Route as AuthenticatedEmptyPreviewRouteImport } from './routes/_authenticated/empty-preview'
+import { Route as AuthenticatedDemoPreviewRouteImport } from './routes/_authenticated/demo-preview'
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedIntentsNewRouteImport } from './routes/_authenticated/intents.new'
@@ -66,6 +67,12 @@ const AuthenticatedEmptyPreviewRoute =
   AuthenticatedEmptyPreviewRouteImport.update({
     id: '/empty-preview',
     path: '/empty-preview',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDemoPreviewRoute =
+  AuthenticatedDemoPreviewRouteImport.update({
+    id: '/demo-preview',
+    path: '/demo-preview',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
@@ -130,6 +137,7 @@ const AuthenticatedIntentsIntentIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/demo-preview': typeof AuthenticatedDemoPreviewRoute
   '/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/demo-preview': typeof AuthenticatedDemoPreviewRoute
   '/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/demo-preview': typeof AuthenticatedDemoPreviewRoute
   '/_authenticated/empty-preview': typeof AuthenticatedEmptyPreviewRoute
   '/_authenticated/explore': typeof AuthenticatedExploreRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/demo-preview'
     | '/empty-preview'
     | '/explore'
     | '/home'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/demo-preview'
     | '/empty-preview'
     | '/explore'
     | '/home'
@@ -230,6 +242,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/demo-preview'
     | '/_authenticated/empty-preview'
     | '/_authenticated/explore'
     | '/_authenticated/home'
@@ -309,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/empty-preview'
       fullPath: '/empty-preview'
       preLoaderRoute: typeof AuthenticatedEmptyPreviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/demo-preview': {
+      id: '/_authenticated/demo-preview'
+      path: '/demo-preview'
+      fullPath: '/demo-preview'
+      preLoaderRoute: typeof AuthenticatedDemoPreviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile/me': {
@@ -423,6 +443,7 @@ const AuthenticatedIntentsIntentIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDemoPreviewRoute: typeof AuthenticatedDemoPreviewRoute
   AuthenticatedEmptyPreviewRoute: typeof AuthenticatedEmptyPreviewRoute
   AuthenticatedExploreRoute: typeof AuthenticatedExploreRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
@@ -435,6 +456,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDemoPreviewRoute: AuthenticatedDemoPreviewRoute,
   AuthenticatedEmptyPreviewRoute: AuthenticatedEmptyPreviewRoute,
   AuthenticatedExploreRoute: AuthenticatedExploreRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
