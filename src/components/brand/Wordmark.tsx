@@ -18,18 +18,13 @@ const dotSizeMap = {
 export function Wordmark({ size = "lg", tagline }: Props) {
   return (
     <div>
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline">
         <span
           className={`${sizeMap[size]} font-medium leading-none tracking-[-0.02em] text-foreground`}
           style={{ fontFamily: "var(--font-display)" }}
         >
           Intent
         </span>
-        <span
-          aria-hidden
-          className={`${dotSizeMap[size]} inline-block rounded-full bg-foreground intent-wordmark-dot`}
-          style={{ marginBottom: 2 }}
-        />
       </div>
       {tagline ? (
         <div className="mt-4 flex items-center gap-3">
