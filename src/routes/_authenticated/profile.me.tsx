@@ -215,6 +215,26 @@ function MeProfile() {
     return i.status === mineSub;
   });
 
+  const EMPTY_COPY = {
+    active: {
+      title: "No active intents.",
+      body: "Your active intents will appear here.",
+    },
+    fulfilled: {
+      title: "No fulfilled intents yet.",
+      body: "Completed intents will appear here.",
+    },
+    closed: {
+      title: "No closed intents yet.",
+      body: "Closed intents will appear here.",
+    },
+    expired: {
+      title: "No expired intents.",
+      body: "Expired intents will appear here.",
+    },
+  } as const;
+
+
   const interestedRows = (participations ?? []).filter((p) => p.state === "interested" && p.intent);
   const joinedRows = (participations ?? []).filter((p) => p.state === "confirmed" && p.intent);
   const upcoming = joinedRows.filter((p) => p.intent!.starts_at && new Date(p.intent!.starts_at).getTime() >= now);
