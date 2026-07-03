@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.prevent_self_participation() FROM PUBLIC, anon, authenticated;
