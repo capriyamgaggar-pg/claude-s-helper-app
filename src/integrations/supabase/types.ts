@@ -1542,6 +1542,10 @@ export type Database = {
           unread_messages: number
         }[]
       }
+      get_intents_joined_count: {
+        Args: { target_user_id: string }
+        Returns: number
+      }
       get_my_profile: {
         Args: never
         Returns: Database["public"]["CompositeTypes"]["my_profile"]
