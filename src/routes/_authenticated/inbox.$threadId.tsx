@@ -82,7 +82,8 @@ function ChatThread() {
     thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null; interests: string[] } | null }>;
   } | undefined;
 
-  const other = ctxData?.thread_members.find((m) => m.user_id !== user.id)?.profiles;
+  const otherMember = ctxData?.thread_members.find((m) => m.user_id !== user.id);
+  const other = otherMember?.profiles;
   const me = ctxData?.thread_members.find((m) => m.user_id === user.id)?.profiles;
   const sharedInterests = (me?.interests ?? []).filter((i) => (other?.interests ?? []).includes(i));
   const starters = startersFor(ctxData?.intents?.category_slug, ctxData?.intents?.creator_id === user.id);
@@ -96,14 +97,19 @@ function ChatThread() {
         <Link to="/inbox" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
           <ChevronLeft className="size-5" />
         </Link>
-        {other?.photo_url ? (
-          <img src={other.photo_url} alt="" className="size-9 rounded-full object-cover" />
-        ) : (
-          <span className="grid size-9 place-items-center rounded-full bg-muted text-[12px] font-semibold">
-            {(other?.name?.[0] ?? "·").toUpperCase()}
-          </span>
+        {otherMember && (
+          <Link to="/profile/$userId" params={{ userId: otherMember.user_id }}
+            className="flex min-w-0 items-center gap-3 hover:opacity-80">
+            {other?.photo_url ? (
+              <img src={other.photo_url} alt="" className="size-9 rounded-full object-cover" />
+            ) : (
+              <span className="grid size-9 place-items-center rounded-full bg-muted text-[12px] font-semibold">
+                {(other?.name?.[0] ?? "·").toUpperCase()}
+              </span>
+            )}
+            <p className="truncate font-medium">{other?.name ?? "Chat"}</p>
+          </Link>
         )}
-        <p className="truncate font-medium">{other?.name ?? "Chat"}</p>
       </header>
 
       {ctxData?.intent_id && ctxData.intents && other && (

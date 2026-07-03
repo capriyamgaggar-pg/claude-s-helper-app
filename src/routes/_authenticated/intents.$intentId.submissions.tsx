@@ -44,6 +44,13 @@ function Submissions() {
     ensureRegistrationStep(intentId).then(setStepId).catch(console.error);
   }, [intentQ.data, intentId, user.id]);
 
+  useEffect(() => {
+    if (intentQ.data?.creator_id !== user.id) return;
+    supabase.from("intents")
+      .update({ responses_last_viewed_at: new Date().toISOString() })
+      .eq("id", intentId).then();
+  }, [intentQ.data, intentId, user.id]);
+
   const fieldsQ = useQuery({
     enabled: !!stepId,
     queryKey: ["form-fields-all", stepId],
@@ -102,7 +109,7 @@ function Submissions() {
   return (
     <div className="mx-auto max-w-3xl pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
-        <Link to="/intents/$intentId/form" params={{ intentId }}
+        <Link to="/intents/$intentId" params={{ intentId }}
           className="rounded-full p-1.5 hover:bg-muted"><ChevronLeft className="size-5" /></Link>
         <div>
           <p className="text-sm font-semibold">Responses</p>
@@ -119,8 +126,9 @@ function Submissions() {
         )}
         {subs.map((s) => (
           <div key={s.id} className="rounded-lg border border-border bg-card">
-            <button type="button" className="flex w-full items-center justify-between p-3 text-left"
-              onClick={() => setOpenId(openId === s.id ? null : s.id)}>
+            <div role="button" tabIndex={0} className="flex w-full items-center justify-between p-3 text-left cursor-pointer"
+              onClick={() => setOpenId(openId === s.id ? null : s.id)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(openId === s.id ? null : s.id); }}>
               <div className="flex items-center gap-2 min-w-0">
                 {s.profiles?.photo_url ? (
                   <img src={s.profiles.photo_url} className="size-8 rounded-full object-cover" alt="" />
@@ -130,14 +138,17 @@ function Submissions() {
                   </span>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{s.profiles?.name ?? "Anonymous"}</p>
+                  <Link to="/profile/$userId" params={{ userId: s.participant_id }}
+                    className="truncate text-sm font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
+                    {s.profiles?.name ?? "Anonymous"}
+                  </Link>
                   <p className="text-[11px] text-muted-foreground">
                     {s.status} · v{s.form_version} · {new Date(s.submitted_at ?? s.created_at).toLocaleString()}
                   </p>
                 </div>
               </div>
               <span className="text-xs text-muted-foreground">{openId === s.id ? "Hide" : "View"}</span>
-            </button>
+            </div>
             {openId === s.id && (
               <div className="space-y-2 border-t border-border p-3">
                 {answersQ.isLoading && <Skeleton className="h-16" />}
@@ -148,7 +159,7 @@ function Submissions() {
                     <div key={a.field_id} className="grid grid-cols-3 gap-2 text-sm">
                       <div className="text-muted-foreground">{f.label}</div>
                       <div className="col-span-2 break-words">
-                        <AnswerCell value={a.value} filePath={a.file_path} />
+                        <AnswerCell value={a.value} filePath={a.file_path} kind={f.kind} />
                       </div>
                     </div>
                   );
@@ -162,7 +173,7 @@ function Submissions() {
   );
 }
 
-function AnswerCell({ value, filePath }: { value: unknown; filePath: string | null }) {
+function AnswerCell({ value, filePath, kind }: { value: unknown; filePath: string | null; kind?: string }) {
   const [signed, setSigned] = useState<string | null>(null);
   useEffect(() => {
     if (!filePath) return;
@@ -174,6 +185,22 @@ function AnswerCell({ value, filePath }: { value: unknown; filePath: string | nu
     return signed ? <a className="text-primary underline" href={signed} target="_blank" rel="noreferrer">View file</a> : <span className="text-muted-foreground">Loading…</span>;
   }
   if (value === null || value === undefined || value === "") return <span className="text-muted-foreground">—</span>;
+
+  if (kind === "location" && typeof value === "object" && value !== null) {
+    const loc = value as { label?: string; locality?: string; city?: string; state?: string };
+    const text = loc.label || [loc.locality, loc.city, loc.state].filter(Boolean).join(", ");
+    return <span>{text || "—"}</span>;
+  }
+  if (kind === "payment_reference" && typeof value === "object" && value !== null) {
+    const ref = (value as { ref?: string }).ref;
+    return ref ? <span>{ref}</span> : <span className="text-muted-foreground">Not provided</span>;
+  }
+  if (kind === "emergency_contact" && typeof value === "object" && value !== null) {
+    const c = value as { name?: string; phone?: string };
+    const text = [c.name, c.phone].filter(Boolean).join(" — ");
+    return <span>{text || "—"}</span>;
+  }
+
   if (Array.isArray(value)) return <span>{value.join(", ")}</span>;
   if (typeof value === "object") return <code className="text-xs">{JSON.stringify(value)}</code>;
   return <span>{String(value)}</span>;

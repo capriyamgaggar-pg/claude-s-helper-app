@@ -275,13 +275,13 @@ export function getRegistrationCTA(
   const href = `/intents/${intentId}/register`;
 
   if (myParticipationStatus === "approved") {
-    return { label: "Approved ✓", variant: "success", disabled: true };
+    return { label: "Approved ✓ — View my response", variant: "success", disabled: false, href };
   }
   if (!status.ready) {
     return { label: "Registration will open soon.", variant: "muted", disabled: true };
   }
   if (mySubmissionStatus === "submitted") {
-    return { label: "Registration Submitted ✓", variant: "success", disabled: false, href };
+    return { label: "Submitted ✓ — View my response", variant: "success", disabled: false, href };
   }
   return { label: "Register", variant: "primary", disabled: false, href };
 }
