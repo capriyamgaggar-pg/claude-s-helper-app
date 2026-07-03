@@ -66,7 +66,7 @@ export function ReputationPanel({ userId }: Props) {
           Reputation builds as you create and fulfill intents.
         </p>
       ) : (
-        <dl className="mt-3 grid grid-cols-3 gap-y-4 rounded-3xl bg-[color:var(--surface-card)] p-4 shadow-[var(--shadow-ambient)]">
+        <dl className="mt-3 grid grid-cols-3 gap-x-2 gap-y-7 rounded-3xl border border-[color:var(--border-warm)] bg-[color:var(--surface-card)] p-6 shadow-[var(--shadow-ambient)]">
           <StatCell tint="peach"    icon={FileText} label="Created"    value={stats.intents_created} />
           <StatCell tint="mint"     icon={Users}    label="Joined"     value={intentsJoined ?? 0} />
           <StatCell tint="lavender" icon={Star}     label="Interested" value={stats.total_interested_received} />
@@ -84,15 +84,19 @@ function StatCell({
 }: { tint: Tint; icon: LucideIcon; label: string; value: number | string }) {
   const color = TINT_VAR[tint];
   return (
-    <div className="flex flex-col items-center gap-1.5 px-1 text-center">
+    <div className="flex flex-col items-center gap-2 px-1 text-center">
       <span
-        className="grid size-9 place-items-center rounded-full"
-        style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+        className="grid size-10 place-items-center rounded-full"
+        style={{ backgroundColor: `color-mix(in oklab, ${color} 18%, transparent)`, color }}
       >
-        <Icon className="size-4" />
+        <Icon className="size-[18px]" strokeWidth={2.25} />
       </span>
-      <dd className="text-[17px] font-semibold tabular-nums leading-none text-foreground">{value}</dd>
-      <dt className="text-[10.5px] leading-tight text-muted-foreground">{label}</dt>
+      <dd className="display text-[30px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
+        {value}
+      </dd>
+      <dt className="text-[10.5px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </dt>
     </div>
   );
 }
