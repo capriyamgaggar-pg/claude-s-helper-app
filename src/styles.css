@@ -82,9 +82,9 @@
   --muted: oklch(0.955 0.012 80);
   --muted-foreground: oklch(0.48 0.015 260);
 
-  /* accent = muted ink-green for category chips, active states */
-  --accent: oklch(0.5 0.09 160);
-  --accent-foreground: oklch(0.985 0.005 80);
+  /* accent = warm orange (Intent brand) used for chips, active states */
+  --accent: oklch(0.72 0.17 55);
+  --accent-foreground: oklch(0.22 0.015 260);
 
   --ink: oklch(0.22 0.015 260);
   --ink-foreground: oklch(0.985 0.005 80);
@@ -94,7 +94,7 @@
 
   --border: oklch(0.91 0.01 80);
   --input: oklch(0.91 0.01 80);
-  --ring: oklch(0.5 0.09 160);
+  --ring: oklch(0.72 0.17 55);
 
   --chart-1: oklch(0.5 0.09 160);
   --chart-2: oklch(0.65 0.13 50);
@@ -154,7 +154,7 @@
   --muted: oklch(0.24 0.012 260);
   --muted-foreground: oklch(0.68 0.015 260);
 
-  --accent: oklch(0.65 0.10 160);
+  --accent: oklch(0.72 0.17 55);
   --accent-foreground: oklch(0.16 0.01 260);
 
   --ink: oklch(0.96 0.005 80);
@@ -165,7 +165,7 @@
 
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.65 0.10 160);
+  --ring: oklch(0.72 0.17 55);
 
   --sidebar: oklch(0.18 0.012 260);
   --sidebar-foreground: oklch(0.96 0.005 80);
