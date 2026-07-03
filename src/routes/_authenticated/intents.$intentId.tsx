@@ -294,6 +294,38 @@ function IntentDetail() {
         })()}
 
 
+        {/* Creator-only: who's actually joined -- previously only visible to visitors, never to the organizer themselves */}
+        {isCreator && joinedCount > 0 && (
+          <section className="mt-8">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {joinedCount} joined
+            </h2>
+            <ul className="mt-3 space-y-3">
+              {participants.filter((p) => p.state === "confirmed").map((p) => (
+                <li key={p.user_id} className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3">
+                  <Link to="/profile/$userId" params={{ userId: p.user_id }}>
+                    {p.profiles?.photo_url ? (
+                      <img src={p.profiles.photo_url} alt="" className="size-11 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid size-11 place-items-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                        {(p.profiles?.name?.[0] ?? "·").toUpperCase()}
+                      </span>
+                    )}
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <Link to="/profile/$userId" params={{ userId: p.user_id }} className="block truncate font-medium">
+                      {p.profiles?.name ?? "Someone"}
+                    </Link>
+                    <p className="truncate text-[12px] text-muted-foreground">
+                      {[p.profiles?.profession, p.profiles?.city].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Creator-only: Interested list with optional notes */}
         {isCreator && (
           <div className="pb-32">
