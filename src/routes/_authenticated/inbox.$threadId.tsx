@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { startersFor } from "@/lib/categories";
 import { ParticipationCard } from "@/components/chat/participation-card";
+import { EmojiPicker } from "@/components/chat/emoji-picker";
 
 export const Route = createFileRoute("/_authenticated/inbox/$threadId")({
   head: () => ({ meta: [{ title: "Chat — Intent" }] }),
@@ -169,6 +170,7 @@ function ChatThread() {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
       >
         <div className="flex items-center gap-2">
+          <EmojiPicker onSelect={(emoji) => setBody((b) => b + emoji)} />
           <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message"
             className="h-11 flex-1 rounded-full bg-background" />
           <Button type="submit" size="icon" className="size-11 rounded-full" disabled={!body.trim()}>
