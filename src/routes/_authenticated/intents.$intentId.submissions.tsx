@@ -106,7 +106,7 @@ function Submissions() {
     },
     onSuccess: () => {
       toast.success("Approved");
-      qc.invalidateQueries({ queryKey: ["submission-participation-states"] });
+      partsQ.refetch();
       qc.invalidateQueries({ queryKey: ["new-response-counts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -121,7 +121,7 @@ function Submissions() {
     },
     onSuccess: () => {
       toast.success("Declined");
-      qc.invalidateQueries({ queryKey: ["submission-participation-states"] });
+      partsQ.refetch();
       qc.invalidateQueries({ queryKey: ["new-response-counts"] });
     },
     onError: (e: Error) => toast.error(e.message),
