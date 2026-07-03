@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,13 @@ export function DemoAuthPanel() {
   const [initializing, setInitializing] = useState(false);
   const [busy, setBusy] = useState<DemoPersona | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isDemoHostBrowser()) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !isDemoHostBrowser()) return null;
 
   async function onInit() {
     setInitializing(true);

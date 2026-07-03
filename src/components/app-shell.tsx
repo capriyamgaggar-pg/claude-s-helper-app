@@ -43,7 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {!isThreadOpen && (
         <nav
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-warm)] bg-[color:var(--surface-warm)]/95 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--surface-warm)]/80"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <div className="mx-auto grid w-full max-w-[480px] grid-cols-5 sm:max-w-[640px]">
@@ -59,7 +59,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   to={to as any}
                   className={cn(
                     "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
-                    active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    active
+                      ? "text-[color:var(--accent-orange)]"
+                      : "text-muted-foreground/70 hover:text-muted-foreground",
                   )}
                 >
                   {primary ? (
