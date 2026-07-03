@@ -198,7 +198,7 @@ function Submissions() {
                     <div key={a.field_id} className="grid grid-cols-3 gap-2 text-sm">
                       <div className="text-muted-foreground">{f.label}</div>
                       <div className="col-span-2 break-words">
-                        <AnswerCell value={a.value} filePath={a.file_path} kind={f.kind} />
+                        <AnswerCell value={a.value} filePath={a.file_path} kind={f.kind} options={f.validation?.options} />
                       </div>
                     </div>
                   );
@@ -237,7 +237,7 @@ function Submissions() {
   );
 }
 
-function AnswerCell({ value, filePath, kind }: { value: unknown; filePath: string | null; kind?: string }) {
+function AnswerCell({ value, filePath, kind, options }: { value: unknown; filePath: string | null; kind?: string; options?: { value: string; label: string }[] }) {
   const [signed, setSigned] = useState<string | null>(null);
   useEffect(() => {
     if (!filePath) return;
@@ -249,6 +249,15 @@ function AnswerCell({ value, filePath, kind }: { value: unknown; filePath: strin
     return signed ? <a className="text-primary underline" href={signed} target="_blank" rel="noreferrer">View file</a> : <span className="text-muted-foreground">Loading…</span>;
   }
   if (value === null || value === undefined || value === "") return <span className="text-muted-foreground">—</span>;
+
+  const labelFor = (raw: unknown) => options?.find((o) => o.value === raw)?.label ?? String(raw);
+
+  if ((kind === "dropdown" || kind === "radio") && options?.length) {
+    return <span>{labelFor(value)}</span>;
+  }
+  if (kind === "checkbox_multi" && options?.length && Array.isArray(value)) {
+    return <span>{value.map((v) => labelFor(v)).join(", ")}</span>;
+  }
 
   if (kind === "location" && typeof value === "object" && value !== null) {
     const loc = value as { label?: string; locality?: string; city?: string; state?: string };
