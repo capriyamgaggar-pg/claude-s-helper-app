@@ -45,15 +45,34 @@ function Inbox() {
     queryKey: ["threads", user.id],
     queryFn: async () => {
       const { data: tms, error } = await supabase.from("thread_members")
-        .select("thread_id").eq("user_id", user.id);
+        .select("thread_id, last_read_at").eq("user_id", user.id);
       if (error) throw error;
       const ids = (tms ?? []).map((t) => t.thread_id);
       if (ids.length === 0) return [];
+      const lastReadByThread = new Map((tms ?? []).map((t) => [t.thread_id, t.last_read_at as string]));
+
       const { data, error: e2 } = await supabase.from("threads")
         .select(`id, kind, created_at, thread_members(user_id, profiles(id, name, photo_url))`)
         .in("id", ids).order("created_at", { ascending: false });
       if (e2) throw e2;
-      return data ?? [];
+
+      // Latest message per thread, to determine unread status per row.
+      const { data: latest, error: e3 } = await supabase.from("messages")
+        .select("thread_id, sender_id, created_at")
+        .in("thread_id", ids).order("created_at", { ascending: false });
+      if (e3) throw e3;
+      const latestByThread = new Map<string, { sender_id: string; created_at: string }>();
+      for (const m of latest ?? []) {
+        if (!latestByThread.has(m.thread_id)) latestByThread.set(m.thread_id, m);
+      }
+
+      return (data ?? []).map((t) => {
+        const lastMsg = latestByThread.get(t.id);
+        const myLastRead = lastReadByThread.get(t.id);
+        const unread = !!lastMsg && lastMsg.sender_id !== user.id &&
+          (!myLastRead || new Date(lastMsg.created_at) > new Date(myLastRead));
+        return { ...t, unread };
+      });
     },
   });
 
@@ -215,21 +234,28 @@ function ChatList({ user, threads }: { user: { id: string }; threads: unknown[] 
           Chats appear here once you mutually connect with someone.
         </p>
       )}
-      {(threads as Array<{ id: string; thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null } | null }> }>).map((t) => {
+      {(threads as Array<{ id: string; unread: boolean; thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null } | null }> }>).map((t) => {
         const other = t.thread_members.find((m) => m.user_id !== user.id)?.profiles;
         return (
           <Link key={t.id} to="/inbox/$threadId" params={{ threadId: t.id }}
             className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 hover:bg-secondary/60">
-            {other?.photo_url ? (
-              <img src={other.photo_url} alt="" className="size-12 rounded-full object-cover" />
-            ) : (
-              <span className="grid size-12 place-items-center rounded-full bg-muted text-sm font-semibold">
-                {(other?.name?.[0] ?? "·").toUpperCase()}
-              </span>
-            )}
+            <div className="relative shrink-0">
+              {other?.photo_url ? (
+                <img src={other.photo_url} alt="" className="size-12 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-12 place-items-center rounded-full bg-muted text-sm font-semibold">
+                  {(other?.name?.[0] ?? "·").toUpperCase()}
+                </span>
+              )}
+              {t.unread && (
+                <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-surface bg-red-500" />
+              )}
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{other?.name ?? "Chat"}</p>
-              <p className="text-[12px] text-muted-foreground">Tap to open</p>
+              <p className={"truncate " + (t.unread ? "font-semibold" : "font-medium")}>{other?.name ?? "Chat"}</p>
+              <p className={"text-[12px] " + (t.unread ? "font-medium text-foreground" : "text-muted-foreground")}>
+                {t.unread ? "New message" : "Tap to open"}
+              </p>
             </div>
           </Link>
         );
