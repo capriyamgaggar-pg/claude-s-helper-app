@@ -220,6 +220,18 @@ function Runner() {
     return <div className="p-4 space-y-2"><Skeleton className="h-6 w-40" /><Skeleton className="h-32" /></div>;
   }
 
+  if (intentQ.data && intentQ.data.creator_id === user.id) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
+        <p className="font-medium">You're the organizer of this intent.</p>
+        <p className="text-sm text-muted-foreground">You don't need to register for your own intent.</p>
+        <Link to="/intents/$intentId" params={{ intentId }} className="mt-2 text-sm text-primary underline">
+          Back to intent
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
