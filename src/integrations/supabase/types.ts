@@ -630,6 +630,7 @@ export type Database = {
           place_id: string | null
           price_inr: number | null
           radius_km: number
+          responses_last_viewed_at: string
           starts_at: string | null
           state: string | null
           status: Database["public"]["Enums"]["intent_status"]
@@ -668,6 +669,7 @@ export type Database = {
           place_id?: string | null
           price_inr?: number | null
           radius_km?: number
+          responses_last_viewed_at?: string
           starts_at?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
@@ -706,6 +708,7 @@ export type Database = {
           place_id?: string | null
           price_inr?: number | null
           radius_km?: number
+          responses_last_viewed_at?: string
           starts_at?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
@@ -1548,6 +1551,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_new_response_counts: {
+        Args: never
+        Returns: {
+          intent_id: string
+          new_count: number
+        }[]
       }
       has_role: {
         Args: {

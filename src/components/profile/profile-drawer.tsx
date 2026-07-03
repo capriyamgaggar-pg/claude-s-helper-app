@@ -58,7 +58,7 @@ function DrawerLink({
     <Link
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       to={to as any}
-      search={search}
+      search={search as any}
       onClick={onClick}
       className={
         "flex items-center gap-3 rounded-lg px-2 py-2.5 text-[14px] hover:bg-secondary " +
