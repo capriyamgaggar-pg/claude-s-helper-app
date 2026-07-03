@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isDemoHostBrowser } from "@/lib/demo-client";
 import { ReputationPanel } from "@/components/reputation-panel";
 import { ProfileDrawer } from "@/components/profile/profile-drawer";
+import { interestEmoji } from "@/lib/interest-emoji";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile/me")({
@@ -102,7 +103,9 @@ function MeProfile() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Interests</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {profile.interests.map((i: string) => (
-              <span key={i} className="rounded-full bg-secondary px-2.5 py-0.5 text-[12px]">{i}</span>
+              <span key={i} className="rounded-full bg-secondary px-2.5 py-1 text-[12px] font-semibold">
+                {interestEmoji(i)} {i}
+              </span>
             ))}
           </div>
         </section>

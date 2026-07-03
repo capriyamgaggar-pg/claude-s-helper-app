@@ -54,24 +54,24 @@ export function ReputationPanel({ userId }: Props) {
           Reputation builds as you create and fulfill intents.
         </p>
       ) : (
-        <dl className="mt-3 grid grid-cols-2 gap-2">
-          <Stat label="Intents Created" value={stats.intents_created} />
-          <Stat label="Intents Joined" value={intentsJoined ?? 0} />
-          <Stat label="People Interested" value={stats.total_interested_received} />
-          <Stat label="People Connected" value={stats.total_connections} />
-          <Stat label="Returning Participants" value={wouldJoinAgain} />
-          <Stat label="Avg. Response Time" value={avgResponseLabel(stats)} />
+        <dl className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface">
+          <StatRow label="Intents created" value={stats.intents_created} />
+          <StatRow label="Intents joined" value={intentsJoined ?? 0} />
+          <StatRow label="People interested" value={stats.total_interested_received} />
+          <StatRow label="People connected" value={stats.total_connections} />
+          <StatRow label="Returning participants" value={wouldJoinAgain} />
+          <StatRow label="Avg. response time" value={avgResponseLabel(stats)} last />
         </dl>
       )}
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function StatRow({ label, value, last }: { label: string; value: number | string; last?: boolean }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-3">
-      <dt className="text-[11px] text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 text-[18px] font-semibold tabular-nums">{value}</dd>
+    <div className={"flex items-center justify-between px-3.5 py-2.5 " + (last ? "" : "border-b border-border")}>
+      <dt className="text-[13px] text-muted-foreground">{label}</dt>
+      <dd className="text-[14px] font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }

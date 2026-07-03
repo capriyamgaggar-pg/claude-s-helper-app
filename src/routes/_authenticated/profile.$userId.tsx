@@ -6,6 +6,7 @@ import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ReputationPanel } from "@/components/reputation-panel";
+import { interestEmoji } from "@/lib/interest-emoji";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: ({ params }) => ({ meta: [{ title: `Profile — ${params.userId.slice(0, 6)}` }] }),
@@ -100,7 +101,9 @@ function PublicProfile() {
       {profile.interests?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-1.5">
           {profile.interests.map((i: string) => (
-            <span key={i} className="rounded-full bg-secondary px-2.5 py-0.5 text-[12px]">{i}</span>
+            <span key={i} className="rounded-full bg-secondary px-2.5 py-1 text-[12px] font-semibold">
+              {interestEmoji(i)} {i}
+            </span>
           ))}
         </div>
       )}

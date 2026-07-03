@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
+import { interestEmoji } from "@/lib/interest-emoji";
 
 export const Route = createFileRoute("/_authenticated/profile/edit")({
   head: () => ({ meta: [{ title: "Edit profile — Intent" }] }),
@@ -146,7 +147,7 @@ function EditProfile() {
                   className={"rounded-full border px-4 py-2 text-[13px] transition-colors " + (on
                     ? "border-foreground bg-foreground text-background"
                     : "border-border bg-surface text-foreground hover:bg-secondary")}>
-                  {i}
+                  {interestEmoji(i)} {i}
                 </button>
               );
             })}
