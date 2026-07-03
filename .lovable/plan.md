@@ -1,68 +1,17 @@
-Profile Redesign — Warm Editorial v2 (deltas only)
+## Fix Responses page 400 by adding missing FK
 
-The v1 "Warm Editorial" profile is already shipped (warm cream background, pulsing avatar ring, tinted 3×2 reputation grid, gradient category covers, compact promo card, shared-interests line). This patch includes only the following changes.
+The `journey_form_submissions.participant_id` column was created without an actual foreign key constraint. The Responses page (`src/routes/_authenticated/intents.$intentId.submissions.tsx`) uses a PostgREST embedded lookup hinted by the constraint name `profiles!journey_form_submissions_participant_id_fkey`, which doesn't exist — so PostgREST returns 400 and the page falls back (or breaks) for both fetching and Approve/Decline.
 
-1. Softer bottom navigation
+### Migration
 
-Update src/components/app-shell.tsx to match the new Warm Editorial palette by reusing the existing warm design tokens. The center "+" FAB remains unchanged.
+Add the missing FK from `journey_form_submissions.participant_id` → `profiles(id)` with `ON DELETE CASCADE`, matching the constraint name the query already references:
 
-No routing or layout changes.
+```sql
+ALTER TABLE public.journey_form_submissions
+  ADD CONSTRAINT journey_form_submissions_participant_id_fkey
+  FOREIGN KEY (participant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+```
 
-2. Fix hydration mismatch on /auth
+### Scope
 
-Ensure DemoAuthPanel renders the same initial tree during SSR and hydration. The implementation (mounted flag, client-only render, or equivalent) is left to the implementation.
-
-Scope:
-
-src/components/demo/DemoAuthPanel.tsx
-(or its call site in src/routes/auth.tsx)
-
-No functional changes beyond fixing the hydration error.
-
-Explicitly not changing
-
- Header layout
-
- Avatar
-
- Avatar ring animation
-
- Presence dot
-
- Name
-
- Bio/About text
-
- Profession
-
- City
-
- Interests
-
- Reputation card
-
- Active intent cards
-
- Promo card
-
- Queries
-
- Database
-
- Business logic
-
- Design tokens
-
-All user-generated profile content (name, bio, profession, city, etc.) remains exactly as entered by the user. This patch only adjusts application UI, not profile data or copy.
-
-This patch is strictly limited to the files listed below. Any visual or behavioral changes outside this scope are out of scope and should not be made.
-
-Files touched
-
-src/components/app-shell.tsx
-
-src/components/demo/DemoAuthPanel.tsx (or src/routes/auth.tsx if mounted there)
-
-Ship as v2 patch.
-
-This keeps the scope focused and avoids altering any user content.
+Strictly limited to running this one migration. No code changes — the Responses page query already targets this constraint name and will start resolving correctly once the FK exists.
