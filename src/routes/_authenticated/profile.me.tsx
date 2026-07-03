@@ -27,6 +27,19 @@ function MeProfile() {
     },
   });
 
+  const { data: activeIntents } = useQuery({
+    queryKey: ["my-active-intents", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("intents")
+        .select("id, title, category_slug, intent_categories(label), status, expires_at")
+        .eq("creator_id", user.id).eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false }).limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   async function signOut() {
     await supabase.auth.signOut();
     toast.success("Signed out");
@@ -96,6 +109,24 @@ function MeProfile() {
       )}
 
       <ReputationPanel userId={user.id} />
+
+      <section className="mt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active intents</p>
+        <div className="mt-3 space-y-2">
+          {(activeIntents ?? []).map((it) => (
+            <Link key={it.id} to="/intents/$intentId" params={{ intentId: it.id }}
+              className="block rounded-2xl border border-border bg-surface p-3 hover:bg-secondary/60">
+              <p className="text-[11px] text-muted-foreground">{it.intent_categories?.label ?? it.category_slug}</p>
+              <p className="mt-0.5 truncate font-medium">{it.title}</p>
+            </Link>
+          ))}
+          {(activeIntents?.length ?? 0) === 0 && (
+            <p className="rounded-2xl border border-dashed border-border bg-surface p-4 text-center text-sm text-muted-foreground">
+              No active intents.
+            </p>
+          )}
+        </div>
+      </section>
 
       <p className="mt-8 text-center text-[13px] text-muted-foreground">
         Tap the menu icon above for your intents, connections, and settings.
