@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Sparkle } from "lucide-react";
+import { ChevronLeft, Sparkle, MessageCircle, Hourglass } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,21 @@ function PublicProfile() {
     },
   });
 
+  const { data: connection } = useQuery({
+    queryKey: ["connection-status", user.id, userId],
+    queryFn: async () => {
+      if (userId === user.id) return null;
+      const [a, b] = user.id < userId ? [user.id, userId] : [userId, user.id];
+      const { data, error } = await supabase.from("connections")
+        .select("id, state, requested_by, thread_id")
+        .eq("user_a", a).eq("user_b", b)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: userId !== user.id,
+  });
+
   const connect = useMutation({
     mutationFn: async () => {
       if (userId === user.id) return;
@@ -51,6 +66,7 @@ function PublicProfile() {
     onSuccess: () => {
       toast.success("Connection request sent");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
+      qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -89,10 +105,22 @@ function PublicProfile() {
       )}
 
       {userId !== user.id && (
-        <Button onClick={() => connect.mutate()} disabled={connect.isPending}
-          className="mt-6 w-full gap-2 rounded-xl">
-          <Sparkle className="size-4" /> Connect
-        </Button>
+        connection?.state === "accepted" && connection.thread_id ? (
+          <Link to="/inbox/$threadId" params={{ threadId: connection.thread_id }}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-medium text-primary-foreground hover:bg-primary/90">
+            <MessageCircle className="size-4" /> Chat
+          </Link>
+        ) : connection?.state === "requested" ? (
+          <Button disabled className="mt-6 w-full gap-2 rounded-xl" variant="outline">
+            <Hourglass className="size-4" />
+            {connection.requested_by === user.id ? "Request sent" : "Respond in your Inbox"}
+          </Button>
+        ) : (
+          <Button onClick={() => connect.mutate()} disabled={connect.isPending}
+            className="mt-6 w-full gap-2 rounded-xl">
+            <Sparkle className="size-4" /> Connect
+          </Button>
+        )
       )}
 
       <ReputationPanel userId={userId} />
