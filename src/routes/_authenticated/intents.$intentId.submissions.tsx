@@ -31,6 +31,7 @@ function Submissions() {
   const qc = useQueryClient();
   const [stepId, setStepId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [statusTab, setStatusTab] = useState<"pending" | "approved" | "declined">("pending");
 
   const intentQ = useQuery({
     queryKey: ["intent-owner", intentId],
@@ -145,6 +146,12 @@ function Submissions() {
   const fieldsById = new Map((fieldsQ.data ?? []).map((f) => [f.id, f]));
   const subs = subsQ.data ?? [];
 
+  const stateOf = (participantId: string) => partsQ.data?.get(participantId);
+  const pendingSubs = subs.filter((s) => stateOf(s.participant_id) !== "confirmed" && stateOf(s.participant_id) !== "declined");
+  const approvedSubs = subs.filter((s) => stateOf(s.participant_id) === "confirmed");
+  const declinedSubs = subs.filter((s) => stateOf(s.participant_id) === "declined");
+  const visibleSubs = statusTab === "pending" ? pendingSubs : statusTab === "approved" ? approvedSubs : declinedSubs;
+
   return (
     <div className="mx-auto max-w-3xl pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
@@ -156,14 +163,39 @@ function Submissions() {
         </div>
       </div>
 
+      <div className="flex gap-1.5 px-4 pt-3">
+        {([
+          { id: "pending" as const, label: "Pending", count: pendingSubs.length },
+          { id: "approved" as const, label: "Approved", count: approvedSubs.length },
+          { id: "declined" as const, label: "Declined", count: declinedSubs.length },
+        ]).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => { setStatusTab(t.id); setOpenId(null); }}
+            className={
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors " +
+              (statusTab === t.id ? "bg-foreground text-background" : "bg-secondary text-foreground hover:bg-secondary/70")
+            }
+          >
+            {t.label}
+            {t.count > 0 && (
+              <span className={"rounded-full px-1.5 text-[11px] " + (statusTab === t.id ? "bg-background/20" : "bg-background")}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2 p-4">
         {subsQ.isLoading && <Skeleton className="h-20" />}
-        {!subsQ.isLoading && subs.length === 0 && (
+        {!subsQ.isLoading && visibleSubs.length === 0 && (
           <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No submissions yet.
+            {statusTab === "pending" ? "No pending responses." : statusTab === "approved" ? "Nobody approved yet." : "Nobody declined."}
           </div>
         )}
-        {subs.map((s) => (
+        {visibleSubs.map((s) => (
           <div key={s.id} className="rounded-lg border border-border bg-card">
             <div role="button" tabIndex={0} className="flex w-full items-center justify-between p-3 text-left cursor-pointer"
               onClick={() => setOpenId(openId === s.id ? null : s.id)}
