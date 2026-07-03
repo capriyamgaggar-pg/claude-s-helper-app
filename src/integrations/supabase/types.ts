@@ -1330,16 +1330,19 @@ export type Database = {
       thread_members: {
         Row: {
           created_at: string
+          last_read_at: string
           thread_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          last_read_at?: string
           thread_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          last_read_at?: string
           thread_id?: string
           user_id?: string
         }
@@ -1529,6 +1532,13 @@ export type Database = {
         Returns: boolean
       }
       expire_intents_job: { Args: never; Returns: undefined }
+      get_inbox_counts: {
+        Args: never
+        Returns: {
+          received_count: number
+          unread_messages: number
+        }[]
+      }
       get_my_profile: {
         Args: never
         Returns: Database["public"]["CompositeTypes"]["my_profile"]
