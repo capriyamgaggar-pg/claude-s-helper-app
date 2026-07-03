@@ -84,15 +84,32 @@ function Submissions() {
     },
   });
 
-  const partsQ = useQuery({
-    enabled: !!subsQ.data,
-    queryKey: ["submission-participation-states", intentId, (subsQ.data ?? []).map((s) => s.participant_id).join(",")],
+  // Everyone who has actually acted on this intent (requested to join,
+  // been confirmed, or been declined) -- not just people who submitted the
+  // registration form. Accepting/declining someone through chat previously
+  // never showed up here at all if they'd never filled the form.
+  const applicantsQ = useQuery({
+    queryKey: ["intent-applicants", intentId],
     queryFn: async () => {
-      const ids = (subsQ.data ?? []).map((s) => s.participant_id);
-      if (ids.length === 0) return new Map<string, string>();
-      const { data } = await supabase.from("intent_participants")
-        .select("user_id, state").eq("intent_id", intentId).in("user_id", ids);
-      return new Map((data ?? []).map((r) => [r.user_id, r.state]));
+      const { data, error } = await supabase.from("intent_participants")
+        .select("user_id, state, created_at, profiles:profiles!intent_participants_user_id_fkey(id, name, photo_url)")
+        .eq("intent_id", intentId)
+        .in("state", ["interested", "joining", "confirmed", "declined"])
+        .order("created_at", { ascending: false });
+      if (error) {
+        const r = await supabase.from("intent_participants")
+          .select("user_id, state, created_at").eq("intent_id", intentId)
+          .in("state", ["interested", "joining", "confirmed", "declined"])
+          .order("created_at", { ascending: false });
+        if (r.error) throw r.error;
+        const ids = (r.data ?? []).map((p) => p.user_id);
+        const { data: profs } = ids.length
+          ? await supabase.from("profiles").select("id, name, photo_url").in("id", ids)
+          : { data: [] };
+        const profMap = new Map((profs ?? []).map((p) => [p.id, p]));
+        return (r.data ?? []).map((p) => ({ ...p, profiles: profMap.get(p.user_id) ?? null }));
+      }
+      return data;
     },
   });
 
@@ -106,7 +123,7 @@ function Submissions() {
     },
     onSuccess: () => {
       toast.success("Approved");
-      partsQ.refetch();
+      applicantsQ.refetch();
       qc.invalidateQueries({ queryKey: ["new-response-counts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -121,18 +138,24 @@ function Submissions() {
     },
     onSuccess: () => {
       toast.success("Declined");
-      partsQ.refetch();
+      applicantsQ.refetch();
       qc.invalidateQueries({ queryKey: ["new-response-counts"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const openSubmissionId = (() => {
+    const applicant = (applicantsQ.data ?? []).find((p) => p.user_id === openId);
+    if (!applicant) return null;
+    return (subsQ.data ?? []).find((s) => s.participant_id === applicant.user_id)?.id ?? null;
+  })();
+
   const answersQ = useQuery({
-    enabled: !!openId,
-    queryKey: ["submission-answers", openId],
+    enabled: !!openSubmissionId,
+    queryKey: ["submission-answers", openSubmissionId],
     queryFn: async () => {
       const { data, error } = await supabase.from("journey_form_answers")
-        .select("field_id, field_key, value, file_path").eq("submission_id", openId!);
+        .select("field_id, field_key, value, file_path").eq("submission_id", openSubmissionId!);
       if (error) throw error;
       return (data ?? []) as AnswerRow[];
     },
@@ -145,11 +168,26 @@ function Submissions() {
 
   const fieldsById = new Map((fieldsQ.data ?? []).map((f) => [f.id, f]));
   const subs = subsQ.data ?? [];
+  const subByParticipant = new Map(subs.map((s) => [s.participant_id, s]));
 
-  const stateOf = (participantId: string) => partsQ.data?.get(participantId);
-  const pendingSubs = subs.filter((s) => stateOf(s.participant_id) !== "confirmed" && stateOf(s.participant_id) !== "declined");
-  const approvedSubs = subs.filter((s) => stateOf(s.participant_id) === "confirmed");
-  const declinedSubs = subs.filter((s) => stateOf(s.participant_id) === "declined");
+  type Applicant = {
+    key: string;
+    participant_id: string;
+    profiles: { id: string; name: string | null; photo_url: string | null } | null;
+    state: string;
+    submission: SubRow | null;
+  };
+  const applicants: Applicant[] = (applicantsQ.data ?? []).map((p) => ({
+    key: p.user_id,
+    participant_id: p.user_id,
+    profiles: p.profiles ?? null,
+    state: p.state,
+    submission: subByParticipant.get(p.user_id) ?? null,
+  }));
+
+  const pendingSubs = applicants.filter((a) => a.state !== "confirmed" && a.state !== "declined");
+  const approvedSubs = applicants.filter((a) => a.state === "confirmed");
+  const declinedSubs = applicants.filter((a) => a.state === "declined");
   const visibleSubs = statusTab === "pending" ? pendingSubs : statusTab === "approved" ? approvedSubs : declinedSubs;
 
   return (
@@ -159,7 +197,7 @@ function Submissions() {
           className="rounded-full p-1.5 hover:bg-muted"><ChevronLeft className="size-5" /></Link>
         <div>
           <p className="text-sm font-semibold">Responses</p>
-          <p className="text-xs text-muted-foreground">{subs.length} total</p>
+          <p className="text-xs text-muted-foreground">{applicants.length} total</p>
         </div>
       </div>
 
@@ -189,77 +227,75 @@ function Submissions() {
       </div>
 
       <div className="space-y-2 p-4">
-        {subsQ.isLoading && <Skeleton className="h-20" />}
-        {!subsQ.isLoading && visibleSubs.length === 0 && (
+        {applicantsQ.isLoading && <Skeleton className="h-20" />}
+        {!applicantsQ.isLoading && visibleSubs.length === 0 && (
           <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             {statusTab === "pending" ? "No pending responses." : statusTab === "approved" ? "Nobody approved yet." : "Nobody declined."}
           </div>
         )}
-        {visibleSubs.map((s) => (
-          <div key={s.id} className="rounded-lg border border-border bg-card">
+        {visibleSubs.map((a) => (
+          <div key={a.key} className="rounded-lg border border-border bg-card">
             <div role="button" tabIndex={0} className="flex w-full items-center justify-between p-3 text-left cursor-pointer"
-              onClick={() => setOpenId(openId === s.id ? null : s.id)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(openId === s.id ? null : s.id); }}>
+              onClick={() => setOpenId(openId === a.key ? null : a.key)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(openId === a.key ? null : a.key); }}>
               <div className="flex items-center gap-2 min-w-0">
-                {s.profiles?.photo_url ? (
-                  <img src={s.profiles.photo_url} className="size-8 rounded-full object-cover" alt="" />
+                {a.profiles?.photo_url ? (
+                  <img src={a.profiles.photo_url} className="size-8 rounded-full object-cover" alt="" />
                 ) : (
                   <span className="grid size-8 place-items-center rounded-full bg-muted text-xs">
-                    {(s.profiles?.name?.[0] ?? "·").toUpperCase()}
+                    {(a.profiles?.name?.[0] ?? "·").toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0">
-                  <Link to="/profile/$userId" params={{ userId: s.participant_id }}
+                  <Link to="/profile/$userId" params={{ userId: a.participant_id }}
                     className="truncate text-sm font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
-                    {s.profiles?.name ?? "Anonymous"}
+                    {a.profiles?.name ?? "Anonymous"}
                   </Link>
                   <p className="text-[11px] text-muted-foreground">
-                    {s.status} · v{s.form_version} · {new Date(s.submitted_at ?? s.created_at).toLocaleString()}
+                    {a.submission
+                      ? `${a.submission.status} · v${a.submission.form_version} · ${new Date(a.submission.submitted_at ?? a.submission.created_at).toLocaleString()}`
+                      : "Requested via chat — no registration submitted"}
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">{openId === s.id ? "Hide" : "View"}</span>
+              <span className="text-xs text-muted-foreground">{openId === a.key ? "Hide" : "View"}</span>
             </div>
-            {openId === s.id && (
+            {openId === a.key && (
               <div className="space-y-2 border-t border-border p-3">
-                {answersQ.isLoading && <Skeleton className="h-16" />}
-                {(answersQ.data ?? []).map((a) => {
-                  const f = fieldsById.get(a.field_id);
+                {!a.submission && (
+                  <p className="text-[13px] text-muted-foreground">No registration form was submitted — this request came through chat.</p>
+                )}
+                {a.submission && answersQ.isLoading && <Skeleton className="h-16" />}
+                {a.submission && (answersQ.data ?? []).map((ans) => {
+                  const f = fieldsById.get(ans.field_id);
                   if (!f || f.kind === "section") return null;
                   return (
-                    <div key={a.field_id} className="grid grid-cols-3 gap-2 text-sm">
+                    <div key={ans.field_id} className="grid grid-cols-3 gap-2 text-sm">
                       <div className="text-muted-foreground">{f.label}</div>
                       <div className="col-span-2 break-words">
-                        <AnswerCell value={a.value} filePath={a.file_path} kind={f.kind} options={f.validation?.options} />
+                        <AnswerCell value={ans.value} filePath={ans.file_path} kind={f.kind} options={f.validation?.options} />
                       </div>
                     </div>
                   );
                 })}
-                {(() => {
-                  const pState = partsQ.data?.get(s.participant_id);
-                  if (pState === "confirmed") {
-                    return (
-                      <p className="flex items-center gap-1.5 pt-2 text-[13px] font-medium text-emerald-700">
-                        <CheckCircle2 className="size-4" /> Approved
-                      </p>
-                    );
-                  }
-                  if (pState === "declined") {
-                    return <p className="pt-2 text-[13px] text-muted-foreground">Declined</p>;
-                  }
-                  return (
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-full"
-                        onClick={() => decline.mutate(s.participant_id)} disabled={decline.isPending}>
-                        <XCircle className="size-3.5" /> Decline
-                      </Button>
-                      <Button size="sm" className="h-8 gap-1.5 rounded-full"
-                        onClick={() => approve.mutate(s.participant_id)} disabled={approve.isPending}>
-                        <CheckCircle2 className="size-3.5" /> Approve
-                      </Button>
-                    </div>
-                  );
-                })()}
+                {a.state === "confirmed" ? (
+                  <p className="flex items-center gap-1.5 pt-2 text-[13px] font-medium text-emerald-700">
+                    <CheckCircle2 className="size-4" /> Approved
+                  </p>
+                ) : a.state === "declined" ? (
+                  <p className="pt-2 text-[13px] text-muted-foreground">Declined</p>
+                ) : (
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-full"
+                      onClick={() => decline.mutate(a.participant_id)} disabled={decline.isPending}>
+                      <XCircle className="size-3.5" /> Decline
+                    </Button>
+                    <Button size="sm" className="h-8 gap-1.5 rounded-full"
+                      onClick={() => approve.mutate(a.participant_id)} disabled={approve.isPending}>
+                      <CheckCircle2 className="size-3.5" /> Approve
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
