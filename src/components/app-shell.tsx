@@ -1,8 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Compass, MessageCircle, User as UserIcon, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { DemoBanner } from "@/components/demo/DemoBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Tab = { to: string; label: string; Icon: typeof Home; primary?: boolean };
 const tabs: Tab[] = [
@@ -16,6 +18,18 @@ const tabs: Tab[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isThreadOpen = pathname !== "/inbox" && pathname.startsWith("/inbox/");
+
+  const { data: counts } = useQuery({
+    queryKey: ["inbox-badge-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_inbox_counts").single();
+      if (error) throw error;
+      return data as { received_count: number; unread_messages: number };
+    },
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+  const inboxBadge = (counts?.received_count ?? 0) + (counts?.unread_messages ?? 0);
 
   return (
     <div
@@ -37,6 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               const active =
                 pathname === to ||
                 (to !== "/home" && to !== "/intents/new" && pathname.startsWith(to));
+              const showBadge = to === "/inbox" && inboxBadge > 0;
               return (
                 <Link
                   key={to}
@@ -52,7 +67,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                       <Icon className="size-5" />
                     </span>
                   ) : (
-                    <Icon className={cn("size-5", active && "stroke-[2.25]")} />
+                    <span className="relative">
+                      <Icon className={cn("size-5", active && "stroke-[2.25]")} />
+                      {showBadge && (
+                        <span className="absolute -right-2 -top-1.5 grid min-w-[16px] place-items-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-[16px] text-white">
+                          {inboxBadge > 9 ? "9+" : inboxBadge}
+                        </span>
+                      )}
+                    </span>
                   )}
                   {!primary && <span>{label}</span>}
                 </Link>

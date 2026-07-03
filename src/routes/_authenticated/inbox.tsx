@@ -69,8 +69,20 @@ function Inbox() {
       toast.success("Connected — chat is open");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["threads", user.id] });
+      qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] });
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const { data: counts } = useQuery({
+    queryKey: ["inbox-badge-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_inbox_counts").single();
+      if (error) throw error;
+      return data as { received_count: number; unread_messages: number };
+    },
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const rows = connections.data ?? [];
@@ -78,7 +90,7 @@ function Inbox() {
   const sent = rows.filter((c) => c.state === "requested" && c.requested_by === user.id);
 
   const tabs: { id: TabId; label: string; badge: number | null }[] = [
-    { id: "chats", label: "Chats", badge: null },
+    { id: "chats", label: "Chats", badge: counts?.unread_messages ? counts.unread_messages : null },
     { id: "received", label: "Received", badge: received.length > 0 ? received.length : null },
     { id: "sent", label: "Sent", badge: null },
   ];

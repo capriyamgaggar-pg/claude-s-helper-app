@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkle } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ interface Message { id: string; thread_id: string; sender_id: string; body: stri
 function ChatThread() {
   const { threadId } = Route.useParams();
   const { user } = Route.useRouteContext();
+  const qc = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,6 +57,15 @@ function ChatThread() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages.length]);
+
+  // Mark as read whenever we open the thread, and again whenever a new
+  // message arrives while we're actively viewing it.
+  useEffect(() => {
+    supabase.from("thread_members")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("thread_id", threadId).eq("user_id", user.id)
+      .then(() => qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] }));
+  }, [threadId, user.id, messages.length, qc]);
 
   async function send(text: string) {
     const trimmed = text.trim();
