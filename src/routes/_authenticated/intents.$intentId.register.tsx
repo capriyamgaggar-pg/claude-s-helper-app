@@ -176,6 +176,36 @@ function Runner() {
         if (ansErr) throw ansErr;
       }
 
+      // Submitting the registration form IS a signal of real intent -- unify
+      // it with the same intent_participants row "Show Interest" / chat's
+      // "Request to join" use, so the organizer sees this person regardless
+      // of entry point. Never downgrade someone already confirmed.
+      //
+      // If a connection/chat with the creator already exists, this
+      // submission plays the same role as the chat's "Request to join" --
+      // a real pending request (state: joining). If not, this is someone's
+      // first signal of interest before ever connecting, so it only counts
+      // as interested (connecting to chat is still a separate, always-
+      // available next step, not implied by registering alone).
+      const { data: existingRow } = await supabase.from("intent_participants")
+        .select("state").eq("intent_id", intentId).eq("user_id", user.id).maybeSingle();
+      if (existingRow?.state !== "confirmed") {
+        const [pa, pb] = user.id < intentQ.data.creator_id
+          ? [user.id, intentQ.data.creator_id] : [intentQ.data.creator_id, user.id];
+        const { data: conn } = await supabase.from("connections")
+          .select("state").eq("user_a", pa).eq("user_b", pb).maybeSingle();
+        const alreadyConnected = conn?.state === "accepted";
+        await supabase.from("intent_participants").upsert({
+          intent_id: intentId,
+          user_id: user.id,
+          state: alreadyConnected ? "joining" : "interested",
+          ...(alreadyConnected ? {
+            confirm_initiated_by: user.id,
+            confirm_initiated_at: new Date().toISOString(),
+          } : {}),
+        }, { onConflict: "intent_id,user_id" });
+      }
+
       toast.success("Submitted.");
       setDone(true);
     } catch (e) {

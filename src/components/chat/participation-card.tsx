@@ -1,9 +1,11 @@
+import { useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PendingDots } from "@/components/ui/pending-dots";
+import { getRegistrationStatus } from "@/lib/registration-form";
 import type { JoinMode, ParticipationState } from "@/lib/participation";
 
 interface Props {
@@ -21,6 +23,11 @@ interface PartRow {
 
 export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const regStatus = useQuery({
+    queryKey: ["registration-status", intentId],
+    queryFn: () => getRegistrationStatus(intentId),
+  });
   const isCreator = creatorId === meId;
 
   const { data } = useQuery({
@@ -143,8 +150,15 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
               </>
             )}
             {!isCreator && !requested && (
-              <Button size="sm" className="h-8 rounded-full" onClick={() => request.mutate()} disabled={request.isPending}>
-                {joinMode === "open_join" ? "Join now" : "Request to join"}
+              <Button size="sm" className="h-8 rounded-full" disabled={request.isPending}
+                onClick={() => {
+                  if (joinMode !== "open_join" && regStatus.data?.ready) {
+                    navigate({ to: "/intents/$intentId/register", params: { intentId } });
+                  } else {
+                    request.mutate();
+                  }
+                }}>
+                {joinMode === "open_join" ? "Join now" : regStatus.data?.ready ? "Fill registration to request" : "Request to join"}
               </Button>
             )}
             {!isCreator && requested && (

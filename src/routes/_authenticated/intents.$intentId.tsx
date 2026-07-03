@@ -10,11 +10,12 @@ import { ReactivateDialog } from "@/components/reactivate-dialog";
 import { statusPill, type IntentStatus, CLOSURE_REASONS } from "@/lib/intent-lifecycle";
 import { ParticipationButton } from "@/components/intent/participation-button";
 import { InterestedList, type InterestedRow } from "@/components/intent/interested-list";
-import { pairKey, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
+import { pairKey, computeStage, type JoinMode, type ParticipationState, type ConnectionState } from "@/lib/participation";
 import { canSeeCreator, isOrganizerCategory } from "@/lib/creator-visibility";
 import { FeedbackTab } from "@/components/feedback/feedback-tab";
 import { RegistrationStatusCard } from "@/components/registration/status-card";
 import { ParticipantRegistrationCTA } from "@/components/registration/participant-cta";
+import { RegisterOrConnectChoice } from "@/components/intent/register-or-connect-choice";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
@@ -137,6 +138,15 @@ function IntentDetail() {
   const participants = (data.intent_participants ?? []) as ParticipantRow[];
   const myRow = participants.find((p) => p.user_id === user.id);
   const joinedCount = participants.filter((p) => p.state === "confirmed").length;
+  const myStage = !isCreator
+    ? computeStage({
+        myParticipation: myRow ? { state: myRow.state as ParticipationState, confirm_initiated_by: myRow.confirm_initiated_by } : null,
+        connection: connection ? { id: connection.id, state: connection.state as ConnectionState, requested_by: connection.requested_by } : null,
+        meId: user.id,
+        isCreator: false,
+      })
+    : null;
+  const showCombinedChoice = myStage === "request_connect" || myStage === "interest_saved";
 
   const toneClass =
     pill.tone === "amber"
@@ -223,7 +233,7 @@ function IntentDetail() {
 
         {/* Registration status / CTA */}
         {isCreator && <RegistrationStatusCard intentId={intentId} />}
-        {!isCreator && isActive && (
+        {!isCreator && isActive && !showCombinedChoice && (
           <ParticipantRegistrationCTA
             intentId={intentId}
             userId={user.id}
@@ -236,6 +246,15 @@ function IntentDetail() {
                     ? "rejected"
                     : "none"
             }
+          />
+        )}
+        {!isCreator && isActive && showCombinedChoice && (
+          <RegisterOrConnectChoice
+            intentId={intentId}
+            creatorId={data.creator_id}
+            meId={user.id}
+            categorySlug={data.category_slug}
+            city={data.city}
           />
         )}
 
@@ -315,7 +334,7 @@ function IntentDetail() {
       </article>
 
       {/* Visitor stage-aware CTA */}
-      {!isCreator && isActive && (
+      {!isCreator && isActive && !showCombinedChoice && (
         <footer className="sticky bottom-16 mx-3 mb-3 rounded-2xl border border-border bg-surface/95 p-3 shadow-lg backdrop-blur">
           <ParticipationButton
             intentId={intentId}

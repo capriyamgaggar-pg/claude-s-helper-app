@@ -1,10 +1,12 @@
 // Organizer: list of submissions for the registration form.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, CheckCircle2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { ensureRegistrationStep, type FormField } from "@/lib/registration-form";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId/submissions")({
@@ -26,6 +28,7 @@ interface AnswerRow { field_id: string; field_key: string | null; value: unknown
 function Submissions() {
   const { intentId } = Route.useParams();
   const { user } = Route.useRouteContext();
+  const qc = useQueryClient();
   const [stepId, setStepId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -42,13 +45,6 @@ function Submissions() {
   useEffect(() => {
     if (intentQ.data?.creator_id !== user.id) return;
     ensureRegistrationStep(intentId).then(setStepId).catch(console.error);
-  }, [intentQ.data, intentId, user.id]);
-
-  useEffect(() => {
-    if (intentQ.data?.creator_id !== user.id) return;
-    supabase.from("intents")
-      .update({ responses_last_viewed_at: new Date().toISOString() })
-      .eq("id", intentId).then();
   }, [intentQ.data, intentId, user.id]);
 
   const fieldsQ = useQuery({
@@ -85,6 +81,49 @@ function Submissions() {
       }
       return data as unknown as SubRow[];
     },
+  });
+
+  const partsQ = useQuery({
+    enabled: !!subsQ.data,
+    queryKey: ["submission-participation-states", intentId, (subsQ.data ?? []).map((s) => s.participant_id).join(",")],
+    queryFn: async () => {
+      const ids = (subsQ.data ?? []).map((s) => s.participant_id);
+      if (ids.length === 0) return new Map<string, string>();
+      const { data } = await supabase.from("intent_participants")
+        .select("user_id, state").eq("intent_id", intentId).in("user_id", ids);
+      return new Map((data ?? []).map((r) => [r.user_id, r.state]));
+    },
+  });
+
+  const approve = useMutation({
+    mutationFn: async (participantId: string) => {
+      const { error } = await supabase.from("intent_participants").upsert({
+        intent_id: intentId, user_id: participantId,
+        state: "confirmed", joined_at: new Date().toISOString(),
+      }, { onConflict: "intent_id,user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Approved");
+      qc.invalidateQueries({ queryKey: ["submission-participation-states"] });
+      qc.invalidateQueries({ queryKey: ["new-response-counts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const decline = useMutation({
+    mutationFn: async (participantId: string) => {
+      const { error } = await supabase.from("intent_participants").update({
+        state: "declined",
+      }).eq("intent_id", intentId).eq("user_id", participantId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Declined");
+      qc.invalidateQueries({ queryKey: ["submission-participation-states"] });
+      qc.invalidateQueries({ queryKey: ["new-response-counts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const answersQ = useQuery({
@@ -164,6 +203,31 @@ function Submissions() {
                     </div>
                   );
                 })}
+                {(() => {
+                  const pState = partsQ.data?.get(s.participant_id);
+                  if (pState === "confirmed") {
+                    return (
+                      <p className="flex items-center gap-1.5 pt-2 text-[13px] font-medium text-emerald-700">
+                        <CheckCircle2 className="size-4" /> Approved
+                      </p>
+                    );
+                  }
+                  if (pState === "declined") {
+                    return <p className="pt-2 text-[13px] text-muted-foreground">Declined</p>;
+                  }
+                  return (
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-full"
+                        onClick={() => decline.mutate(s.participant_id)} disabled={decline.isPending}>
+                        <XCircle className="size-3.5" /> Decline
+                      </Button>
+                      <Button size="sm" className="h-8 gap-1.5 rounded-full"
+                        onClick={() => approve.mutate(s.participant_id)} disabled={approve.isPending}>
+                        <CheckCircle2 className="size-3.5" /> Approve
+                      </Button>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

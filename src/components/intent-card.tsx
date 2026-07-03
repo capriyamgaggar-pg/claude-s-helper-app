@@ -19,8 +19,10 @@ export interface IntentCardData {
   created_at: string;
   status?: IntentStatus | string;
   expires_at?: string | null;
-  /** Count of new registration responses since the organizer last checked (My Intents only). */
+  /** Count of registration responses still awaiting a decision (My Intents only). */
   newResponses?: number;
+  /** Total responses ever received for this intent (My Intents only). */
+  totalResponses?: number;
 }
 
 export function IntentCard({ intent }: { intent: IntentCardData }) {
@@ -57,7 +59,7 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
         )}
         {!!intent.newResponses && intent.newResponses > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-medium text-white">
-            {intent.newResponses} new response{intent.newResponses > 1 ? "s" : ""}
+            {intent.totalResponses ?? intent.newResponses} total · {intent.newResponses} left
           </span>
         )}
         <span className="ml-auto text-[11px] text-muted-foreground">

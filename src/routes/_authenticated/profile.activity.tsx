@@ -135,7 +135,8 @@ function Activity() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_new_response_counts");
       if (error) throw error;
-      return new Map((data ?? []).map((r: { intent_id: string; new_count: number }) => [r.intent_id, r.new_count]));
+      return new Map((data ?? []).map((r: { intent_id: string; total_count: number; pending_count: number }) =>
+        [r.intent_id, { total: r.total_count, pending: r.pending_count }]));
     },
     refetchInterval: 20_000,
   });
@@ -305,7 +306,8 @@ function Activity() {
               {mineFiltered.map((i) => (
                 <IntentCard key={i.id} intent={{
                   ...rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true),
-                  newResponses: newResponseCounts?.get(i.id) ?? 0,
+                  newResponses: newResponseCounts?.get(i.id)?.pending ?? 0,
+                  totalResponses: newResponseCounts?.get(i.id)?.total ?? 0,
                 }} />
               ))}
             </TabsContent>
