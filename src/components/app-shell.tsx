@@ -12,7 +12,7 @@ const tabs: Tab[] = [
   { to: "/explore", label: "Explore", Icon: Compass },
   { to: "/intents/new", label: "Create", Icon: Plus, primary: true },
   { to: "/inbox", label: "Inbox", Icon: MessageCircle },
-  { to: "/profile/me", label: "You", Icon: UserIcon },
+  { to: "/profile/me", label: "Profile", Icon: UserIcon },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
