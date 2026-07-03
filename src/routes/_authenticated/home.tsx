@@ -97,9 +97,7 @@ function HomePage() {
   const { data: profile } = useQuery({
     queryKey: ["profile", user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles")
-        .select("id, name, photo_url, bio, city, locality, state, country, place_id, profession, interests, languages, linkedin_url, instagram_url, onboarded, created_at, updated_at")
-        .eq("id", user.id).single();
+      const { data, error } = await supabase.rpc("get_my_profile");
       if (error) throw error;
       return data;
     },
