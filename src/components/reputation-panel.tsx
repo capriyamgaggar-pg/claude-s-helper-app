@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { FileText, Users, Star, Link2, Undo2, Clock, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   avgResponseLabel,
@@ -9,6 +10,17 @@ import {
 interface Props {
   userId: string;
 }
+
+type Tint = "peach" | "mint" | "lavender" | "coral" | "blue" | "amber";
+
+const TINT_VAR: Record<Tint, string> = {
+  peach: "var(--tint-peach)",
+  mint: "var(--tint-mint)",
+  lavender: "var(--tint-lavender)",
+  coral: "var(--tint-coral)",
+  blue: "var(--tint-blue)",
+  amber: "var(--tint-amber)",
+};
 
 export function ReputationPanel({ userId }: Props) {
   const { data, isLoading } = useQuery({
@@ -50,32 +62,37 @@ export function ReputationPanel({ userId }: Props) {
       </p>
 
       {!hasAny ? (
-        <p className="mt-3 rounded-2xl border border-dashed border-border bg-surface p-4 text-center text-[13px] text-muted-foreground">
+        <p className="mt-3 rounded-2xl border border-dashed border-[color:var(--border-warm)] bg-[color:var(--surface-card)] p-4 text-center text-[13px] text-muted-foreground">
           Reputation builds as you create and fulfill intents.
         </p>
       ) : (
-        <dl className="mt-3 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-surface">
-          <StatCell label="Created" value={stats.intents_created} col={1} row={1} />
-          <StatCell label="Joined" value={intentsJoined ?? 0} col={2} row={1} />
-          <StatCell label="Interested" value={stats.total_interested_received} col={3} row={1} />
-          <StatCell label="Connected" value={stats.total_connections} col={1} row={2} />
-          <StatCell label="Returning" value={wouldJoinAgain} col={2} row={2} />
-          <StatCell label="Response" value={avgResponseLabel(stats)} col={3} row={2} />
+        <dl className="mt-3 grid grid-cols-3 gap-y-4 rounded-3xl bg-[color:var(--surface-card)] p-4 shadow-[var(--shadow-ambient)]">
+          <StatCell tint="peach"    icon={FileText} label="Created"    value={stats.intents_created} />
+          <StatCell tint="mint"     icon={Users}    label="Joined"     value={intentsJoined ?? 0} />
+          <StatCell tint="lavender" icon={Star}     label="Interested" value={stats.total_interested_received} />
+          <StatCell tint="coral"    icon={Link2}    label="Connected"  value={stats.total_connections} />
+          <StatCell tint="blue"     icon={Undo2}    label="Returning"  value={wouldJoinAgain} />
+          <StatCell tint="amber"    icon={Clock}    label="Response"   value={avgResponseLabel(stats)} />
         </dl>
       )}
     </section>
   );
 }
 
-function StatCell({ label, value, col, row }: { label: string; value: number | string; col: 1 | 2 | 3; row: 1 | 2 }) {
+function StatCell({
+  tint, icon: Icon, label, value,
+}: { tint: Tint; icon: LucideIcon; label: string; value: number | string }) {
+  const color = TINT_VAR[tint];
   return (
-    <div className={
-      "px-2 py-2.5 text-center " +
-      (row === 2 ? "border-t border-border " : "") +
-      (col !== 3 ? "border-r border-border" : "")
-    }>
-      <dd className="text-[15px] font-semibold tabular-nums">{value}</dd>
-      <dt className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{label}</dt>
+    <div className="flex flex-col items-center gap-1.5 px-1 text-center">
+      <span
+        className="grid size-9 place-items-center rounded-full"
+        style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+      >
+        <Icon className="size-4" />
+      </span>
+      <dd className="text-[17px] font-semibold tabular-nums leading-none text-foreground">{value}</dd>
+      <dt className="text-[10.5px] leading-tight text-muted-foreground">{label}</dt>
     </div>
   );
 }
