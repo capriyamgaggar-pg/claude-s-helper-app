@@ -57,7 +57,7 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
   const candidateUserId = isCreator ? partner : meId;
   const status = candidate?.state ?? "interested";
 
-  const registrationRequired = data?.intent?.participation_mode === "registration_first" && !!regStatus.data?.ready;
+  const registrationRequired = !!regStatus.data?.ready;
   const { data: candidateSubmitted } = useQuery({
     queryKey: ["candidate-submitted", intentId, candidateUserId],
     enabled: registrationRequired,
