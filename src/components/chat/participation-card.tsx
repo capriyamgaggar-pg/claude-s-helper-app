@@ -34,7 +34,7 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
     queryKey: ["intent-participation-card", intentId, meId, otherId],
     queryFn: async () => {
       const { data: intent } = await supabase.from("intents")
-        .select("id, title, join_mode, people_needed")
+        .select("id, title, join_mode, people_needed, participation_mode")
         .eq("id", intentId).single();
       const ids = Array.from(new Set([meId, otherId, creatorId]));
       const { data: parts } = await supabase.from("intent_participants")
@@ -56,6 +56,22 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
   const candidate = isCreator ? partnerRow : myRow;
   const candidateUserId = isCreator ? partner : meId;
   const status = candidate?.state ?? "interested";
+
+  const registrationRequired = data?.intent?.participation_mode === "registration_first" && !!regStatus.data?.ready;
+  const { data: candidateSubmitted } = useQuery({
+    queryKey: ["candidate-submitted", intentId, candidateUserId],
+    enabled: registrationRequired,
+    queryFn: async () => {
+      const { data: journey } = await supabase.from("intent_journeys").select("id").eq("intent_id", intentId).maybeSingle();
+      if (!journey) return false;
+      const { data: step } = await supabase.from("journey_steps").select("id").eq("journey_id", journey.id).eq("type", "registration_form").maybeSingle();
+      if (!step) return false;
+      const { data: sub } = await supabase.from("journey_form_submissions")
+        .select("id").eq("step_id", step.id).eq("participant_id", candidateUserId).eq("status", "submitted").maybeSingle();
+      return !!sub;
+    },
+  });
+  const missingRequiredRegistration = registrationRequired && candidateSubmitted === false;
 
   // Only the participant can request/join. Only the creator can approve.
   const requested = status === "joining";
@@ -84,6 +100,9 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
 
   const approve = useMutation({
     mutationFn: async () => {
+      if (missingRequiredRegistration) {
+        throw new Error("This intent requires registration before you can approve someone.");
+      }
       const { error } = await supabase.from("intent_participants").update({
         state: "confirmed" as ParticipationState,
         joined_at: new Date().toISOString(),
@@ -140,14 +159,18 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
         {!joined && (
           <div className="flex gap-2">
             {isCreator && requested && (
-              <>
-                <Button size="sm" variant="outline" className="h-8 rounded-full" onClick={() => decline.mutate()} disabled={decline.isPending}>
-                  Decline
-                </Button>
-                <Button size="sm" className="h-8 rounded-full" onClick={() => approve.mutate()} disabled={approve.isPending}>
-                  Approve request
-                </Button>
-              </>
+              missingRequiredRegistration ? (
+                <p className="text-[12px] text-muted-foreground">Waiting for their registration form</p>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" className="h-8 rounded-full" onClick={() => decline.mutate()} disabled={decline.isPending}>
+                    Decline
+                  </Button>
+                  <Button size="sm" className="h-8 rounded-full" onClick={() => approve.mutate()} disabled={approve.isPending}>
+                    Approve request
+                  </Button>
+                </>
+              )
             )}
             {!isCreator && !requested && (
               <Button size="sm" className="h-8 rounded-full" disabled={request.isPending}
