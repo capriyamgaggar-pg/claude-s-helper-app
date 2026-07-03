@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, MessageCircle, X } from "lucide-react";
+import { LogOut, MessageCircle, X, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isDemoHostBrowser } from "@/lib/demo-client";
 import { Button } from "@/components/ui/button";
@@ -270,6 +270,13 @@ function MeProfile() {
           {profile?.profession && <p className="text-[13px] text-muted-foreground">{profile.profession}</p>}
           {profile?.city && <p className="text-[12px] text-muted-foreground">{profile.city}</p>}
         </div>
+        <Link
+          to="/profile/edit"
+          className="grid size-10 shrink-0 place-items-center rounded-full border border-border bg-surface hover:bg-secondary"
+          aria-label="Edit profile"
+        >
+          <Pencil className="size-4" />
+        </Link>
       </header>
 
       {isDemoHostBrowser() && (
