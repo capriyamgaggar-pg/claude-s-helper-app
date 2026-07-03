@@ -24,12 +24,22 @@ export function ReputationPanel({ userId }: Props) {
     },
   });
 
-  if (isLoading) return null;
+  const { data: intentsJoined, isLoading: joinedLoading } = useQuery({
+    queryKey: ["intents-joined-count", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_intents_joined_count", { target_user_id: userId });
+      if (error) throw error;
+      return data ?? 0;
+    },
+  });
+
+  if (isLoading || joinedLoading) return null;
 
   const stats = data ?? { ...EMPTY_STATS, user_id: userId };
+  const wouldJoinAgain = stats.would_participate_again_definitely + stats.would_participate_again_probably;
   const hasAny =
     stats.intents_created > 0 ||
-    stats.intents_fulfilled > 0 ||
+    (intentsJoined ?? 0) > 0 ||
     stats.total_interested_received > 0 ||
     stats.total_connections > 0;
 
@@ -46,10 +56,10 @@ export function ReputationPanel({ userId }: Props) {
       ) : (
         <dl className="mt-3 grid grid-cols-2 gap-2">
           <Stat label="Intents Created" value={stats.intents_created} />
-          <Stat label="Successful Intents" value={stats.intents_fulfilled} />
+          <Stat label="Intents Joined" value={intentsJoined ?? 0} />
           <Stat label="People Interested" value={stats.total_interested_received} />
           <Stat label="People Connected" value={stats.total_connections} />
-          <Stat label="Returning Participants" value={stats.returning_members} />
+          <Stat label="Returning Participants" value={wouldJoinAgain} />
           <Stat label="Avg. Response Time" value={avgResponseLabel(stats)} />
         </dl>
       )}

@@ -22,6 +22,14 @@ export interface UserReputationStats {
   organizer_intents_total: number;
   organizer_intents_completed: number;
   fulfilled_by_category: Record<string, number>;
+  feedback_received: number;
+  met_expectations_sum: number;
+  met_expectations_count: number;
+  would_participate_again_definitely: number;
+  would_participate_again_probably: number;
+  would_participate_again_maybe: number;
+  would_participate_again_probably_not: number;
+  would_participate_again_never: number;
   updated_at: string;
 }
 
@@ -60,6 +68,14 @@ export const EMPTY_STATS: UserReputationStats = {
   organizer_intents_total: 0,
   organizer_intents_completed: 0,
   fulfilled_by_category: {},
+  feedback_received: 0,
+  met_expectations_sum: 0,
+  met_expectations_count: 0,
+  would_participate_again_definitely: 0,
+  would_participate_again_probably: 0,
+  would_participate_again_maybe: 0,
+  would_participate_again_probably_not: 0,
+  would_participate_again_never: 0,
   updated_at: new Date(0).toISOString(),
 };
 
