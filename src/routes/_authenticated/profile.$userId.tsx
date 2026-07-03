@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Sparkle, MessageCircle, Hourglass } from "lucide-react";
+import { ChevronLeft, Sparkle, MessageCircle, Hourglass, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ReputationPanel } from "@/components/reputation-panel";
+import { ActiveIntentCard, type ActiveIntentCardData } from "@/components/profile/active-intent-card";
+import { PromoCard } from "@/components/profile/promo-card";
 import { interestEmoji } from "@/lib/interest-emoji";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
@@ -29,11 +32,22 @@ function PublicProfile() {
     },
   });
 
+  // Viewer's own profile — reused from /profile/me query cache when available.
+  const { data: viewerProfile } = useQuery({
+    queryKey: ["profile", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_profile");
+      if (error) throw error;
+      return data;
+    },
+    enabled: userId !== user.id,
+  });
+
   const { data: intents } = useQuery({
     queryKey: ["public-intents", userId],
     queryFn: async () => {
       const { data, error } = await supabase.from("intents")
-        .select("id, title, category_slug, intent_categories(label), created_at")
+        .select("id, title, category_slug, intent_categories(label), created_at, starts_at, ends_at, people_needed, locality, city")
         .eq("creator_id", userId).eq("visibility", "public")
         .order("created_at", { ascending: false }).limit(20);
       if (error) throw error;
@@ -73,81 +87,132 @@ function PublicProfile() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const sharedInterests = useMemo(() => {
+    if (!profile?.interests || !viewerProfile?.interests || userId === user.id) return 0;
+    const mine = new Set(viewerProfile.interests as string[]);
+    return (profile.interests as string[]).filter((i) => mine.has(i)).length;
+  }, [profile?.interests, viewerProfile?.interests, userId, user.id]);
+
   if (!profile) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
   return (
-    <div className="px-5 pt-4 pb-8">
-      <Link to="/home" className="-ml-2 grid size-9 place-items-center rounded-full hover:bg-secondary">
+    <div className="min-h-screen bg-[color:var(--surface-warm)] px-5 pt-4 pb-8">
+      <Link to="/home" className="-ml-2 grid size-9 place-items-center rounded-full hover:bg-[color:color-mix(in_oklab,var(--accent-peach)_35%,white)]">
         <ChevronLeft className="size-5" />
       </Link>
 
-      <div className="mt-2 flex items-center gap-4">
-        {profile.photo_url ? (
-          <img src={profile.photo_url} alt="" className="size-16 rounded-full object-cover" />
-        ) : (
-          <span className="grid size-16 place-items-center rounded-full bg-muted text-xl font-semibold">
-            {(profile.name?.[0] ?? "·").toUpperCase()}
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <h1 className="display truncate text-2xl">{profile.name ?? "Someone"}</h1>
-          {profile.profession && <p className="text-[13px] text-muted-foreground">{profile.profession}</p>}
-          {profile.city && <p className="text-[12px] text-muted-foreground">{profile.city}</p>}
+      <header className="mt-2 flex items-center gap-4">
+        <div className="relative shrink-0">
+          <span
+            className="pointer-events-none absolute -inset-1 rounded-full"
+            style={{
+              boxShadow: `0 0 0 2px color-mix(in oklab, var(--accent-peach) 70%, transparent)`,
+              animation: "ring-pulse 3s ease-in-out infinite",
+            }}
+            aria-hidden
+          />
+          {profile.photo_url ? (
+            <img src={profile.photo_url} alt="" className="relative size-16 rounded-full object-cover ring-2 ring-white" />
+          ) : (
+            <span className="relative grid size-16 place-items-center rounded-full bg-[color:color-mix(in_oklab,var(--accent-peach)_45%,white)] text-xl font-semibold text-[color:var(--accent-orange)] ring-2 ring-white">
+              {(profile.name?.[0] ?? "·").toUpperCase()}
+            </span>
+          )}
         </div>
-      </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="display truncate text-2xl font-semibold tracking-tight">{profile.name ?? "Someone"}</h1>
+          {profile.profession && <p className="text-[13px] text-muted-foreground">{profile.profession}</p>}
+          {profile.city && (
+            <p className="mt-0.5 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
+              <MapPin className="size-3" />
+              {profile.city}
+            </p>
+          )}
+          {sharedInterests > 0 && (
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
+              {sharedInterests} shared {sharedInterests === 1 ? "interest" : "interests"} with you
+            </p>
+          )}
+        </div>
+      </header>
 
       {profile.bio && <p className="mt-5 text-[14px] leading-relaxed">{profile.bio}</p>}
 
       {profile.interests?.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {profile.interests.map((i: string) => (
-            <span key={i} className="rounded-full bg-secondary px-2.5 py-1 text-[12px] font-semibold">
-              {interestEmoji(i)} {i}
-            </span>
-          ))}
-        </div>
+        <section className="mt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Interests</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {profile.interests.map((i: string) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border-warm)] bg-white px-2.5 py-1 text-[12.5px] font-medium"
+              >
+                <span>{interestEmoji(i)}</span> {i}
+              </span>
+            ))}
+          </div>
+        </section>
       )}
 
       {userId !== user.id && (
         connection?.state === "accepted" && connection.thread_id ? (
           <Link to="/inbox/$threadId" params={{ threadId: connection.thread_id }}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-medium text-primary-foreground hover:bg-primary/90">
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "var(--accent-orange)" }}>
             <MessageCircle className="size-4" /> Chat
           </Link>
         ) : connection?.state === "requested" ? (
-          <Button disabled className="mt-6 w-full gap-2 rounded-xl" variant="outline">
+          <Button disabled className="mt-6 w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
             <Hourglass className="size-4" />
             {connection.requested_by === user.id ? "Request sent" : "Respond in your Inbox"}
           </Button>
         ) : (
-          <Button onClick={() => connect.mutate()} disabled={connect.isPending}
-            className="mt-6 w-full gap-2 rounded-xl">
+          <button
+            type="button"
+            onClick={() => connect.mutate()}
+            disabled={connect.isPending}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ backgroundColor: "var(--accent-orange)" }}
+          >
             <Sparkle className="size-4" /> Connect
-          </Button>
+          </button>
         )
       )}
 
       <ReputationPanel userId={userId} />
 
-
-      <section className="mt-8">
+      <section className="mt-6">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active intents</p>
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-2.5">
           {(intents ?? []).map((i) => {
-            const it = i as { id: string; title: string; category_slug: string; intent_categories: { label: string } | null };
-            return (
-              <Link key={it.id} to="/intents/$intentId" params={{ intentId: it.id }}
-                className="block rounded-2xl border border-border bg-surface p-3 hover:bg-secondary/60">
-                <p className="text-[11px] text-muted-foreground">{it.intent_categories?.label ?? it.category_slug}</p>
-                <p className="mt-0.5 truncate font-medium">{it.title}</p>
-              </Link>
-            );
+            const row = i as unknown as {
+              id: string; title: string; category_slug: string;
+              intent_categories: { label: string } | null;
+              starts_at: string | null; ends_at: string | null;
+              people_needed: number | null; locality: string | null; city: string | null;
+            };
+            const data: ActiveIntentCardData = {
+              id: row.id,
+              title: row.title,
+              category_slug: row.category_slug,
+              category_label: row.intent_categories?.label ?? null,
+              starts_at: row.starts_at,
+              ends_at: row.ends_at,
+              people_needed: row.people_needed,
+              locality: row.locality,
+              city: row.city,
+            };
+            return <ActiveIntentCard key={row.id} intent={data} />;
           })}
           {(intents?.length ?? 0) === 0 && (
-            <p className="text-sm text-muted-foreground">No active intents.</p>
+            <p className="rounded-2xl border border-dashed border-[color:var(--border-warm)] bg-[color:var(--surface-card)] p-4 text-center text-sm text-muted-foreground">
+              No active intents.
+            </p>
           )}
         </div>
       </section>
+
+      <PromoCard />
     </div>
   );
 }
