@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
+import { PendingDots } from "@/components/ui/pending-dots";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +76,7 @@ export function ParticipationButton({
       }, { onConflict: "user_a,user_b" });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Connection request sent"); invalidate(); },
+    onSuccess: () => { toast.success(randomPick(CONNECTION_SENT_MESSAGES)); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -159,12 +161,13 @@ export function ParticipationButton({
   return (
     <div className="space-y-2">
       <Button
-        className="h-12 w-full rounded-xl"
+        className="h-12 w-full rounded-xl gap-1.5"
         variant={cta.variant}
         disabled={cta.disabled || busy}
         onClick={handleClick}
       >
         {cta.label}
+        {(stage === "connect_outgoing" || stage === "confirm_outgoing") && <PendingDots />}
       </Button>
       {(cta.hint || stage === "open_chat") && (
         <div className="flex items-center justify-between gap-2">

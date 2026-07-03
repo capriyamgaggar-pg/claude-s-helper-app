@@ -64,11 +64,11 @@ export function ctaForStage(stage: Stage): CtaSpec {
   switch (stage) {
     case "show_interest":     return { label: "Show Interest",        variant: "default" };
     case "request_connect":   return { label: "Request to Connect",   variant: "default", hint: "You're marked as interested" };
-    case "connect_outgoing":  return { label: "Connection Pending",   variant: "outline", disabled: true };
+    case "connect_outgoing":  return { label: "Waiting for their reply…",   variant: "outline", disabled: true };
     case "connect_incoming":  return { label: "Accept Connection",    variant: "default" };
     case "connect_declined":  return { label: "Connection Declined",  variant: "outline", disabled: true };
     case "open_chat":         return { label: "Open Chat",            variant: "default", hint: "Not yet a confirmed participant" };
-    case "confirm_outgoing":  return { label: "Confirmation Pending", variant: "outline", disabled: true, hint: "Awaiting their response" };
+    case "confirm_outgoing":  return { label: "Waiting for their reply…", variant: "outline", disabled: true, hint: "Awaiting their response" };
     case "confirm_incoming":  return { label: "Accept Participation", variant: "default" };
     case "joined":            return { label: "Joined ✓",             variant: "outline", disabled: true };
     case "left":              return { label: "Show Interest",        variant: "default" };

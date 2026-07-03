@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Sparkle, MessageCircle, Hourglass } from "lucide-react";
 import { toast } from "sonner";
+import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ReputationPanel } from "@/components/reputation-panel";
@@ -64,7 +65,7 @@ function PublicProfile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Connection request sent");
+      toast.success(randomPick(CONNECTION_SENT_MESSAGES));
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
     },

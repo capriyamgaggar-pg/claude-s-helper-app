@@ -3,6 +3,7 @@ import { CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PendingDots } from "@/components/ui/pending-dots";
 import type { JoinMode, ParticipationState } from "@/lib/participation";
 
 interface Props {
@@ -120,7 +121,7 @@ export function ParticipationCard({ intentId, meId, otherId, creatorId }: Props)
               isCreator ? (
                 <><Hourglass className="size-3.5 text-amber-600" /> Wants to join</>
               ) : (
-                <><Hourglass className="size-3.5 text-amber-600" /> Request sent — awaiting approval</>
+                <><Hourglass className="size-3.5 text-amber-600" /> Waiting for their reply<PendingDots /></>
               )
             ) : isCreator ? (
               "No request yet"

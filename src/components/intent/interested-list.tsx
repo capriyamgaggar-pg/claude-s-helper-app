@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkle } from "lucide-react";
 import { toast } from "sonner";
+import { randomPick, seededPick, CONNECTION_SENT_MESSAGES, NO_INTEREST_YET_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { pairKey } from "@/lib/participation";
@@ -52,7 +53,7 @@ export function InterestedList({ intentId, creatorId, categorySlug, city, rows, 
       }, { onConflict: "user_a,user_b" });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Connection request sent"); qc.invalidateQueries({ queryKey: ["intent", intentId] }); },
+    onSuccess: () => { toast.success(randomPick(CONNECTION_SENT_MESSAGES)); qc.invalidateQueries({ queryKey: ["intent", intentId] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -63,7 +64,7 @@ export function InterestedList({ intentId, creatorId, categorySlug, city, rows, 
           Interested
         </h2>
         <p className="mt-3 rounded-2xl border border-dashed border-border bg-surface p-6 text-center text-sm text-muted-foreground">
-          When someone shows interest, they'll appear here.
+          {seededPick(intentId, NO_INTEREST_YET_MESSAGES)}
         </p>
       </section>
     );

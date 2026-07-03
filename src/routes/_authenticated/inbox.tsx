@@ -1,8 +1,9 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { randomPick, NO_PENDING_REQUESTS_MESSAGES } from "@/lib/personality";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
@@ -26,6 +27,7 @@ function Inbox() {
   const [tab, setTab] = useState<TabId>("chats");
   const location = useLocation();
   const isThreadOpen = location.pathname !== "/inbox" && location.pathname.startsWith("/inbox/");
+  const noPendingMessage = useMemo(() => randomPick(NO_PENDING_REQUESTS_MESSAGES), []);
 
   const connections = useQuery({
     queryKey: ["connections", user.id],
@@ -144,7 +146,7 @@ function Inbox() {
         <RequestList
           rows={received}
           userId={user.id}
-          emptyText="No pending requests."
+          emptyText={noPendingMessage}
           onAccept={(c) => accept.mutate({ id: c.id })}
         />
       )}
