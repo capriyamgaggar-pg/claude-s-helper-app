@@ -19,6 +19,7 @@ import { Route as AuthenticatedExploreRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEmptyPreviewRouteImport } from './routes/_authenticated/empty-preview'
 import { Route as AuthenticatedDemoPreviewRouteImport } from './routes/_authenticated/demo-preview'
 import { Route as AuthenticatedProfileMeRouteImport } from './routes/_authenticated/profile.me'
+import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile.edit'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedIntentsNewRouteImport } from './routes/_authenticated/intents.new'
 import { Route as AuthenticatedIntentsIntentIdRouteImport } from './routes/_authenticated/intents.$intentId'
@@ -80,6 +81,12 @@ const AuthenticatedProfileMeRoute = AuthenticatedProfileMeRouteImport.update({
   path: '/profile/me',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileEditRoute =
+  AuthenticatedProfileEditRouteImport.update({
+    id: '/profile/edit',
+    path: '/profile/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProfileUserIdRoute =
   AuthenticatedProfileUserIdRouteImport.update({
     id: '/profile/$userId',
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/intents/new': typeof AuthenticatedIntentsNewRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
   '/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/intents/new': typeof AuthenticatedIntentsNewRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/profile/me': typeof AuthenticatedProfileMeRoute
   '/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
   '/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
@@ -189,6 +198,7 @@ export interface FileRoutesById {
   '/_authenticated/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/_authenticated/intents/new': typeof AuthenticatedIntentsNewRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/_authenticated/profile/edit': typeof AuthenticatedProfileEditRoute
   '/_authenticated/profile/me': typeof AuthenticatedProfileMeRoute
   '/_authenticated/intents/$intentId/edit': typeof AuthenticatedIntentsIntentIdEditRoute
   '/_authenticated/intents/$intentId/feedback': typeof AuthenticatedIntentsIntentIdFeedbackRoute
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/intents/$intentId'
     | '/intents/new'
     | '/profile/$userId'
+    | '/profile/edit'
     | '/profile/me'
     | '/intents/$intentId/edit'
     | '/intents/$intentId/feedback'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/intents/$intentId'
     | '/intents/new'
     | '/profile/$userId'
+    | '/profile/edit'
     | '/profile/me'
     | '/intents/$intentId/edit'
     | '/intents/$intentId/feedback'
@@ -252,6 +264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/intents/$intentId'
     | '/_authenticated/intents/new'
     | '/_authenticated/profile/$userId'
+    | '/_authenticated/profile/edit'
     | '/_authenticated/profile/me'
     | '/_authenticated/intents/$intentId/edit'
     | '/_authenticated/intents/$intentId/feedback'
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/me'
       fullPath: '/profile/me'
       preLoaderRoute: typeof AuthenticatedProfileMeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/edit': {
+      id: '/_authenticated/profile/edit'
+      path: '/profile/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof AuthenticatedProfileEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile/$userId': {
@@ -452,6 +472,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntentsIntentIdRoute: typeof AuthenticatedIntentsIntentIdRouteWithChildren
   AuthenticatedIntentsNewRoute: typeof AuthenticatedIntentsNewRoute
   AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
+  AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
   AuthenticatedProfileMeRoute: typeof AuthenticatedProfileMeRoute
 }
 
@@ -466,6 +487,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedIntentsIntentIdRouteWithChildren,
   AuthenticatedIntentsNewRoute: AuthenticatedIntentsNewRoute,
   AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
+  AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
   AuthenticatedProfileMeRoute: AuthenticatedProfileMeRoute,
 }
 
