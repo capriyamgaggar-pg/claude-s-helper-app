@@ -131,12 +131,23 @@ function Activity() {
   });
 
   const { data: newResponseCounts } = useQuery({
-    queryKey: ["new-response-counts", user.id],
+    queryKey: ["response-counts", user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_new_response_counts");
-      if (error) throw error;
-      return new Map((data ?? []).map((r: { intent_id: string; total_count: number; pending_count: number }) =>
-        [r.intent_id, { total: r.total_count, pending: r.pending_count }]));
+      const [{ data: totalRows, error: totalError }, { data: pendingRows, error: pendingError }] = await Promise.all([
+        supabase.rpc("get_response_counts_total"),
+        supabase.rpc("get_response_counts_pending"),
+      ]);
+      if (totalError) throw totalError;
+      if (pendingError) throw pendingError;
+      const map = new Map<string, { total: number; pending: number }>();
+      (totalRows ?? []).forEach((r: { intent_id: string; total_count: number }) => {
+        map.set(r.intent_id, { total: r.total_count, pending: 0 });
+      });
+      (pendingRows ?? []).forEach((r: { intent_id: string; new_count: number }) => {
+        const existing = map.get(r.intent_id) ?? { total: 0, pending: 0 };
+        map.set(r.intent_id, { ...existing, pending: r.new_count });
+      });
+      return map;
     },
     refetchInterval: 20_000,
   });
