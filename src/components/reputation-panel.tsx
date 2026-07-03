@@ -54,24 +54,28 @@ export function ReputationPanel({ userId }: Props) {
           Reputation builds as you create and fulfill intents.
         </p>
       ) : (
-        <dl className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface">
-          <StatRow label="Intents created" value={stats.intents_created} />
-          <StatRow label="Intents joined" value={intentsJoined ?? 0} />
-          <StatRow label="People interested" value={stats.total_interested_received} />
-          <StatRow label="People connected" value={stats.total_connections} />
-          <StatRow label="Returning participants" value={wouldJoinAgain} />
-          <StatRow label="Avg. response time" value={avgResponseLabel(stats)} last />
+        <dl className="mt-3 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-surface">
+          <StatCell label="Created" value={stats.intents_created} col={1} row={1} />
+          <StatCell label="Joined" value={intentsJoined ?? 0} col={2} row={1} />
+          <StatCell label="Interested" value={stats.total_interested_received} col={3} row={1} />
+          <StatCell label="Connected" value={stats.total_connections} col={1} row={2} />
+          <StatCell label="Returning" value={wouldJoinAgain} col={2} row={2} />
+          <StatCell label="Response" value={avgResponseLabel(stats)} col={3} row={2} />
         </dl>
       )}
     </section>
   );
 }
 
-function StatRow({ label, value, last }: { label: string; value: number | string; last?: boolean }) {
+function StatCell({ label, value, col, row }: { label: string; value: number | string; col: 1 | 2 | 3; row: 1 | 2 }) {
   return (
-    <div className={"flex items-center justify-between px-3.5 py-2.5 " + (last ? "" : "border-b border-border")}>
-      <dt className="text-[13px] text-muted-foreground">{label}</dt>
-      <dd className="text-[14px] font-semibold tabular-nums">{value}</dd>
+    <div className={
+      "px-2 py-2.5 text-center " +
+      (row === 2 ? "border-t border-border " : "") +
+      (col !== 3 ? "border-r border-border" : "")
+    }>
+      <dd className="text-[15px] font-semibold tabular-nums">{value}</dd>
+      <dt className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{label}</dt>
     </div>
   );
 }
