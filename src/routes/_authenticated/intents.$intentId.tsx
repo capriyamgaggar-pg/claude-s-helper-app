@@ -141,7 +141,7 @@ function IntentDetail() {
   const myStage = !isCreator
     ? computeStage({
         myParticipation: myRow ? { state: myRow.state as ParticipationState, confirm_initiated_by: myRow.confirm_initiated_by } : null,
-        connection: connection ? { id: connection.id, state: connection.state as ConnectionState, requested_by: connection.requested_by } : null,
+        connection: connection ? { state: connection.state as ConnectionState, requested_by: connection.requested_by } : null,
         meId: user.id,
         isCreator: false,
       })

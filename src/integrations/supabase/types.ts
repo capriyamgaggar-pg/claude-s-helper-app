@@ -1563,6 +1563,20 @@ export type Database = {
           new_count: number
         }[]
       }
+      get_response_counts_pending: {
+        Args: never
+        Returns: {
+          intent_id: string
+          new_count: number
+        }[]
+      }
+      get_response_counts_total: {
+        Args: never
+        Returns: {
+          intent_id: string
+          total_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
