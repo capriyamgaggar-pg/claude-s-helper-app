@@ -17,6 +17,7 @@ import { FeedbackTab } from "@/components/feedback/feedback-tab";
 import { RegistrationStatusCard } from "@/components/registration/status-card";
 import { ParticipantRegistrationCTA } from "@/components/registration/participant-cta";
 import { RegisterOrConnectChoice } from "@/components/intent/register-or-connect-choice";
+import { MotifTile } from "@/components/motifs/motif-tile";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
@@ -181,20 +182,29 @@ function IntentDetail() {
       </header>
 
       <article className="flex-1 px-5 pt-2">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {data.intent_categories?.label ?? data.category_slug}
-          </span>
-          <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium " + toneClass}>
-            <Clock className="size-3" /> {pill.text}
-          </span>
-          {joinMode === "open_join" && (
-            <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-900">
-              Open join
-            </span>
-          )}
+        <div className="flex items-start gap-3">
+          <MotifTile
+            slug={data.category_slug}
+            layoutId={`motif-${intentId}`}
+            size={72}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {data.intent_categories?.label ?? data.category_slug}
+              </span>
+              <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium " + toneClass}>
+                <Clock className="size-3" /> {pill.text}
+              </span>
+              {joinMode === "open_join" && (
+                <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-900">
+                  Open join
+                </span>
+              )}
+            </div>
+            <h1 className="display mt-2 text-3xl leading-[1.15]">{data.title}</h1>
+          </div>
         </div>
-        <h1 className="display mt-3 text-3xl leading-[1.15]">{data.title}</h1>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
           {data.city && <span className="flex items-center gap-1.5"><MapPin className="size-4" />{data.city}</span>}

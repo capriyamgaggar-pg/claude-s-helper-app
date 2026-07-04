@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { STATUS_TAB_FILTERS, type IntentStatus } from "@/lib/intent-lifecycle";
 import { pairKey } from "@/lib/participation";
 import { canSeeCreator } from "@/lib/creator-visibility";
+import { AnimatePresence } from "motion/react";
 
 type TopTab = "mine" | "interested" | "joined" | "connections";
 
@@ -313,13 +314,15 @@ function Activity() {
                 }
                 return null;
               })()}
-              {mineFiltered.map((i) => (
-                <IntentCard key={i.id} intent={{
-                  ...rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true),
-                  newResponses: newResponseCounts?.get(i.id)?.pending ?? 0,
-                  totalResponses: newResponseCounts?.get(i.id)?.total ?? 0,
-                }} />
-              ))}
+              <AnimatePresence initial={false}>
+                {mineFiltered.map((i) => (
+                  <IntentCard key={i.id} intent={{
+                    ...rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true),
+                    newResponses: newResponseCounts?.get(i.id)?.pending ?? 0,
+                    totalResponses: newResponseCounts?.get(i.id)?.total ?? 0,
+                  }} />
+                ))}
+              </AnimatePresence>
             </TabsContent>
           </Tabs>
         </TabsContent>

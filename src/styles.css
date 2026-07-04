@@ -127,6 +127,14 @@
   --tint-coral: oklch(0.68 0.17 20);
   --tint-blue: oklch(0.62 0.13 240);
   --tint-amber: oklch(0.72 0.15 80);
+
+  /* Card interaction accent — every card exposes --card-accent at its own
+     scope; PR 1 uses the neutral orange accent, PR 2 will override per slug. */
+  --card-accent: var(--accent);
+
+  /* Neutral motif tile gradient (PR 1). PR 2 introduces --motif-<slug>. */
+  --motif-fallback-a: oklch(0.97 0.02 60);
+  --motif-fallback-b: oklch(0.93 0.04 80);
 }
 
 @keyframes ring-pulse {
@@ -175,6 +183,10 @@
   --sidebar-accent-foreground: oklch(0.96 0.005 80);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.65 0.10 160);
+
+  /* Motif tile — slightly cooler for dark mode. */
+  --motif-fallback-a: oklch(0.28 0.02 260);
+  --motif-fallback-b: oklch(0.24 0.02 260);
 }
 
 @layer base {

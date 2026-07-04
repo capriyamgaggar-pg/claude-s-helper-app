@@ -13,6 +13,8 @@ import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/locati
 import { canSeeCreator } from "@/lib/creator-visibility";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { isDemoHostBrowser } from "@/lib/demo-client";
+import { AnimatePresence, motion as m } from "motion/react";
+import { useCardMotion } from "@/lib/card-motion";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
@@ -327,15 +329,26 @@ function FeedRecoveryState({
 }
 
 function Section({ title, Icon, items, viewerId }: { title: string; Icon: typeof Search; items: IntentRow[]; viewerId: string }) {
+  const cardMotion = useCardMotion();
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
         <Icon className="size-4 text-muted-foreground" />
         <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       </div>
-      <div className="space-y-3">
-        {items.map((r) => <IntentCard key={r.id} intent={rowToCard(r, viewerId)} />)}
-      </div>
+      <m.ul
+        className="space-y-3"
+        initial={false}
+        transition={cardMotion.list(items.length)}
+      >
+        <AnimatePresence initial={false}>
+          {items.map((r) => (
+            <m.li key={r.id} layout {...cardMotion.item}>
+              <IntentCard intent={rowToCard(r, viewerId)} />
+            </m.li>
+          ))}
+        </AnimatePresence>
+      </m.ul>
     </section>
   );
 }
