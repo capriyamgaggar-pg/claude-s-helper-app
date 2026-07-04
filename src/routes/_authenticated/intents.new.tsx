@@ -184,40 +184,20 @@ function NewIntent() {
 
       {createdOrganizerId ? (
         <div className="flex-1 px-5 pt-8 pb-24">
-          <div className="mx-auto max-w-md rounded-2xl border border-border bg-surface p-6">
-            <div className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-full bg-emerald-100 text-emerald-900">✓</span>
-              <h2 className="display text-xl">Intent Created</h2>
-            </div>
-            <p className="mt-3 text-[14px] text-foreground">
-              Your {category === "trekking" ? "trek" : "event"} is now live.
-            </p>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              Participants can already discover it.
-            </p>
-
-            <div className="mt-5 rounded-xl border border-border bg-background p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Next recommended step
-              </p>
-              <div className="mt-2 flex items-start gap-2">
-                <span className="mt-0.5 inline-block size-4 rounded border border-border" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-medium">Registration Form</p>
-                  <p className="mt-0.5 text-[13px] text-muted-foreground">
-                    Build your registration form so people can register.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2">
+          <div className="mx-auto max-w-md space-y-4">
+            <EmptyState
+              icon={<Sparkles className="size-6" />}
+              title="Your intent is live"
+              description={`Your ${category === "trekking" ? "trek" : "event"} is now discoverable. Build the registration form next so people can join.`}
+            />
+            <div className="space-y-2">
               <Link
                 to="/intents/$intentId/form"
                 params={{ intentId: createdOrganizerId }}
-                className="block rounded-xl bg-foreground px-3 py-3 text-center text-[14px] font-medium text-background hover:opacity-90"
+                className="block rounded-xl bg-foreground px-3 py-3 text-center text-[14px] font-medium text-background transition-opacity hover:opacity-90"
+                style={{ transition: motion.transition("opacity", "quick") }}
               >
-                Build Registration Form
+                Build registration form
               </Link>
               <Link
                 to="/intents/$intentId"
@@ -231,16 +211,27 @@ function NewIntent() {
         </div>
       ) : (
 
-      <form onSubmit={submit} className="flex-1 space-y-5 px-5 pt-6 pb-24">
+      <form onSubmit={submit} className="flex-1 space-y-6 px-5 pt-6 pb-24">
+        {/* Verb-first hero — the constitution: intentions first, identity second */}
+        <div className="space-y-1">
+          <h2 className="display text-2xl leading-tight">
+            What do you want to do next?
+          </h2>
+          <p className="text-[13px] text-muted-foreground">
+            Name it in plain words. We'll introduce you to people who share it.
+          </p>
+        </div>
+
         {/* Category — first choice; everything else adapts to it */}
         <div className="space-y-2">
-          <Label>What kind of intent?</Label>
+          <Label>Pick a kind</Label>
           <div className="flex flex-wrap gap-2">
             {cats.map((c) => {
               const on = category === c.slug;
               return (
                 <button key={c.slug} type="button" onClick={() => setCategory(c.slug)}
-                  className={"rounded-full border px-3.5 py-1.5 text-[13px] transition-colors " + (on
+                  style={{ transition: motion.transition("background-color, color, border-color", "quick") }}
+                  className={"rounded-full border px-3.5 py-1.5 text-[13px] " + (on
                     ? "border-foreground bg-foreground text-background"
                     : "border-border bg-surface text-foreground hover:bg-secondary")}>
                   {c.label}
@@ -256,6 +247,7 @@ function NewIntent() {
             </p>
           ) : null}
         </div>
+
 
         {category ? (
           <>
