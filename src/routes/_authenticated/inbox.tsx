@@ -201,7 +201,7 @@ function RequestList({
     );
   }
   return (
-    <div className="mt-5 space-y-3 pb-8">
+    <div className="mt-6 space-y-4 pb-10">
       {rows.map((cn) => {
         const other = cn.user_a === userId ? cn.b : cn.a;
         if (!other) return null;
@@ -211,7 +211,11 @@ function RequestList({
           ?? [cn.origin_category, cn.origin_city].filter(Boolean).join(" · ")
           ?? null;
         return (
-          <div key={cn.id} className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-3">
+          <div
+            key={cn.id}
+            className="flex items-start gap-3 rounded-3xl border border-border/60 bg-surface p-4 shadow-sm"
+            style={{ transition: motion.transition("box-shadow, border-color", "quick") }}
+          >
             {other.photo_url ? (
               <img src={other.photo_url} alt="" className="size-12 shrink-0 rounded-full object-cover" />
             ) : (
@@ -229,12 +233,13 @@ function RequestList({
                   <Link
                     to="/intents/$intentId"
                     params={{ intentId: cn.intent.id }}
-                    className="mt-1 block truncate rounded-lg bg-secondary/60 px-2 py-1 text-[12px] font-medium hover:bg-secondary"
+                    className="mt-1.5 block truncate rounded-lg bg-secondary/60 px-2 py-1 text-[12px] font-medium hover:bg-secondary"
+                    style={{ transition: motion.transition("background-color", "quick") }}
                   >
                     {incoming ? "About: " : "On: "}{contextLabel}
                   </Link>
                 ) : (
-                  <p className="mt-1 truncate text-[12px] text-muted-foreground">{contextLabel}</p>
+                  <p className="mt-1.5 truncate text-[12px] text-muted-foreground">{contextLabel}</p>
                 )
               )}
             </div>
@@ -255,18 +260,29 @@ function RequestList({
 }
 
 function ChatList({ user, threads }: { user: { id: string }; threads: unknown[] }) {
+  if (threads.length === 0) {
+    return (
+      <div className="mt-6">
+        <EmptyState
+          icon={<MessageCircle className="size-6" aria-hidden />}
+          title="No chats yet"
+          description="Chats open here once you and someone else both accept a connection."
+        />
+      </div>
+    );
+  }
   return (
-    <div className="mt-5 space-y-3 pb-8">
-      {threads.length === 0 && (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Chats appear here once you mutually connect with someone.
-        </p>
-      )}
+    <div className="mt-6 space-y-4 pb-10">
       {(threads as Array<{ id: string; unread: boolean; thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null } | null }> }>).map((t) => {
         const other = t.thread_members.find((m) => m.user_id !== user.id)?.profiles;
         return (
-          <Link key={t.id} to="/inbox/$threadId" params={{ threadId: t.id }}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 hover:bg-secondary/60">
+          <Link
+            key={t.id}
+            to="/inbox/$threadId"
+            params={{ threadId: t.id }}
+            className="flex items-center gap-3 rounded-3xl border border-border/60 bg-surface p-4 shadow-sm hover:bg-secondary/40"
+            style={{ transition: motion.transition("background-color, border-color", "quick") }}
+          >
             <div className="relative shrink-0">
               {other?.photo_url ? (
                 <img src={other.photo_url} alt="" className="size-12 rounded-full object-cover" />
@@ -276,7 +292,7 @@ function ChatList({ user, threads }: { user: { id: string }; threads: unknown[] 
                 </span>
               )}
               {t.unread && (
-                <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-surface bg-red-500" />
+                <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-surface bg-primary" />
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -292,4 +308,4 @@ function ChatList({ user, threads }: { user: { id: string }; threads: unknown[] 
   );
 }
 
-export function _useEffectShim() { useEffect(() => {}, []); }
+export function _useEffectShim() { useEffect(() => {}, []); InboxIcon; }
