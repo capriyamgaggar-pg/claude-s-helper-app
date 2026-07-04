@@ -90,11 +90,22 @@ function ChatThread() {
     const { error } = await supabase.from("messages")
       .insert({ thread_id: threadId, sender_id: user.id, body: trimmed });
     if (error) toast.error(error.message);
+    // Constitution §5: feedback visible + finish the loop — keep focus in the composer.
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
+
+  // Focus composer on mount + thread change (chat-agent-ui-contract).
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [threadId]);
 
   const ctxData = ctx.data as unknown as {
     intent_id: string | null;
-    intents: { id: string; title: string; category_slug: string; creator_id: string; intent_categories: { label: string } | null } | null;
+    intents: {
+      id: string; title: string; category_slug: string; creator_id: string;
+      status: string | null; expires_at: string | null; ends_at: string | null;
+      intent_categories: { label: string } | null;
+    } | null;
     thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null; interests: string[] } | null }>;
   } | undefined;
 
@@ -104,8 +115,20 @@ function ChatThread() {
   const sharedInterests = (me?.interests ?? []).filter((i) => (other?.interests ?? []).includes(i));
   const starters = startersFor(ctxData?.intents?.category_slug, ctxData?.intents?.creator_id === user.id);
 
+  // Ephemeral chat: bounded to the intent. Closes when the intent ends.
+  const intent = ctxData?.intents;
+  const isBounded = !!ctxData?.intent_id && !!intent;
+  const ended = useMemo(() => {
+    if (!intent) return false;
+    if (intent.status && ENDED_STATUSES.has(intent.status)) return true;
+    const now = Date.now();
+    if (intent.expires_at && new Date(intent.expires_at).getTime() < now) return true;
+    if (intent.ends_at && new Date(intent.ends_at).getTime() < now) return true;
+    return false;
+  }, [intent]);
 
-  const showOpener = messages.length === 0 && !!ctxData;
+  const showOpener = messages.length === 0 && !!ctxData && !ended;
+
 
   return (
     <div className="flex h-dvh flex-col">
