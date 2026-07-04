@@ -2,18 +2,29 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { LocationPill } from "@/components/location-pill";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 import { applyLocationFilter, placeToFilter, type Place } from "@/lib/location";
 import { canSeeCreator } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/explore")({
-  head: () => ({ meta: [{ title: "Explore — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Explore intents — Intent" },
+      { name: "description", content: "Discover what people around you want to do next, and join in." },
+      { property: "og:title", content: "Explore intents — Intent" },
+      { property: "og:description", content: "Discover what people around you want to do next, and join in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Explore,
 });
+
 
 interface Cat { slug: string; label: string }
 
@@ -61,13 +72,19 @@ function Explore() {
 
   return (
     <div className="px-5 pt-8">
-      <h1 className="display text-3xl">Explore</h1>
+      <div className="space-y-1">
+        <h1 className="display text-3xl">Explore</h1>
+        <p className="text-[13px] text-muted-foreground">
+          See what people nearby want to do next.
+        </p>
+      </div>
 
       <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3">
         <Search className="size-4 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, city or area"
           className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" />
       </div>
+
 
       <div className="mt-4 space-y-3">
         <div>
@@ -122,15 +139,12 @@ function Explore() {
           return <IntentCard key={card.id} intent={card} />;
         })}
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
-            <p className="font-semibold text-foreground">Nothing matched your search.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try another location or category. Or be the first to post here.
-            </p>
-            <Link to="/intents/new">
-              <Button className="mt-4" size="sm">Post an Intent</Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={<Compass className="size-6" />}
+            title="Nothing here yet"
+            description="Try another location or category — or be the first to post an intent here."
+            action={{ label: "Post an intent", href: "/intents/new" }}
+          />
         )}
       </div>
       <Link to="/intents/new" className="hidden">+</Link>
@@ -141,6 +155,7 @@ function Explore() {
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
+      style={{ transition: motion.transition("background-color, color, border-color", "quick") }}
       className={"shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] " + (on
         ? "border-foreground bg-foreground text-background"
         : "border-border bg-surface text-foreground hover:bg-secondary")}>
@@ -148,3 +163,4 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     </button>
   );
 }
+
