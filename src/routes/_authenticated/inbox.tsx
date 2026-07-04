@@ -98,6 +98,7 @@ function Inbox() {
     },
     onSuccess: () => {
       toast.success(randomPick(CONNECTION_ACCEPTED_MESSAGES));
+      celebrateOnce(user.id, "first-connection-accepted");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["threads", user.id] });
       qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] });
