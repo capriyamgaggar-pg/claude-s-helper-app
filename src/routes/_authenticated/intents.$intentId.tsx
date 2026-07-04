@@ -17,6 +17,7 @@ import { FeedbackTab } from "@/components/feedback/feedback-tab";
 import { RegistrationStatusCard } from "@/components/registration/status-card";
 import { ParticipantRegistrationCTA } from "@/components/registration/participant-cta";
 import { RegisterOrConnectChoice } from "@/components/intent/register-or-connect-choice";
+import { MotifTile } from "@/components/motifs/motif-tile";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId")({
   head: ({ params }) => ({ meta: [{ title: `Intent — ${params.intentId.slice(0, 6)}` }] }),
