@@ -96,7 +96,7 @@ function Inbox() {
       return threadId as string;
     },
     onSuccess: () => {
-      toast.success("Connected — chat is open");
+      toast.success(randomPick(CONNECTION_ACCEPTED_MESSAGES));
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["threads", user.id] });
       qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] });
