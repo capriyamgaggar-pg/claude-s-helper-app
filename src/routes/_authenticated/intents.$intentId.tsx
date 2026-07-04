@@ -115,6 +115,18 @@ function IntentDetail() {
     },
   });
 
+  // If this intent is linked to a community, joining requires membership --
+  // the intent itself stays fully visible either way.
+  const { data: isCommunityMember } = useQuery({
+    enabled: !!data?.community_id,
+    queryKey: ["is-community-member", data?.community_id, user.id],
+    queryFn: async () => {
+      const { data: row } = await supabase.from("community_members")
+        .select("user_id").eq("community_id", data!.community_id).eq("user_id", user.id).maybeSingle();
+      return !!row;
+    },
+  });
+
   if (hasChildRoute) {
     return <Outlet />;
   }
@@ -148,6 +160,7 @@ function IntentDetail() {
       })
     : null;
   const showCombinedChoice = myStage === "request_connect" || myStage === "interest_saved";
+  const canJoin = !data.community_id || isCreator || !!isCommunityMember;
 
   const toneClass =
     pill.tone === "amber"
@@ -232,7 +245,15 @@ function IntentDetail() {
 
         {/* Registration status / CTA */}
         {isCreator && <RegistrationStatusCard intentId={intentId} />}
-        {!isCreator && isActive && !showCombinedChoice && (
+        {!isCreator && isActive && !canJoin && (
+          <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-4 text-center">
+            <p className="text-[14px] font-medium">Members only</p>
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              This intent is limited to a community you're not part of yet.
+            </p>
+          </div>
+        )}
+        {!isCreator && isActive && canJoin && !showCombinedChoice && (
           <ParticipantRegistrationCTA
             intentId={intentId}
             userId={user.id}
@@ -247,7 +268,7 @@ function IntentDetail() {
             }
           />
         )}
-        {!isCreator && isActive && showCombinedChoice && (
+        {!isCreator && isActive && canJoin && showCombinedChoice && (
           <RegisterOrConnectChoice
             intentId={intentId}
             creatorId={data.creator_id}
@@ -365,7 +386,7 @@ function IntentDetail() {
       </article>
 
       {/* Visitor stage-aware CTA */}
-      {!isCreator && isActive && !showCombinedChoice && (
+      {!isCreator && isActive && canJoin && !showCombinedChoice && (
         <footer className="sticky bottom-16 mx-3 mb-3 rounded-2xl border border-border bg-surface/95 p-3 shadow-lg backdrop-blur">
           <ParticipationButton
             intentId={intentId}

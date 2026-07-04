@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, MapPin } from "lucide-react";
 import { BackButton } from "@/components/back-button";
@@ -63,6 +64,17 @@ function NewIntent() {
 
   // Creator visibility (default: show identity)
   const [creatorVisibility, setCreatorVisibility] = useState<CreatorVisibility>("public");
+  const [communityId, setCommunityId] = useState<string>("");
+
+  const { data: myCommunities } = useQuery({
+    queryKey: ["my-communities", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("communities")
+        .select("id, name").eq("organizer_id", user.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   const [busy, setBusy] = useState(false);
   const [createdOrganizerId, setCreatedOrganizerId] = useState<string | null>(null);
@@ -128,6 +140,7 @@ function NewIntent() {
       payment_required: isOrganizer && priceNum > 0,
       price_inr: isOrganizer ? priceNum : 0,
       creator_visibility: creatorVisibility,
+      community_id: communityId || null,
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -420,6 +433,27 @@ function NewIntent() {
                     </div>
                     <p className="text-[11px] text-muted-foreground">
                       This locks once the first person interacts with your intent.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Community (optional)</Label>
+                    <select
+                      value={communityId}
+                      onChange={(e) => setCommunityId(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-[14px]"
+                    >
+                      <option value="">Open to everyone</option>
+                      {(myCommunities ?? []).map((c) => (
+                        <option key={c.id} value={c.id}>{c.name} — members only</option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-muted-foreground">
+                      {communityId
+                        ? "Everyone can see this intent, but only members of this community can join."
+                        : (myCommunities ?? []).length === 0
+                          ? "You don't have a community yet — create one from your profile menu to restrict joining."
+                          : "Anyone can request to join."}
                     </p>
                   </div>
 
