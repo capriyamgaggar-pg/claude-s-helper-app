@@ -10,6 +10,7 @@ import {
   getMyFeedbackEligibility,
   submitFeedback,
 } from "@/lib/feedback.functions";
+import { randomPick, FEEDBACK_THANKS_MESSAGES } from "@/lib/personality";
 
 export const Route = createFileRoute("/_authenticated/intents/$intentId/feedback")({
   head: () => ({ meta: [{ title: "Share feedback — Intent" }] }),
