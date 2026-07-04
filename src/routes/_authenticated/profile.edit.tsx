@@ -89,7 +89,7 @@ function EditProfile() {
     }).eq("id", user.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Profile updated");
+    toast.success(randomPick(PROFILE_SAVED_MESSAGES));
     navigate({ to: "/profile/me" });
   }
 
