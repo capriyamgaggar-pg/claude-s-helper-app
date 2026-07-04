@@ -314,13 +314,15 @@ function Activity() {
                 }
                 return null;
               })()}
-              {mineFiltered.map((i) => (
-                <IntentCard key={i.id} intent={{
-                  ...rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true),
-                  newResponses: newResponseCounts?.get(i.id)?.pending ?? 0,
-                  totalResponses: newResponseCounts?.get(i.id)?.total ?? 0,
-                }} />
-              ))}
+              <AnimatePresence initial={false}>
+                {mineFiltered.map((i) => (
+                  <IntentCard key={i.id} intent={{
+                    ...rowToCard(i, profile?.name ?? null, profile?.photo_url ?? null, true),
+                    newResponses: newResponseCounts?.get(i.id)?.pending ?? 0,
+                    totalResponses: newResponseCounts?.get(i.id)?.total ?? 0,
+                  }} />
+                ))}
+              </AnimatePresence>
             </TabsContent>
           </Tabs>
         </TabsContent>
