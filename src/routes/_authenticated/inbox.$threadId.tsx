@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Send, Sparkle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Send, Sparkle, Clock, Lock } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,11 +11,21 @@ import { startersFor } from "@/lib/categories";
 import { ParticipationCard } from "@/components/chat/participation-card";
 import { EmojiPicker } from "@/components/chat/emoji-picker";
 import { BlockReportMenu } from "@/components/safety/block-report-menu";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/_authenticated/inbox/$threadId")({
-  head: () => ({ meta: [{ title: "Chat — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Chat — Intent" },
+      { name: "description", content: "A conversation bounded to your shared intent." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: ChatThread,
 });
+
+const ENDED_STATUSES = new Set(["fulfilled", "closed", "expired", "cancelled", "completed"]);
 
 interface Message { id: string; thread_id: string; sender_id: string; body: string; created_at: string }
 
@@ -27,18 +37,21 @@ function ChatThread() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const ctx = useQuery({
     queryKey: ["thread-ctx", threadId],
     queryFn: async () => {
       const { data: thread, error: et } = await supabase.from("threads")
-        .select(`id, kind, intent_id, intents(id, title, category_slug, creator_id, intent_categories(label)),
+        .select(`id, kind, intent_id, intents(id, title, category_slug, creator_id, status, expires_at, ends_at, intent_categories(label)),
           thread_members(user_id, profiles(id, name, photo_url, interests))`)
         .eq("id", threadId).single();
       if (et) throw et;
       return thread;
     },
   });
+
+
 
 
   // initial messages
@@ -77,11 +90,22 @@ function ChatThread() {
     const { error } = await supabase.from("messages")
       .insert({ thread_id: threadId, sender_id: user.id, body: trimmed });
     if (error) toast.error(error.message);
+    // Constitution §5: feedback visible + finish the loop — keep focus in the composer.
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
+
+  // Focus composer on mount + thread change (chat-agent-ui-contract).
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [threadId]);
 
   const ctxData = ctx.data as unknown as {
     intent_id: string | null;
-    intents: { id: string; title: string; category_slug: string; creator_id: string; intent_categories: { label: string } | null } | null;
+    intents: {
+      id: string; title: string; category_slug: string; creator_id: string;
+      status: string | null; expires_at: string | null; ends_at: string | null;
+      intent_categories: { label: string } | null;
+    } | null;
     thread_members: Array<{ user_id: string; profiles: { id: string; name: string | null; photo_url: string | null; interests: string[] } | null }>;
   } | undefined;
 
@@ -91,8 +115,20 @@ function ChatThread() {
   const sharedInterests = (me?.interests ?? []).filter((i) => (other?.interests ?? []).includes(i));
   const starters = startersFor(ctxData?.intents?.category_slug, ctxData?.intents?.creator_id === user.id);
 
+  // Ephemeral chat: bounded to the intent. Closes when the intent ends.
+  const intent = ctxData?.intents;
+  const isBounded = !!ctxData?.intent_id && !!intent;
+  const ended = useMemo(() => {
+    if (!intent) return false;
+    if (intent.status && ENDED_STATUSES.has(intent.status)) return true;
+    const now = Date.now();
+    if (intent.expires_at && new Date(intent.expires_at).getTime() < now) return true;
+    if (intent.ends_at && new Date(intent.ends_at).getTime() < now) return true;
+    return false;
+  }, [intent]);
 
-  const showOpener = messages.length === 0 && !!ctxData;
+  const showOpener = messages.length === 0 && !!ctxData && !ended;
+
 
   return (
     <div className="flex h-dvh flex-col">
@@ -120,6 +156,22 @@ function ChatThread() {
           />
         )}
       </header>
+
+      {isBounded && intent ? (
+        <div
+          className="flex items-start gap-2 border-b border-border bg-[color:var(--surface-warm)] px-4 py-2 text-[12px] text-muted-foreground"
+          role="note"
+        >
+          {ended ? <Lock className="mt-0.5 size-3.5 shrink-0" /> : <Clock className="mt-0.5 size-3.5 shrink-0" />}
+          <p className="leading-snug">
+            {ended ? (
+              <>This chat has closed because <span className="font-medium text-foreground">{intent.title}</span> ended. History stays for you both.</>
+            ) : (
+              <>This chat exists because of <span className="font-medium text-foreground">{intent.title}</span> — it closes when the intent ends.</>
+            )}
+          </p>
+        </div>
+      ) : null}
 
       {ctxData?.intent_id && ctxData.intents && other && (
         <ParticipationCard
@@ -165,6 +217,7 @@ function ChatThread() {
               <div className="mt-2 space-y-2">
                 {starters.map((s) => (
                   <button key={s} onClick={() => send(s)}
+                    style={{ transition: motion.transition("background-color", "quick") }}
                     className="block w-full rounded-2xl border border-dashed border-border bg-surface px-4 py-3 text-left text-[14px] hover:bg-secondary/60">
                     {s}
                   </button>
@@ -180,29 +233,50 @@ function ChatThread() {
             return (
               <div key={m.id} className={"flex " + (mine ? "justify-end" : "justify-start")}>
                 <div className={"max-w-[78%] rounded-2xl px-3.5 py-2 text-[14px] " +
-                  (mine ? "bg-foreground text-background" : "bg-secondary text-foreground")}>
+                  (mine ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground")}>
                   {m.body}
                 </div>
               </div>
             );
           })}
         </div>
+
+        {ended && messages.length > 0 ? (
+          <div className="mt-6">
+            <EmptyState
+              icon={<Lock className="size-5" />}
+              title="This chat has closed"
+              description="The intent it belonged to has ended. You can still read it, but no new messages."
+            />
+          </div>
+        ) : null}
       </div>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); send(body); }}
-        className="border-t border-border bg-surface px-3 py-2"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
-      >
-        <div className="flex items-center gap-2">
-          <EmojiPicker onSelect={(emoji) => setBody((b) => b + emoji)} />
-          <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message"
-            className="h-11 flex-1 rounded-full bg-background" />
-          <Button type="submit" size="icon" className="size-11 rounded-full" disabled={!body.trim()}>
-            <Send className="size-4" />
-          </Button>
+      {ended ? (
+        <div
+          className="border-t border-border bg-surface px-4 py-3 text-center text-[13px] text-muted-foreground"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        >
+          <Lock className="mr-1.5 inline size-3.5 -translate-y-0.5" />
+          Chat closed with the intent.
         </div>
-      </form>
+      ) : (
+        <form
+          onSubmit={(e) => { e.preventDefault(); send(body); }}
+          className="border-t border-border bg-surface px-3 py-2"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+        >
+          <div className="flex items-center gap-2">
+            <EmojiPicker onSelect={(emoji) => setBody((b) => b + emoji)} />
+            <Input ref={inputRef} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message"
+              className="h-11 flex-1 rounded-full bg-background" />
+            <Button type="submit" size="icon" className="size-11 rounded-full" disabled={!body.trim()}>
+              <Send className="size-4" />
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
+
 }
