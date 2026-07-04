@@ -200,27 +200,85 @@ function PublicProfile() {
       {userId !== user.id && (
         connection?.state === "accepted" && connection.thread_id ? (
           <Link to="/inbox/$threadId" params={{ threadId: connection.thread_id }}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "var(--accent-orange)" }}>
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white hover:opacity-90"
+            style={{ backgroundColor: "var(--accent-orange)", transition: motion.transition("opacity", "quick") }}>
             <MessageCircle className="size-4" /> Chat
           </Link>
         ) : connection?.state === "requested" ? (
-          <Button disabled className="mt-6 w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
-            <Hourglass className="size-4" />
-            {connection.requested_by === user.id ? "Request sent" : "Respond in your Inbox"}
-          </Button>
+          connection.requested_by === user.id ? (
+            <div className="mt-6 space-y-2">
+              <Button disabled className="w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
+                <Hourglass className="size-4" /> Request sent — waiting to hear back
+              </Button>
+              <button
+                type="button"
+                onClick={() => setWithdrawOpen(true)}
+                disabled={withdraw.isPending}
+                className="flex w-full items-center justify-center gap-1.5 rounded-2xl px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground disabled:opacity-60"
+                style={{ transition: motion.transition("color", "quick") }}
+              >
+                <X className="size-3.5" /> Withdraw request
+              </button>
+            </div>
+          ) : (
+            <Button disabled className="mt-6 w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
+              <Hourglass className="size-4" /> Respond in your Inbox
+            </Button>
+          )
         ) : (
-          <button
-            type="button"
-            onClick={() => connect.mutate()}
-            disabled={connect.isPending}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ backgroundColor: "var(--accent-orange)" }}
-          >
-            <Sparkle className="size-4" /> Connect
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              disabled={connect.isPending || rateLimited}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: "var(--accent-orange)", transition: motion.transition("opacity", "quick") }}
+            >
+              <Sparkle className="size-4" /> Connect
+            </button>
+            {rateLimited ? (
+              <p className="mt-2 text-center text-[12px] text-muted-foreground">
+                You've sent {CONNECT_LIMIT_24H} requests in the last 24 hours. Give it a moment.
+              </p>
+            ) : null}
+          </>
         )
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send a connection request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {profile.name ?? "They"} will see your profile and can accept or pass. You can withdraw the request any time before they respond.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={() => connect.mutate()}>
+              Send request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Withdraw your request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {profile.name ?? "They"} won't be notified. You can send a new request later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => withdraw.mutate()}>
+              Withdraw
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <ReputationPanel userId={userId} />
 
