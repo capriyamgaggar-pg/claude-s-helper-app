@@ -32,6 +32,7 @@ interface Cat { slug: string; label: string }
 
 function Explore() {
   const { user } = Route.useRouteContext();
+  const cardMotion = useCardMotion();
   const [cats, setCats] = useState<Cat[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [q, setQ] = useState("");
