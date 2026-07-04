@@ -157,6 +157,22 @@ function ChatThread() {
         )}
       </header>
 
+      {isBounded && intent ? (
+        <div
+          className="flex items-start gap-2 border-b border-border bg-[color:var(--surface-warm)] px-4 py-2 text-[12px] text-muted-foreground"
+          role="note"
+        >
+          {ended ? <Lock className="mt-0.5 size-3.5 shrink-0" /> : <Clock className="mt-0.5 size-3.5 shrink-0" />}
+          <p className="leading-snug">
+            {ended ? (
+              <>This chat has closed because <span className="font-medium text-foreground">{intent.title}</span> ended. History stays for you both.</>
+            ) : (
+              <>This chat exists because of <span className="font-medium text-foreground">{intent.title}</span> — it closes when the intent ends.</>
+            )}
+          </p>
+        </div>
+      ) : null}
+
       {ctxData?.intent_id && ctxData.intents && other && (
         <ParticipationCard
           intentId={ctxData.intent_id}
@@ -201,6 +217,7 @@ function ChatThread() {
               <div className="mt-2 space-y-2">
                 {starters.map((s) => (
                   <button key={s} onClick={() => send(s)}
+                    style={{ transition: motion.transition("background-color", "quick") }}
                     className="block w-full rounded-2xl border border-dashed border-border bg-surface px-4 py-3 text-left text-[14px] hover:bg-secondary/60">
                     {s}
                   </button>
@@ -216,29 +233,50 @@ function ChatThread() {
             return (
               <div key={m.id} className={"flex " + (mine ? "justify-end" : "justify-start")}>
                 <div className={"max-w-[78%] rounded-2xl px-3.5 py-2 text-[14px] " +
-                  (mine ? "bg-foreground text-background" : "bg-secondary text-foreground")}>
+                  (mine ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground")}>
                   {m.body}
                 </div>
               </div>
             );
           })}
         </div>
+
+        {ended && messages.length > 0 ? (
+          <div className="mt-6">
+            <EmptyState
+              icon={<Lock className="size-5" />}
+              title="This chat has closed"
+              description="The intent it belonged to has ended. You can still read it, but no new messages."
+            />
+          </div>
+        ) : null}
       </div>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); send(body); }}
-        className="border-t border-border bg-surface px-3 py-2"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
-      >
-        <div className="flex items-center gap-2">
-          <EmojiPicker onSelect={(emoji) => setBody((b) => b + emoji)} />
-          <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message"
-            className="h-11 flex-1 rounded-full bg-background" />
-          <Button type="submit" size="icon" className="size-11 rounded-full" disabled={!body.trim()}>
-            <Send className="size-4" />
-          </Button>
+      {ended ? (
+        <div
+          className="border-t border-border bg-surface px-4 py-3 text-center text-[13px] text-muted-foreground"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        >
+          <Lock className="mr-1.5 inline size-3.5 -translate-y-0.5" />
+          Chat closed with the intent.
         </div>
-      </form>
+      ) : (
+        <form
+          onSubmit={(e) => { e.preventDefault(); send(body); }}
+          className="border-t border-border bg-surface px-3 py-2"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
+        >
+          <div className="flex items-center gap-2">
+            <EmojiPicker onSelect={(emoji) => setBody((b) => b + emoji)} />
+            <Input ref={inputRef} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message"
+              className="h-11 flex-1 rounded-full bg-background" />
+            <Button type="submit" size="icon" className="size-11 rounded-full" disabled={!body.trim()}>
+              <Send className="size-4" />
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
+
 }
