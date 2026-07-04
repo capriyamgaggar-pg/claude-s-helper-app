@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, MapPin } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -150,9 +151,7 @@ function NewIntent() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 px-4 pt-4">
-        <Link to="/home" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback="/home" />
         <h1 className="display text-lg">
           {isOrganizer ? "New event" : "New intent"}
         </h1>

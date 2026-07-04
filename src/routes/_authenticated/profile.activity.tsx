@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, MessageCircle, X } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -265,9 +266,7 @@ function Activity() {
   return (
     <div className="px-5 pt-8 pb-8">
       <div className="flex items-center gap-3">
-        <Link to="/profile/me" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback="/profile/me" />
         <h1 className="display text-2xl">Activity</h1>
       </div>
 

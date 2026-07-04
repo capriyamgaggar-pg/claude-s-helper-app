@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, CheckCircle2, XCircle } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -193,8 +194,7 @@ function Submissions() {
   return (
     <div className="mx-auto max-w-3xl pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
-        <Link to="/intents/$intentId" params={{ intentId }}
-          className="rounded-full p-1.5 hover:bg-muted"><ChevronLeft className="size-5" /></Link>
+        <BackButton fallback={`/intents/${intentId}`} className="rounded-full p-1.5 hover:bg-muted" />
         <div>
           <p className="text-sm font-semibold">Responses</p>
           <p className="text-xs text-muted-foreground">{applicants.length} total</p>

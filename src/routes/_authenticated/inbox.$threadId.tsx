@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkle } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,9 +95,7 @@ function ChatThread() {
   return (
     <div className="flex h-dvh flex-col">
       <header className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3">
-        <Link to="/inbox" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback="/inbox" />
         {otherMember && (
           <Link to="/profile/$userId" params={{ userId: otherMember.user_id }}
             className="flex min-w-0 items-center gap-3 hover:opacity-80">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ChevronLeft, MapPin, Pencil } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,9 +126,7 @@ function EditIntent() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 px-4 pt-4">
-        <Link to="/intents/$intentId" params={{ intentId }} className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback={`/intents/${intentId}`} />
         <h1 className="display text-lg">
           {pendingExpiresAt ? "Edit & reactivate" : "Edit intent"}
         </h1>

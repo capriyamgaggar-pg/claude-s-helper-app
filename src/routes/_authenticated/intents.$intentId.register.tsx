@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, CheckCircle2 } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -235,8 +236,7 @@ function Runner() {
   return (
     <div className="mx-auto max-w-2xl pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
-        <Link to="/intents/$intentId" params={{ intentId }}
-          className="rounded-full p-1.5 hover:bg-muted"><ChevronLeft className="size-5" /></Link>
+        <BackButton fallback={`/intents/${intentId}`} className="rounded-full p-1.5 hover:bg-muted" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">Register</p>
           <p className="truncate text-xs text-muted-foreground">{intentQ.data?.title}</p>

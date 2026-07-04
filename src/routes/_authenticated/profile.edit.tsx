@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, MapPin, Pencil } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,9 +97,7 @@ function EditProfile() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3">
-        <Link to="/profile/me" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback="/profile/me" />
         <h1 className="text-[15px] font-semibold">Edit profile</h1>
       </header>
 

@@ -8,6 +8,7 @@ import {
   Pencil, Cloud, Loader2, AlertCircle, Eye, ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -191,8 +192,7 @@ function FormBuilder() {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-2 min-w-0">
-          <Link to="/intents/$intentId" params={{ intentId }}
-            className="rounded-full p-1.5 hover:bg-muted"><ChevronLeft className="size-5" /></Link>
+          <BackButton fallback={`/intents/${intentId}`} className="rounded-full p-1.5 hover:bg-muted" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">Registration form</p>
             <p className="truncate text-xs text-muted-foreground">{intentQ.data?.title}</p>

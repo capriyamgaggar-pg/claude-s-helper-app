@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, MapPin, Calendar, Users, Clock, CheckCircle2, RotateCw } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -163,9 +164,7 @@ function IntentDetail() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 px-4 pt-4">
-        <Link to="/home" className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback="/home" />
       </header>
 
       <article className="flex-1 px-5 pt-2">

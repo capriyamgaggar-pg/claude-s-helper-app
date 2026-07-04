@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, CheckCircle2 } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 import { FeedbackForm } from "@/components/feedback/feedback-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,9 +88,7 @@ function FeedbackPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center gap-2 px-4 pt-4">
-        <Link to="/intents/$intentId" params={{ intentId }} className="grid size-9 place-items-center rounded-full hover:bg-secondary">
-          <ChevronLeft className="size-5" />
-        </Link>
+        <BackButton fallback={`/intents/${intentId}`} />
       </header>
       <div className="flex-1 px-5 pb-16 pt-2">
         <h1 className="display text-2xl leading-tight">Share feedback</h1>
