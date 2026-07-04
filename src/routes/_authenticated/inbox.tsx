@@ -308,4 +308,4 @@ function ChatList({ user, threads }: { user: { id: string }; threads: unknown[] 
   );
 }
 
-export function _useEffectShim() { useEffect(() => {}, []); InboxIcon; }
+export function _useEffectShim() { useEffect(() => {}, []); }
