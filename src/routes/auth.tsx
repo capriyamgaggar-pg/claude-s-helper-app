@@ -12,6 +12,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { defaultIntentExamples } from "@/components/brand/examples";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DemoAuthPanel } from "@/components/demo/DemoAuthPanel";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -22,6 +23,20 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content:
           "A network for shared real-world goals. Post what you need and find people nearby who want the same.",
+      },
+      { property: "og:title", content: "Intent — find your people" },
+      {
+        property: "og:description",
+        content:
+          "Post what you're up for. Meet people nearby who want the same.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Intent — find your people" },
+      {
+        name: "twitter:description",
+        content:
+          "Post what you're up for. Meet people nearby who want the same.",
       },
     ],
   }),
