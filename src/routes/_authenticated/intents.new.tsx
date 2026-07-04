@@ -157,7 +157,7 @@ function NewIntent() {
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(isOrganizer ? "Event created" : "Intent posted");
+    toast.success(randomPick(isOrganizer ? EVENT_CREATED_MESSAGES : INTENT_POSTED_MESSAGES));
 
     // Organizer with registration_first → jump straight to Journey/Form builder.
     if (isOrganizer && flow === "registration_first") {
