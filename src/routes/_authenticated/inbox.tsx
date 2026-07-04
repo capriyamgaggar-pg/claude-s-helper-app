@@ -8,6 +8,7 @@ import { randomPick, NO_PENDING_REQUESTS_MESSAGES, CONNECTION_ACCEPTED_MESSAGES 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { motion } from "@/lib/motion";
+import { celebrateOnce } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -97,6 +98,7 @@ function Inbox() {
     },
     onSuccess: () => {
       toast.success(randomPick(CONNECTION_ACCEPTED_MESSAGES));
+      celebrateOnce(user.id, "first-connection-accepted");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["threads", user.id] });
       qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] });

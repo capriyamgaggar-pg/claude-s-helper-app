@@ -6,6 +6,7 @@ import { BackButton } from "@/components/back-button";
 import { BlockReportMenu } from "@/components/safety/block-report-menu";
 import { toast } from "sonner";
 import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
+import { celebrateOnce } from "@/lib/celebrate";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,6 +113,7 @@ function PublicProfile() {
     },
     onSuccess: () => {
       toast.success(randomPick(CONNECTION_SENT_MESSAGES));
+      celebrateOnce(user.id, "first-connection-sent");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
       qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
