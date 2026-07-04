@@ -103,14 +103,6 @@ function PublicProfile() {
 
       <header className="mt-2 flex items-center gap-4">
         <div className="relative shrink-0">
-          <span
-            className="pointer-events-none absolute -inset-1 rounded-full"
-            style={{
-              boxShadow: `0 0 0 2px color-mix(in oklab, var(--accent-peach) 70%, transparent)`,
-              animation: "ring-pulse 3s ease-in-out infinite",
-            }}
-            aria-hidden
-          />
           {profile.photo_url ? (
             <img src={profile.photo_url} alt="" className="relative size-16 rounded-full object-cover ring-2 ring-white" />
           ) : (
