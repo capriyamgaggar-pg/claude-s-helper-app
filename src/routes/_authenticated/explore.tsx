@@ -72,13 +72,19 @@ function Explore() {
 
   return (
     <div className="px-5 pt-8">
-      <h1 className="display text-3xl">Explore</h1>
+      <div className="space-y-1">
+        <h1 className="display text-3xl">Explore</h1>
+        <p className="text-[13px] text-muted-foreground">
+          See what people nearby want to do next.
+        </p>
+      </div>
 
       <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3">
         <Search className="size-4 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, city or area"
           className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" />
       </div>
+
 
       <div className="mt-4 space-y-3">
         <div>
