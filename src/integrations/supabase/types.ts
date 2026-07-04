@@ -1638,6 +1638,10 @@ export type Database = {
         Args: { _submission_id: string; _user_id: string }
         Returns: boolean
       }
+      can_join_intent: {
+        Args: { _intent_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_see_creator: {
         Args: { _intent_id: string; _viewer: string }
         Returns: boolean
