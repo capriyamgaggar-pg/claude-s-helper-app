@@ -13,6 +13,8 @@ import { useActiveLocation, applyLocationFilter, type Place } from "@/lib/locati
 import { canSeeCreator } from "@/lib/creator-visibility";
 import { EmptyFeed } from "@/components/feed/EmptyFeed";
 import { isDemoHostBrowser } from "@/lib/demo-client";
+import { AnimatePresence, motion as m } from "motion/react";
+import { useCardMotion } from "@/lib/card-motion";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "Home — Intent" }] }),
