@@ -96,6 +96,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="top-center" />
+      <CelebrationHost />
     </QueryClientProvider>
   );
 }
