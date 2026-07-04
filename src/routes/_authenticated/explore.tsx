@@ -107,40 +107,50 @@ function Explore() {
         </div>
       </div>
 
-      <div className="mt-4 space-y-3 pb-8">
-        {filtered.map((r) => {
-          const intent = r as unknown as {
-            id: string; title: string; category_slug: string; city: string | null; locality: string | null;
-            starts_at: string | null; people_needed: number; status: string; expires_at: string | null;
-            created_at: string; creator_id: string; creator_visibility: string | null;
-            intent_categories: { label: string } | null;
-            profiles: { name: string | null; photo_url: string | null } | null;
-            intent_participants: { user_id: string; state: string }[];
-          };
-          const mine = intent.intent_participants.find((p) => p.user_id === user.id);
-          const visible = canSeeCreator({
-            creator_id: intent.creator_id,
-            creator_visibility: intent.creator_visibility,
-            viewer_id: user.id,
-            viewer_participant_state: mine?.state ?? null,
-          });
-          const card: IntentCardData = {
-            id: intent.id, title: intent.title,
-            category_slug: intent.category_slug,
-            category_label: intent.intent_categories?.label ?? intent.category_slug,
-            city: intent.locality && intent.city ? `${intent.locality}, ${intent.city}` : intent.city,
-            starts_at: intent.starts_at,
-            people_needed: intent.people_needed,
-            interested_count: intent.intent_participants.length,
-            creator_name: intent.profiles?.name ?? null,
-            creator_photo: intent.profiles?.photo_url ?? null,
-            creator_visible: visible,
-            created_at: intent.created_at,
-            status: intent.status,
-            expires_at: intent.expires_at,
-          };
-          return <IntentCard key={card.id} intent={card} />;
-        })}
+      <m.ul
+        className="mt-4 space-y-3 pb-8"
+        initial={false}
+        transition={cardMotion.list(filtered.length)}
+      >
+        <AnimatePresence initial={false}>
+          {filtered.map((r) => {
+            const intent = r as unknown as {
+              id: string; title: string; category_slug: string; city: string | null; locality: string | null;
+              starts_at: string | null; people_needed: number; status: string; expires_at: string | null;
+              created_at: string; creator_id: string; creator_visibility: string | null;
+              intent_categories: { label: string } | null;
+              profiles: { name: string | null; photo_url: string | null } | null;
+              intent_participants: { user_id: string; state: string }[];
+            };
+            const mine = intent.intent_participants.find((p) => p.user_id === user.id);
+            const visible = canSeeCreator({
+              creator_id: intent.creator_id,
+              creator_visibility: intent.creator_visibility,
+              viewer_id: user.id,
+              viewer_participant_state: mine?.state ?? null,
+            });
+            const card: IntentCardData = {
+              id: intent.id, title: intent.title,
+              category_slug: intent.category_slug,
+              category_label: intent.intent_categories?.label ?? intent.category_slug,
+              city: intent.locality && intent.city ? `${intent.locality}, ${intent.city}` : intent.city,
+              starts_at: intent.starts_at,
+              people_needed: intent.people_needed,
+              interested_count: intent.intent_participants.length,
+              creator_name: intent.profiles?.name ?? null,
+              creator_photo: intent.profiles?.photo_url ?? null,
+              creator_visible: visible,
+              created_at: intent.created_at,
+              status: intent.status,
+              expires_at: intent.expires_at,
+            };
+            return (
+              <m.li key={card.id} layout {...cardMotion.item}>
+                <IntentCard intent={card} />
+              </m.li>
+            );
+          })}
+        </AnimatePresence>
         {filtered.length === 0 && (
           <EmptyState
             icon={<Compass className="size-6" />}
@@ -149,7 +159,7 @@ function Explore() {
             action={{ label: "Post an intent", href: "/intents/new" }}
           />
         )}
-      </div>
+      </m.ul>
       <Link to="/intents/new" className="hidden">+</Link>
     </div>
   );
