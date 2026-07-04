@@ -148,7 +148,7 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
         onPointerMove={trackPointer}
         onPointerLeave={handleLeave}
         onPointerDown={handlePointerDown}
-        className="group relative block rounded-2xl border border-border bg-surface p-4 transition-colors hover:bg-secondary/40"
+        className="group relative block rounded-2xl border border-border bg-surface p-4 transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--card-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <motion.div
           className="relative flex gap-3"
@@ -157,7 +157,8 @@ export function IntentCard({ intent }: { intent: IntentCardData }) {
             rotateX: reduced ? 0 : rotateX,
             rotateY: reduced ? 0 : rotateY,
           }}
-          whileHover={reduced ? undefined : { y: -4, scale: 1.005 }}
+          whileHover={reduced ? { y: -2 } : { y: -4 }}
+          whileFocus={reduced ? { y: -2 } : { y: -4 }}
           transition={springs.gentle}
         >
           {/* Spotlight — pointer-tracked accent wash. */}
