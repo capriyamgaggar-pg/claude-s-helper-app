@@ -26,6 +26,8 @@ import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedIntentsNewRouteImport } from './routes/_authenticated/intents.new'
 import { Route as AuthenticatedIntentsIntentIdRouteImport } from './routes/_authenticated/intents.$intentId'
 import { Route as AuthenticatedInboxThreadIdRouteImport } from './routes/_authenticated/inbox.$threadId'
+import { Route as AuthenticatedCommunitiesNewRouteImport } from './routes/_authenticated/communities.new'
+import { Route as AuthenticatedCommunitiesCommunityIdRouteImport } from './routes/_authenticated/communities.$communityId'
 import { Route as AuthenticatedIntentsIntentIdSubmissionsRouteImport } from './routes/_authenticated/intents.$intentId.submissions'
 import { Route as AuthenticatedIntentsIntentIdRegisterRouteImport } from './routes/_authenticated/intents.$intentId.register'
 import { Route as AuthenticatedIntentsIntentIdFormRouteImport } from './routes/_authenticated/intents.$intentId.form'
@@ -124,6 +126,18 @@ const AuthenticatedInboxThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedInboxRoute,
   } as any)
+const AuthenticatedCommunitiesNewRoute =
+  AuthenticatedCommunitiesNewRouteImport.update({
+    id: '/communities/new',
+    path: '/communities/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommunitiesCommunityIdRoute =
+  AuthenticatedCommunitiesCommunityIdRouteImport.update({
+    id: '/communities/$communityId',
+    path: '/communities/$communityId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedIntentsIntentIdSubmissionsRoute =
   AuthenticatedIntentsIntentIdSubmissionsRouteImport.update({
     id: '/submissions',
@@ -164,6 +178,8 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/communities/$communityId': typeof AuthenticatedCommunitiesCommunityIdRoute
+  '/communities/new': typeof AuthenticatedCommunitiesNewRoute
   '/inbox/$threadId': typeof AuthenticatedInboxThreadIdRoute
   '/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/intents/new': typeof AuthenticatedIntentsNewRoute
@@ -187,6 +203,8 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/communities/$communityId': typeof AuthenticatedCommunitiesCommunityIdRoute
+  '/communities/new': typeof AuthenticatedCommunitiesNewRoute
   '/inbox/$threadId': typeof AuthenticatedInboxThreadIdRoute
   '/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/intents/new': typeof AuthenticatedIntentsNewRoute
@@ -212,6 +230,8 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/communities/$communityId': typeof AuthenticatedCommunitiesCommunityIdRoute
+  '/_authenticated/communities/new': typeof AuthenticatedCommunitiesNewRoute
   '/_authenticated/inbox/$threadId': typeof AuthenticatedInboxThreadIdRoute
   '/_authenticated/intents/$intentId': typeof AuthenticatedIntentsIntentIdRouteWithChildren
   '/_authenticated/intents/new': typeof AuthenticatedIntentsNewRoute
@@ -237,6 +257,8 @@ export interface FileRouteTypes {
     | '/home'
     | '/inbox'
     | '/onboarding'
+    | '/communities/$communityId'
+    | '/communities/new'
     | '/inbox/$threadId'
     | '/intents/$intentId'
     | '/intents/new'
@@ -260,6 +282,8 @@ export interface FileRouteTypes {
     | '/home'
     | '/inbox'
     | '/onboarding'
+    | '/communities/$communityId'
+    | '/communities/new'
     | '/inbox/$threadId'
     | '/intents/$intentId'
     | '/intents/new'
@@ -284,6 +308,8 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/inbox'
     | '/_authenticated/onboarding'
+    | '/_authenticated/communities/$communityId'
+    | '/_authenticated/communities/new'
     | '/_authenticated/inbox/$threadId'
     | '/_authenticated/intents/$intentId'
     | '/_authenticated/intents/new'
@@ -426,6 +452,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInboxThreadIdRouteImport
       parentRoute: typeof AuthenticatedInboxRoute
     }
+    '/_authenticated/communities/new': {
+      id: '/_authenticated/communities/new'
+      path: '/communities/new'
+      fullPath: '/communities/new'
+      preLoaderRoute: typeof AuthenticatedCommunitiesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/communities/$communityId': {
+      id: '/_authenticated/communities/$communityId'
+      path: '/communities/$communityId'
+      fullPath: '/communities/$communityId'
+      preLoaderRoute: typeof AuthenticatedCommunitiesCommunityIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/intents/$intentId/submissions': {
       id: '/_authenticated/intents/$intentId/submissions'
       path: '/submissions'
@@ -509,6 +549,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedCommunitiesCommunityIdRoute: typeof AuthenticatedCommunitiesCommunityIdRoute
+  AuthenticatedCommunitiesNewRoute: typeof AuthenticatedCommunitiesNewRoute
   AuthenticatedIntentsIntentIdRoute: typeof AuthenticatedIntentsIntentIdRouteWithChildren
   AuthenticatedIntentsNewRoute: typeof AuthenticatedIntentsNewRoute
   AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
@@ -525,6 +567,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedCommunitiesCommunityIdRoute:
+    AuthenticatedCommunitiesCommunityIdRoute,
+  AuthenticatedCommunitiesNewRoute: AuthenticatedCommunitiesNewRoute,
   AuthenticatedIntentsIntentIdRoute:
     AuthenticatedIntentsIntentIdRouteWithChildren,
   AuthenticatedIntentsNewRoute: AuthenticatedIntentsNewRoute,

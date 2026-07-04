@@ -122,7 +122,7 @@ function IntentDetail() {
     queryKey: ["is-community-member", data?.community_id, user.id],
     queryFn: async () => {
       const { data: row } = await supabase.from("community_members")
-        .select("user_id").eq("community_id", data!.community_id).eq("user_id", user.id).maybeSingle();
+        .select("user_id").eq("community_id", data!.community_id!).eq("user_id", user.id).maybeSingle();
       return !!row;
     },
   });
