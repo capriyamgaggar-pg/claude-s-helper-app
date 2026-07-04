@@ -183,6 +183,10 @@
   --sidebar-accent-foreground: oklch(0.96 0.005 80);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.65 0.10 160);
+
+  /* Motif tile — slightly cooler for dark mode. */
+  --motif-fallback-a: oklch(0.28 0.02 260);
+  --motif-fallback-b: oklch(0.24 0.02 260);
 }
 
 @layer base {
