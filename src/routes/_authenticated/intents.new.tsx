@@ -159,6 +159,7 @@ function NewIntent() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(randomPick(isOrganizer ? EVENT_CREATED_MESSAGES : INTENT_POSTED_MESSAGES));
+    celebrateOnce(user.id, "first-intent-published");
 
     // Organizer with registration_first → jump straight to Journey/Form builder.
     if (isOrganizer && flow === "registration_first") {
