@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
 import { interestEmoji } from "@/lib/interest-emoji";
+import { randomPick, WELCOME_MESSAGES } from "@/lib/personality";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
