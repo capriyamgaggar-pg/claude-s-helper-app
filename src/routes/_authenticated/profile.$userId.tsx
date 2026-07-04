@@ -1,17 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Sparkle, MessageCircle, Hourglass, MapPin } from "lucide-react";
+import { Sparkle, MessageCircle, Hourglass, MapPin, X } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { BlockReportMenu } from "@/components/safety/block-report-menu";
 import { toast } from "sonner";
 import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ReputationPanel } from "@/components/reputation-panel";
 import { ActiveIntentCard, type ActiveIntentCardData } from "@/components/profile/active-intent-card";
 import { PromoCard } from "@/components/profile/promo-card";
 import { interestEmoji } from "@/lib/interest-emoji";
+import { motion } from "@/lib/motion";
+
+const CONNECT_LIMIT_24H = 10;
+
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: ({ params }) => ({ meta: [{ title: `Profile — ${params.userId.slice(0, 6)}` }] }),
@@ -72,6 +81,26 @@ function PublicProfile() {
     enabled: userId !== user.id,
   });
 
+  // Rate limit: how many pending outbound requests I've sent in the last 24h.
+  // Respectful default — prevents spam-connecting.
+  const { data: recentSent = 0 } = useQuery({
+    queryKey: ["connect-rate", user.id],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count, error } = await supabase.from("connections")
+        .select("id", { count: "exact", head: true })
+        .eq("requested_by", user.id).eq("state", "requested")
+        .gte("created_at", since);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: userId !== user.id,
+  });
+  const rateLimited = recentSent >= CONNECT_LIMIT_24H;
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
   const connect = useMutation({
     mutationFn: async () => {
       if (userId === user.id) return;
@@ -85,9 +114,28 @@ function PublicProfile() {
       toast.success(randomPick(CONNECTION_SENT_MESSAGES));
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
+      qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const withdraw = useMutation({
+    mutationFn: async () => {
+      if (userId === user.id) return;
+      const [a, b] = user.id < userId ? [user.id, userId] : [userId, user.id];
+      const { error } = await supabase.from("connections")
+        .delete().eq("user_a", a).eq("user_b", b);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Request withdrawn");
+      qc.invalidateQueries({ queryKey: ["connections", user.id] });
+      qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
+      qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const sharedInterests = useMemo(() => {
     if (!profile?.interests || !viewerProfile?.interests || userId === user.id) return 0;
@@ -152,27 +200,85 @@ function PublicProfile() {
       {userId !== user.id && (
         connection?.state === "accepted" && connection.thread_id ? (
           <Link to="/inbox/$threadId" params={{ threadId: connection.thread_id }}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "var(--accent-orange)" }}>
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white hover:opacity-90"
+            style={{ backgroundColor: "var(--accent-orange)", transition: motion.transition("opacity", "quick") }}>
             <MessageCircle className="size-4" /> Chat
           </Link>
         ) : connection?.state === "requested" ? (
-          <Button disabled className="mt-6 w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
-            <Hourglass className="size-4" />
-            {connection.requested_by === user.id ? "Request sent" : "Respond in your Inbox"}
-          </Button>
+          connection.requested_by === user.id ? (
+            <div className="mt-6 space-y-2">
+              <Button disabled className="w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
+                <Hourglass className="size-4" /> Request sent — waiting to hear back
+              </Button>
+              <button
+                type="button"
+                onClick={() => setWithdrawOpen(true)}
+                disabled={withdraw.isPending}
+                className="flex w-full items-center justify-center gap-1.5 rounded-2xl px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground disabled:opacity-60"
+                style={{ transition: motion.transition("color", "quick") }}
+              >
+                <X className="size-3.5" /> Withdraw request
+              </button>
+            </div>
+          ) : (
+            <Button disabled className="mt-6 w-full gap-2 rounded-2xl border-[color:var(--border-warm)]" variant="outline">
+              <Hourglass className="size-4" /> Respond in your Inbox
+            </Button>
+          )
         ) : (
-          <button
-            type="button"
-            onClick={() => connect.mutate()}
-            disabled={connect.isPending}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ backgroundColor: "var(--accent-orange)" }}
-          >
-            <Sparkle className="size-4" /> Connect
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              disabled={connect.isPending || rateLimited}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-medium text-white hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: "var(--accent-orange)", transition: motion.transition("opacity", "quick") }}
+            >
+              <Sparkle className="size-4" /> Connect
+            </button>
+            {rateLimited ? (
+              <p className="mt-2 text-center text-[12px] text-muted-foreground">
+                You've sent {CONNECT_LIMIT_24H} requests in the last 24 hours. Give it a moment.
+              </p>
+            ) : null}
+          </>
         )
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send a connection request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {profile.name ?? "They"} will see your profile and can accept or pass. You can withdraw the request any time before they respond.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={() => connect.mutate()}>
+              Send request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Withdraw your request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {profile.name ?? "They"} won't be notified. You can send a new request later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => withdraw.mutate()}>
+              Withdraw
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <ReputationPanel userId={userId} />
 
