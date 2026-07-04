@@ -8,6 +8,8 @@ import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { LocationPill } from "@/components/location-pill";
 import { EmptyState } from "@/components/ui/empty-state";
 import { motion } from "@/lib/motion";
+import { AnimatePresence, motion as m } from "motion/react";
+import { useCardMotion } from "@/lib/card-motion";
 import { applyLocationFilter, placeToFilter, type Place } from "@/lib/location";
 import { canSeeCreator } from "@/lib/creator-visibility";
 
