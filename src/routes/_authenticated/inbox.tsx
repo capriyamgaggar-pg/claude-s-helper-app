@@ -1,13 +1,22 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { Inbox as InboxIcon, MessageCircle, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { randomPick, NO_PENDING_REQUESTS_MESSAGES } from "@/lib/personality";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
-  head: () => ({ meta: [{ title: "Inbox — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Inbox — Intent" },
+      { name: "description", content: "Your conversations and connection requests." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: Inbox,
 });
 
