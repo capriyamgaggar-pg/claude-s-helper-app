@@ -2,18 +2,29 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { IntentCard, type IntentCardData } from "@/components/intent-card";
 import { LocationPill } from "@/components/location-pill";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 import { applyLocationFilter, placeToFilter, type Place } from "@/lib/location";
 import { canSeeCreator } from "@/lib/creator-visibility";
 
 export const Route = createFileRoute("/_authenticated/explore")({
-  head: () => ({ meta: [{ title: "Explore — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Explore intents — Intent" },
+      { name: "description", content: "Discover what people around you want to do next, and join in." },
+      { property: "og:title", content: "Explore intents — Intent" },
+      { property: "og:description", content: "Discover what people around you want to do next, and join in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Explore,
 });
+
 
 interface Cat { slug: string; label: string }
 
