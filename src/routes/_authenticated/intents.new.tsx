@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronLeft, MapPin } from "lucide-react";
+import { ChevronDown, MapPin, Sparkles } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,14 +16,26 @@ import { VisibilityPicker, pickerExpiresAt } from "@/components/visibility-picke
 import { minCustomDateInputValue, type VisibilityPreset } from "@/lib/intent-lifecycle";
 import type { JoinMode } from "@/lib/participation";
 import type { CreatorVisibility } from "@/lib/creator-visibility";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
-  head: () => ({ meta: [{ title: "Create an intent — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Post an intent — Intent" },
+      { name: "description", content: "Say what you want to do next. Intent introduces you to people who share it." },
+      { property: "og:title", content: "Post an intent — Intent" },
+      { property: "og:description", content: "Say what you want to do next. Intent introduces you to people who share it." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => ({
     title: typeof search.title === "string" ? search.title : undefined,
   }),
   component: NewIntent,
 });
+
 
 interface Category { slug: string; label: string }
 
