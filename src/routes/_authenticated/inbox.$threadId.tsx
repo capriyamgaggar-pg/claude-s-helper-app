@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkle } from "lucide-react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { startersFor } from "@/lib/categories";
 import { ParticipationCard } from "@/components/chat/participation-card";
 import { EmojiPicker } from "@/components/chat/emoji-picker";
+import { BlockReportMenu } from "@/components/safety/block-report-menu";
 
 export const Route = createFileRoute("/_authenticated/inbox/$threadId")({
   head: () => ({ meta: [{ title: "Chat — Intent" }] }),
@@ -21,6 +22,7 @@ interface Message { id: string; thread_id: string; sender_id: string; body: stri
 function ChatThread() {
   const { threadId } = Route.useParams();
   const { user } = Route.useRouteContext();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState("");
@@ -98,7 +100,7 @@ function ChatThread() {
         <BackButton fallback="/inbox" />
         {otherMember && (
           <Link to="/profile/$userId" params={{ userId: otherMember.user_id }}
-            className="flex min-w-0 items-center gap-3 hover:opacity-80">
+            className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80">
             {other?.photo_url ? (
               <img src={other.photo_url} alt="" className="size-9 rounded-full object-cover" />
             ) : (
@@ -108,6 +110,14 @@ function ChatThread() {
             )}
             <p className="truncate font-medium">{other?.name ?? "Chat"}</p>
           </Link>
+        )}
+        {otherMember && (
+          <BlockReportMenu
+            userId={otherMember.user_id}
+            threadId={threadId}
+            intentId={ctxData?.intent_id ?? undefined}
+            onBlocked={() => navigate({ to: "/inbox" })}
+          />
         )}
       </header>
 

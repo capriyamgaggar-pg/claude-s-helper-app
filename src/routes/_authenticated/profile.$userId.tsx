@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Sparkle, MessageCircle, Hourglass, MapPin } from "lucide-react";
 import { BackButton } from "@/components/back-button";
+import { BlockReportMenu } from "@/components/safety/block-report-menu";
 import { toast } from "sonner";
 import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +99,10 @@ function PublicProfile() {
 
   return (
     <div className="min-h-screen bg-[color:var(--surface-warm)] px-5 pt-4 pb-8">
-      <BackButton fallback="/home" className="-ml-2 grid size-9 place-items-center rounded-full hover:bg-[color:color-mix(in_oklab,var(--accent-peach)_35%,white)]" />
+      <div className="-ml-2 flex items-center justify-between">
+        <BackButton fallback="/home" className="grid size-9 place-items-center rounded-full hover:bg-[color:color-mix(in_oklab,var(--accent-peach)_35%,white)]" />
+        <BlockReportMenu userId={userId} />
+      </div>
 
       <header className="mt-2 flex items-center gap-4">
         <div className="relative shrink-0">

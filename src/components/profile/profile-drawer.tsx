@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { X, ListChecks, Heart, CheckCircle2, Users, Pencil, LogOut } from "lucide-react";
+import { X, ListChecks, Heart, CheckCircle2, Users, Pencil, ShieldX, LogOut } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -30,6 +30,7 @@ export function ProfileDrawer({ open, onClose, onSignOut }: Props) {
         <div className="my-2 h-px bg-border" />
 
         <DrawerLink to="/profile/edit" onClick={onClose} icon={Pencil} label="Edit profile" />
+        <DrawerLink to="/profile/blocked" onClick={onClose} icon={ShieldX} label="Blocked users" />
 
         <button
           type="button"
