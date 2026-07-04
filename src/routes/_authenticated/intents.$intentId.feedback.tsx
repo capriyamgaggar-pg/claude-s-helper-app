@@ -51,7 +51,7 @@ function FeedbackPage() {
     mutationFn: (payload: SubmitPayload) =>
       submit({ data: { ...payload, wouldRecommend: payload.wouldRecommend ?? undefined } }),
     onSuccess: () => {
-      toast.success("Thanks for sharing your feedback.");
+      toast.success(randomPick(FEEDBACK_THANKS_MESSAGES));
       qc.invalidateQueries({ queryKey: ["feedback-eligibility", intentId] });
       qc.invalidateQueries({ queryKey: ["intent", intentId] });
       navigate({ to: "/intents/$intentId", params: { intentId } });
