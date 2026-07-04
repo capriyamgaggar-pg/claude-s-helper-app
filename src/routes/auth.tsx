@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -29,7 +29,6 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const navigate = useNavigate();
   const { redirect } = useSearch({ from: "/auth" });
   const isMobile = useIsMobile();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -43,10 +42,10 @@ function AuthPage() {
     let alive = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!alive || !data.user) return;
-      navigate({ to: safeRedirect as never, replace: true });
+      window.location.href = safeRedirect;
     });
     return () => { alive = false; };
-  }, [navigate, safeRedirect]);
+  }, [safeRedirect]);
 
   async function onGoogle() {
     setBusy(true);
@@ -60,7 +59,7 @@ function AuthPage() {
         return;
       }
       if (res.redirected) return;
-      navigate({ to: safeRedirect as never, replace: true });
+      window.location.href = safeRedirect;
     } catch {
       toast.error("Couldn't sign in with Google.");
       setBusy(false);
@@ -90,7 +89,7 @@ function AuthPage() {
           setBusy(false);
           return;
         }
-        navigate({ to: safeRedirect as never, replace: true });
+        window.location.href = safeRedirect;
       }
     } finally {
       setBusy(false);
