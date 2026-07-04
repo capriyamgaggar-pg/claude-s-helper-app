@@ -81,6 +81,26 @@ function PublicProfile() {
     enabled: userId !== user.id,
   });
 
+  // Rate limit: how many pending outbound requests I've sent in the last 24h.
+  // Respectful default — prevents spam-connecting.
+  const { data: recentSent = 0 } = useQuery({
+    queryKey: ["connect-rate", user.id],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count, error } = await supabase.from("connections")
+        .select("id", { count: "exact", head: true })
+        .eq("requested_by", user.id).eq("state", "requested")
+        .gte("created_at", since);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: userId !== user.id,
+  });
+  const rateLimited = recentSent >= CONNECT_LIMIT_24H;
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
   const connect = useMutation({
     mutationFn: async () => {
       if (userId === user.id) return;
@@ -94,9 +114,28 @@ function PublicProfile() {
       toast.success(randomPick(CONNECTION_SENT_MESSAGES));
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
+      qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const withdraw = useMutation({
+    mutationFn: async () => {
+      if (userId === user.id) return;
+      const [a, b] = user.id < userId ? [user.id, userId] : [userId, user.id];
+      const { error } = await supabase.from("connections")
+        .delete().eq("user_a", a).eq("user_b", b);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Request withdrawn");
+      qc.invalidateQueries({ queryKey: ["connections", user.id] });
+      qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
+      qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const sharedInterests = useMemo(() => {
     if (!profile?.interests || !viewerProfile?.interests || userId === user.id) return 0;
