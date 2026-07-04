@@ -113,6 +113,7 @@ function PublicProfile() {
     },
     onSuccess: () => {
       toast.success(randomPick(CONNECTION_SENT_MESSAGES));
+      celebrateOnce(user.id, "first-connection-sent");
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["connection-status", user.id, userId] });
       qc.invalidateQueries({ queryKey: ["connect-rate", user.id] });
