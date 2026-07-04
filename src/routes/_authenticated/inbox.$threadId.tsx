@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Send, Sparkle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Send, Sparkle, Clock, Lock } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,11 +11,21 @@ import { startersFor } from "@/lib/categories";
 import { ParticipationCard } from "@/components/chat/participation-card";
 import { EmojiPicker } from "@/components/chat/emoji-picker";
 import { BlockReportMenu } from "@/components/safety/block-report-menu";
+import { EmptyState } from "@/components/ui/empty-state";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/_authenticated/inbox/$threadId")({
-  head: () => ({ meta: [{ title: "Chat — Intent" }] }),
+  head: () => ({
+    meta: [
+      { title: "Chat — Intent" },
+      { name: "description", content: "A conversation bounded to your shared intent." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: ChatThread,
 });
+
+const ENDED_STATUSES = new Set(["fulfilled", "closed", "expired", "cancelled", "completed"]);
 
 interface Message { id: string; thread_id: string; sender_id: string; body: string; created_at: string }
 
@@ -27,18 +37,21 @@ function ChatThread() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const ctx = useQuery({
     queryKey: ["thread-ctx", threadId],
     queryFn: async () => {
       const { data: thread, error: et } = await supabase.from("threads")
-        .select(`id, kind, intent_id, intents(id, title, category_slug, creator_id, intent_categories(label)),
+        .select(`id, kind, intent_id, intents(id, title, category_slug, creator_id, status, expires_at, ends_at, intent_categories(label)),
           thread_members(user_id, profiles(id, name, photo_url, interests))`)
         .eq("id", threadId).single();
       if (et) throw et;
       return thread;
     },
   });
+
+
 
 
   // initial messages
