@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communities: {
         Row: {
           created_at: string
@@ -1295,6 +1331,71 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          intent_id: string | null
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_user_id: string
+          reporter_id: string
+          status: Database["public"]["Enums"]["report_status"]
+          thread_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          intent_id?: string | null
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_user_id: string
+          reporter_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+          thread_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          intent_id?: string | null
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reported_user_id?: string
+          reporter_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reputation_events: {
         Row: {
           created_at: string
@@ -1591,6 +1692,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       is_community_member: {
         Args: { _community_id: string; _user_id: string }
         Returns: boolean
@@ -1663,6 +1765,14 @@ export type Database = {
         | "confirmed"
         | "declined"
         | "left"
+      report_reason:
+        | "harassment"
+        | "inappropriate_content"
+        | "safety_concern"
+        | "spam"
+        | "scam_or_fraud"
+        | "other"
+      report_status: "open" | "reviewed" | "actioned" | "dismissed"
       thread_kind: "dm" | "intent" | "intent_group"
     }
     CompositeTypes: {
@@ -1852,6 +1962,15 @@ export const Constants = {
         "declined",
         "left",
       ],
+      report_reason: [
+        "harassment",
+        "inappropriate_content",
+        "safety_concern",
+        "spam",
+        "scam_or_fraud",
+        "other",
+      ],
+      report_status: ["open", "reviewed", "actioned", "dismissed"],
       thread_kind: ["dm", "intent", "intent_group"],
     },
   },
