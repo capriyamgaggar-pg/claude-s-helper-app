@@ -25,6 +25,43 @@ export const CONNECTION_SENT_MESSAGES = [
   "🤞 Fingers crossed.",
   "Sent into the wild.",
   "Let's see who finds you.",
+  "Little note, on its way.",
+] as const;
+
+export const CONNECTION_ACCEPTED_MESSAGES = [
+  "You're in — chat is open.",
+  "Connected. Say hi.",
+  "Nice — the chat just opened.",
+] as const;
+
+export const INTENT_POSTED_MESSAGES = [
+  "You're in.",
+  "Out in the world.",
+  "Nicely put.",
+] as const;
+
+export const EVENT_CREATED_MESSAGES = [
+  "Event is live.",
+  "You've set the stage.",
+  "Doors are open.",
+] as const;
+
+export const PROFILE_SAVED_MESSAGES = [
+  "Saved.",
+  "All set.",
+  "Looking good.",
+] as const;
+
+export const FEEDBACK_THANKS_MESSAGES = [
+  "Thanks — this helps everyone.",
+  "Noted. Kind of you.",
+  "Appreciated.",
+] as const;
+
+export const WELCOME_MESSAGES = [
+  "Welcome to Intent.",
+  "Glad you're here.",
+  "You're in — welcome.",
 ] as const;
 
 export const NO_PENDING_REQUESTS_MESSAGES = [
@@ -40,7 +77,7 @@ export const NO_INTEREST_YET_MESSAGES = [
   "Every great plan started with one person.",
 ] as const;
 
-export const PENDING_LABEL = "Waiting for their reply…";
+export const PENDING_LABEL = "Waiting to hear back…";
 
 // Small, rare (~10%) reaction lines shown after a category-specific
 // moment (e.g. someone joins). Never guaranteed -- see callers for the

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LocationPicker } from "@/components/location-picker";
 import { placeLabel, type Place } from "@/lib/location";
 import { interestEmoji } from "@/lib/interest-emoji";
+import { randomPick, PROFILE_SAVED_MESSAGES } from "@/lib/personality";
 
 export const Route = createFileRoute("/_authenticated/profile/edit")({
   head: () => ({ meta: [{ title: "Edit profile — Intent" }] }),
@@ -88,7 +89,7 @@ function EditProfile() {
     }).eq("id", user.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Profile updated");
+    toast.success(randomPick(PROFILE_SAVED_MESSAGES));
     navigate({ to: "/profile/me" });
   }
 

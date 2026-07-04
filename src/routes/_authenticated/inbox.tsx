@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MessageCircle, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { randomPick, NO_PENDING_REQUESTS_MESSAGES } from "@/lib/personality";
+import { randomPick, NO_PENDING_REQUESTS_MESSAGES, CONNECTION_ACCEPTED_MESSAGES } from "@/lib/personality";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { motion } from "@/lib/motion";
@@ -96,7 +96,7 @@ function Inbox() {
       return threadId as string;
     },
     onSuccess: () => {
-      toast.success("Connected — chat is open");
+      toast.success(randomPick(CONNECTION_ACCEPTED_MESSAGES));
       qc.invalidateQueries({ queryKey: ["connections", user.id] });
       qc.invalidateQueries({ queryKey: ["threads", user.id] });
       qc.invalidateQueries({ queryKey: ["inbox-badge-counts"] });
