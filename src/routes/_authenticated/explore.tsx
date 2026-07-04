@@ -139,15 +139,12 @@ function Explore() {
           return <IntentCard key={card.id} intent={card} />;
         })}
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
-            <p className="font-semibold text-foreground">Nothing matched your search.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try another location or category. Or be the first to post here.
-            </p>
-            <Link to="/intents/new">
-              <Button className="mt-4" size="sm">Post an Intent</Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={<Compass className="size-6" />}
+            title="Nothing here yet"
+            description="Try another location or category — or be the first to post an intent here."
+            action={{ label: "Post an intent", href: "/intents/new" }}
+          />
         )}
       </div>
       <Link to="/intents/new" className="hidden">+</Link>
@@ -158,6 +155,7 @@ function Explore() {
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
+      style={{ transition: motion.transition("background-color, color, border-color", "quick") }}
       className={"shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] " + (on
         ? "border-foreground bg-foreground text-background"
         : "border-border bg-surface text-foreground hover:bg-secondary")}>
@@ -165,3 +163,4 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     </button>
   );
 }
+
