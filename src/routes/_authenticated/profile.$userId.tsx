@@ -1,17 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Sparkle, MessageCircle, Hourglass, MapPin } from "lucide-react";
+import { Sparkle, MessageCircle, Hourglass, MapPin, X } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { BlockReportMenu } from "@/components/safety/block-report-menu";
 import { toast } from "sonner";
 import { randomPick, CONNECTION_SENT_MESSAGES } from "@/lib/personality";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ReputationPanel } from "@/components/reputation-panel";
 import { ActiveIntentCard, type ActiveIntentCardData } from "@/components/profile/active-intent-card";
 import { PromoCard } from "@/components/profile/promo-card";
 import { interestEmoji } from "@/lib/interest-emoji";
+import { motion } from "@/lib/motion";
+
+const CONNECT_LIMIT_24H = 10;
+
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: ({ params }) => ({ meta: [{ title: `Profile — ${params.userId.slice(0, 6)}` }] }),
