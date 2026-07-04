@@ -8,6 +8,7 @@ import { randomPick, NO_PENDING_REQUESTS_MESSAGES, CONNECTION_ACCEPTED_MESSAGES 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { motion } from "@/lib/motion";
+import { celebrateOnce } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
