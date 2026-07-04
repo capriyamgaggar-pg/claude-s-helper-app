@@ -132,12 +132,22 @@ function Inbox() {
   return (
     <div className="px-5 pt-8">
       <h1 className="display text-3xl">Inbox</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Conversations and connection requests, in one calm place.
+      </p>
 
-      <div className="mt-4 inline-flex rounded-full border border-border bg-surface p-1 text-[13px]">
+      <div
+        className="mt-5 inline-flex rounded-full border border-border/70 bg-surface p-1 text-[13px] shadow-sm"
+        style={{ transition: motion.transition("background-color, border-color", "quick") }}
+      >
         {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
             className={"inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 " +
-              (tab === t.id ? "bg-foreground text-background" : "text-muted-foreground")}>
+              (tab === t.id ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}
+            style={{ transition: motion.transition("background-color, color", "quick") }}
+          >
             {t.label}
             {t.badge !== null && (
               <span className={"inline-flex min-w-4 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold " +
@@ -156,6 +166,7 @@ function Inbox() {
           rows={received}
           userId={user.id}
           emptyText={noPendingMessage}
+          emptyIcon={<UserPlus className="size-6" aria-hidden />}
           onAccept={(c) => accept.mutate({ id: c.id })}
         />
       )}
@@ -165,6 +176,7 @@ function Inbox() {
           rows={sent}
           userId={user.id}
           emptyText="You haven't sent any requests yet."
+          emptyIcon={<UserPlus className="size-6" aria-hidden />}
           onAccept={null}
         />
       )}
@@ -173,15 +185,20 @@ function Inbox() {
 }
 
 function RequestList({
-  rows, userId, emptyText, onAccept,
+  rows, userId, emptyText, emptyIcon, onAccept,
 }: {
   rows: ConnectionRow[];
   userId: string;
   emptyText: string;
+  emptyIcon?: React.ReactNode;
   onAccept: ((c: ConnectionRow) => void) | null;
 }) {
   if (rows.length === 0) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">{emptyText}</p>;
+    return (
+      <div className="mt-6">
+        <EmptyState icon={emptyIcon} title="Nothing waiting" description={emptyText} />
+      </div>
+    );
   }
   return (
     <div className="mt-5 space-y-3 pb-8">
