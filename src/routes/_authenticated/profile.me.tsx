@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, MapPin, Sparkles, ArrowRight } from "lucide-react";
+import { Menu, MapPin, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isDemoHostBrowser } from "@/lib/demo-client";
 import { ReputationPanel } from "@/components/reputation-panel";
@@ -80,17 +80,11 @@ function MeProfile() {
               {(profile?.name?.[0] ?? "·").toUpperCase()}
             </span>
           )}
-          <span
-            className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-[color:var(--surface-warm)]"
-            style={{ backgroundColor: "var(--accent-orange)" }}
-            aria-hidden
-          />
         </div>
 
         <div className="min-w-0 flex-1">
           <h2 className="display flex items-center gap-1.5 truncate text-2xl font-semibold tracking-tight">
             <span className="truncate">{profile?.name ?? "You"}</span>
-            <Sparkles className="size-4 shrink-0" style={{ color: "var(--accent-orange)" }} />
           </h2>
           {profile?.profession && <p className="text-[13px] text-muted-foreground">{profile.profession}</p>}
           {profile?.city && (
