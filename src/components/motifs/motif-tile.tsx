@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   Bike,
   Music,
@@ -48,9 +48,12 @@ export interface MotifTileProps {
  */
 export function MotifTile({ slug, layoutId, size = 56 }: MotifTileProps) {
   const Icon = ICONS[slug] ?? Compass;
+  const reduced = useReducedMotion() ?? false;
+  // Skip shared layout morphs under reduced motion — a hard swap is calmer
+  // than a cross-route transform animation.
   return (
     <motion.div
-      layoutId={layoutId}
+      layoutId={reduced ? undefined : layoutId}
       className="relative shrink-0 overflow-hidden rounded-2xl"
       style={{
         width: size,

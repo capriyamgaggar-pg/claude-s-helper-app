@@ -3,6 +3,17 @@
  *
  * See .lovable/plan.md — every interactive card, chip, ripple, and motif
  * consumes the same physics from here so the app has one motion voice.
+ *
+ * ── layoutId scoping rule ─────────────────────────────────────────────
+ * Shared `layoutId` pairs are only permitted when BOTH endpoints are
+ * simultaneously mounted AND visually related. Current sanctioned pairs:
+ *   • Explore card → Intent detail hero (motif tile)
+ *   • Home card    → Intent detail hero (motif tile)
+ *   • Modal open   ↔ modal close
+ * Do NOT introduce new `layoutId` pairs without a matched destination
+ * mounted at the same time; reviewers should reject drive-by additions.
+ * Under `prefers-reduced-motion`, shared layout morphs are disabled at
+ * the call site (e.g. MotifTile drops `layoutId`).
  */
 import { useReducedMotion, type Transition } from "motion/react";
 
