@@ -12,6 +12,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { defaultIntentExamples } from "@/components/brand/examples";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DemoAuthPanel } from "@/components/demo/DemoAuthPanel";
+import { motion } from "@/lib/motion";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -22,6 +23,20 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content:
           "A network for shared real-world goals. Post what you need and find people nearby who want the same.",
+      },
+      { property: "og:title", content: "Intent — find your people" },
+      {
+        property: "og:description",
+        content:
+          "Post what you're up for. Meet people nearby who want the same.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Intent — find your people" },
+      {
+        name: "twitter:description",
+        content:
+          "Post what you're up for. Meet people nearby who want the same.",
       },
     ],
   }),
@@ -116,15 +131,22 @@ function AuthPage() {
             Where plans find people
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
-            {"\n"}
+            Post what you're up for. Meet people nearby who want the same.
           </p>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-foreground/8 bg-surface p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.02),0_20px_60px_-30px_rgba(20,20,40,0.10)]">
+        <ul className="mt-6 space-y-1.5 text-[13px] leading-relaxed text-foreground/70">
+          <li>Intentions first, identity second.</li>
+          <li>Anonymous when you want it. Human when it matters.</li>
+          <li>Built for real-world meetings, not endless scrolling.</li>
+        </ul>
+
+        <div className="mt-6 rounded-3xl border border-border/60 bg-[color:var(--surface-warm)] p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.02),0_20px_60px_-30px_rgba(20,20,40,0.14)]">
           <Button
             variant="outline"
             size="lg"
             className="h-11 w-full justify-center gap-3 rounded-xl border-input bg-surface text-[15px] font-medium"
+            style={{ transition: motion.transition("background-color, border-color", "quick") }}
             onClick={onGoogle}
             disabled={busy}
           >
@@ -178,18 +200,19 @@ function AuthPage() {
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             className="mt-3 block w-full text-center text-[13px] text-muted-foreground hover:text-foreground"
+            style={{ transition: motion.transition("color", "quick") }}
           >
             {mode === "signin"
-              ? "First time? Create your account"
-              : "Already have an account? Sign in"}
+              ? "New here? Create an account"
+              : "Have an account? Sign in"}
           </button>
         </div>
 
         <DemoAuthPanel />
 
         <div className="mt-6 text-center">
-          <p className="text-[12px] text-foreground/50">
-            Your next connection could change everything.
+          <p className="text-[12px] text-foreground/60">
+            Small plans. Real people. Nearby.
           </p>
           <p className="mt-2 text-[11px] text-muted-foreground">
             By continuing you agree to our Terms and Privacy.
