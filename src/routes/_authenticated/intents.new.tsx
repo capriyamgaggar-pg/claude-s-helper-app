@@ -19,6 +19,7 @@ import type { CreatorVisibility } from "@/lib/creator-visibility";
 import { EmptyState } from "@/components/ui/empty-state";
 import { motion } from "@/lib/motion";
 import { randomPick, INTENT_POSTED_MESSAGES, EVENT_CREATED_MESSAGES } from "@/lib/personality";
+import { celebrateOnce } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/_authenticated/intents/new")({
   head: () => ({
