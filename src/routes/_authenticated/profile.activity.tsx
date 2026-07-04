@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { STATUS_TAB_FILTERS, type IntentStatus } from "@/lib/intent-lifecycle";
 import { pairKey } from "@/lib/participation";
 import { canSeeCreator } from "@/lib/creator-visibility";
+import { AnimatePresence } from "motion/react";
 
 type TopTab = "mine" | "interested" | "joined" | "connections";
 
